@@ -1,0 +1,13 @@
+date,description,amount,account
+2025-01-01,Paycheck,3200,Checking
+2025-01-02,Rent, -1400,Checking
+2025-01-03,Trader Joe's,-86.42,Checking
+2025-01-05,Netflix,-15.49,Checking
+2025-01-06,Uber Trip,-18.20,Checking
+2025-01-07,Vanguard contribution,-300,Checking
+2025-02-01,Paycheck,3200,Checking
+2025-02-02,Rent,-1400,Checking
+2025-02-05,Whole Foods,-123.10,Checking
+2025-02-08,Coinbase,-150,Checking
+2025-02-10,Restaurant,-42.75,Checking
+

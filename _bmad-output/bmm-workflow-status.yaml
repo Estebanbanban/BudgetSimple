@@ -1,0 +1,20 @@
+generated: "2025-12-20T14:55:45Z"
+project: "Budgetsimple"
+project_level: 3
+project_type: "web"
+selected_track: "method"
+field_type: "brownfield"
+workflow_path: "_bmad/bmm/workflows/workflow-status/paths/method-brownfield.yaml"
+workflow_status:
+  document-project: _bmad-output/index.md
+  brainstorm-project: _bmad-output/analysis/brainstorming-session-2025-12-20T154326Z.md
+  product-brief: _bmad-output/analysis/product-brief-Budgetsimple-2025-12-20.md
+  research: _bmad-output/analysis/research/technical-canada-france-brokerage-rent-fx-research-2025-12-20T155518Z.md
+  prd: _bmad-output/project-planning-artifacts/prd.md
+  create-ux-design: _bmad-output/ux-design-specification.md
+  create-architecture: _bmad-output/architecture.md
+  create-epics-and-stories: _bmad-output/epics.md
+  test-design: recommended
+  validate-architecture: optional
+  implementation-readiness: _bmad-output/implementation-readiness-report-2025-12-21.md
+  sprint-planning: _bmad-output/implementation-artifacts/sprint-status.yaml

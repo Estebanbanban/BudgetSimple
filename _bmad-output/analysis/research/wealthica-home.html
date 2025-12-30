@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en" data-region="us-en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Rufina:wght@400;700&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles/main-eabb71e5e6.css">
+  <title>See All your Investments in One Place | Wealthica</title>
+  <meta name="description" content="Wealthica empowers investors to track their net worth and all their investments effortlessly in a single dashboard. Take full control over your investment portfolio and understand exactly your income, fees, gains or losses.">
+  <meta name="keywords" content="finance, investments, stocks, mutual funds, ETF, aggregation, consolidation">
+  <meta property="og:title" content="See All your Investments in One Place | Wealthica"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:url" content="https://wealthica.com/"/>
+  <meta property="og:image" content="https://wealthica.com/assets/img/meta/og_image-a40e6a8635.jpg"/>
+  <meta property="og:site_name" content="Wealthica"/>
+  <meta property="fb:app_id" content="219180005248739"/>
+  <meta property="og:description" content="Wealthica empowers investors to track their net worth and all their investments effortlessly in a single dashboard. Take full control over your investment portfolio and understand exactly your income, fees, gains or losses."/>
+  
+  <link rel="shortcut icon" href="/assets/img/meta/icon-463d01afbf.png" type="image/png">
+  <link rel="mask-icon" href="/assets/svg/meta/icon-6a6c95531a.svg" color="#ffffff">
+  <meta name="theme-color" content="#A04BA5">
+  <meta name="msapplication-navbutton-color" content="#ffffff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <script>
+    const API_URL = "https://api.wealthica.com";
+    const APP_URL = "https://app.wealthica.com";
+  </script>
+
+  <!-- Google Tag Manager -->
+  <script>(function(w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({
+      "gtm.start":
+        new Date().getTime(), event: "gtm.js",
+    });
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s), dl = l != "dataLayer" ? "&l=" + l : "";
+    j.async = true;
+    j.src =
+      "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, "script", "dataLayer", "GTM-NZX9L2L");</script>
+  <!-- End Google Tag Manager -->
+
+  <script src="/assets/js/vendor-ea6fac4400.js"></script>
+  <script>if (!Cookies.get("mp_78b4e819fad179ed93f585b735261783_mixpanel")) window.isFirstTime = true;</script>
+  <script type="text/javascript">(function(e, b) {
+    if (!b.__SV) {
+      var a, f, i, g;
+      window.mixpanel = b;
+      b._i = [];
+      b.init = function(a, e, d) {
+        function f(b, h) {
+          var a = h.split(".");
+          2 == a.length && (b = b[a[0]], h = a[1]);
+          b[h] = function() {
+            b.push([h].concat(Array.prototype.slice.call(arguments, 0)));
+          };
+        }
+
+        var c = b;
+        "undefined" !== typeof d ? c = b[d] = [] : d = "mixpanel";
+        c.people = c.people || [];
+        c.toString = function(b) {
+          var a = "mixpanel";
+          "mixpanel" !== d && (a += "." + d);
+          b || (a += " (stub)");
+          return a;
+        };
+        c.people.toString = function() {
+          return c.toString(1) + ".people (stub)";
+        };
+        i = "disable time_event track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.union people.track_charge people.clear_charges people.delete_user".split(" ");
+
+        for (g = 0; g < i.length; g++) f(c, i[g]);
+        b._i.push([a, e, d]);
+      };
+      b.__SV = 1.2;
+      a = e.createElement("script");
+      a.type = "text/javascript";
+      a.async = !0;
+      a.src = "undefined" !== typeof MIXPANEL_CUSTOM_LIB_URL ? MIXPANEL_CUSTOM_LIB_URL : "file:" === e.location.protocol && "//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//) ? "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js" : "//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";
+      f = e.getElementsByTagName("script")[0];
+      f.parentNode.insertBefore(a, f);
+    }
+  })(document, window.mixpanel || []);
+  </script>
+  <script>mixpanel.init("78b4e819fad179ed93f585b735261783", {
+    loaded: function(mixpanel) {
+      if (window.isFirstTime) {
+        mixpanel.register({ "first time": true });
+      } else {
+        mixpanel.unregister("first time");
+      }
+    },
+  });
+  </script>
+
+  <!-- Twitter universal website tag code -->
+  <script>
+    !function(e, t, n, s, u, a) {
+      e.twq || (s = e.twq = function() {
+        s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments);
+      }, s.version = "1.1", s.queue = [], u = t.createElement(n), u.async = !0, u.src = "//static.ads-twitter.com/uwt.js",
+        a = t.getElementsByTagName(n)[0], a.parentNode.insertBefore(u, a));
+    }(window, document, "script");
+    // Insert Twitter Pixel ID and Standard Event data below
+    twq("init", "o8q4d");
+    twq("track", "PageView");
+  </script>
+  <!-- End Twitter universal website tag code -->
+
+  <script>let FreeScoutW = { s: { "color": "#3a216f", "position": "br", "id": 728472589 } };
+  (function(d, e, s) {
+    if (d.getElementById("freescout-w")) return;
+    a = d.createElement(e);
+    m = d.getElementsByTagName(e)[0];
+    a.async = 1;
+    a.id = "freescout-w";
+    a.src = s;
+    m.parentNode.insertBefore(a, m);
+  })(document, "script", "https://desk.wealthica.com/modules/enduserportal/js/widget.js?v=7781");</script>
+
+  <!-- ConvertBox  -->
+  <script type="text/javascript">!function(e, t) {
+    (e = t.createElement("script")).src = "https://cdn.convertbox.com/convertbox/js/embed.js", e.id = "app-convertbox-script", e.async = true, e.dataset.uuid = "b80c718f-e57e-405b-a3d6-d1b7e7e8cbc3", document.getElementsByTagName("head")[0].appendChild(e);
+  }(window, document);</script>
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '8950318704986633');
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=8950318704986633&ev=PageView&noscript=1" />
+  </noscript>
+  <!-- End Meta Pixel Code -->
+</head>
+<body class="home lang-en">
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+  <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZX9L2L"
+          height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!--[if lte IE 9]>
+<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
+  your browser</a> to improve your experience and security.</p>
+<![endif]-->
+
+<div id="wrapper-main">
+  <div class="sticky-wrapper">
+    <header id="header" class="header">
+      <div class="wrapper">
+        <button class="header__menu-toggle">
+          Menu
+          <svg width="23" height="17" viewBox="0 0 23 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M0 0.5H23V2.5H0V0.5ZM0 7.5H23V9.5H0V7.5ZM23 14.5H0V16.5H23V14.5Z" fill="currentColor" />
+          </svg>
+        </button>
+        <a href="/" class="header__logo">
+          <picture>
+              <source media="(min-width: 1280px)" srcset="/assets/svg/wealthica-7bd8f9c3ae.svg">
+              <img src="/assets/svg/wealthica-icon-0a5178c89a.svg" width="46" height="46" alt="Wealthica">
+          </picture>
+        </a>
+
+        <div class="header__language-overlay"></div>
+
+        <div class="header__language">
+          <button class="header__language-toggle">
+            <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11.5" cy="11.5" r="10.75" stroke="black" stroke-width="1.5" />
+              <path
+                d="M16.25 11.5C16.25 14.5889 15.6496 17.3487 14.7125 19.3081C13.7491 21.3225 12.5641 22.25 11.5 22.25C10.4359 22.25 9.25091 21.3225 8.28751 19.3081C7.35037 17.3487 6.75 14.5889 6.75 11.5C6.75 8.41106 7.35037 5.65135 8.28751 3.69186C9.25091 1.67749 10.4359 0.75 11.5 0.75C12.5641 0.75 13.7491 1.67749 14.7125 3.69186C15.6496 5.65135 16.25 8.41106 16.25 11.5Z"
+                stroke="black" stroke-width="1.5" />
+              <path d="M1.5 11.5H22" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            <span id="langEl">US - EN</span>
+          </button>
+          <div class="header__language-dropdown">
+            <div class="header__language-left">
+              <h3>United States</h3>
+              <a href="" id="usEnLink" class="header__language-link active">English</a>
+            </div>
+            <div class="header__language-right">
+              <h3>Canada</h3>
+              <a href="/ca-en" id="caEnLink" class="header__language-link ">English</a>
+              <a href="/ca-fr" id="caFrLink" class="header__language-link ">Français</a>
+            </div>
+          </div>
+        </div>
+
+        <nav class="header__nav">
+          <div class="header__mobile-menu-top">
+            <img src="/assets/svg/wealthica-icon-0a5178c89a.svg" width="46" height="46" alt="Wealthica">
+            <button class="header__mobile-menu-close">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M7 8.48684L1.52305 14L0 12.4669L5.47695 6.95373L0.0919403 1.53312L1.61499 0L7 5.42061L12.385 0L13.9081 1.53312L8.52305 6.95373L14 12.4669L12.477 14L7 8.48684Z"
+                      fill="black" />
+              </svg>
+            </button>
+          </div>
+          <ul class="header__nav-list">
+            <li class="header__nav-item"><a href="/how-it-works">How it Works</a></li>
+            <li class="header__nav-item"><a href="/security">Security</a></li>
+            <li class="header__nav-more">
+              <button class="header__nav-more-title"><span>For Professionals</span></button>
+              <div class="header__nav-submenu-wrap">
+                <ul class="header__nav-submenu">
+                    <li class="header__nav-submenu-item">
+                      <a href="/family-office">
+                        <div>
+                          <b>For Family Offices</b>
+                          <p>Delight Family Members<br>with a Family Finance Dashboard</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="/advisor">
+                        <div>
+                          <b>For Financial Advisors</b>
+                          <p>Become the central point<br>of your clients</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="/institutional-partner">
+                        <div>
+                          <b>For Institutions</b>
+                          <p>360 View<br>for Institutional Partners</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="/investment-api/">
+                        <div>
+                          <b>Investment API</b>
+                          <p>Financial Data Aggregation<br>beyond custodians</p>
+                        </div>
+                      </a>
+                    </li>
+                </ul>
+              </div>
+            </li>
+            <li class="header__nav-more">
+              <button class="header__nav-more-title"><span>More</span></button>
+              <div class="header__nav-submenu-wrap">
+                <ul class="header__nav-submenu">
+                    <li class="header__nav-submenu-item">
+                      <a href="/about-us">
+                        <div>
+                          <b>About Us</b>
+                          <p>Meet the Team</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="/pricing">
+                        <div>
+                          <b>Pricing</b>
+                          <p>Find the best<br> plan for you.</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="/contact">
+                        <div>
+                          <b>Contact</b>
+                          <p>Have questions?<br>Have insights?</p>
+                        </div>
+                      </a>
+                    </li>
+                    <li class="header__nav-submenu-item">
+                      <a href="https://wealthica.com/blog/">
+                        <div>
+                          <b>Blog</b>
+                          <p>Find the most interesting<br>topics in finance!</p>
+                        </div>
+                      </a>
+                    </li>
+                </ul>
+              </div>
+            </li>
+              <li class="header__nav-btn enter"><a href="https://app.wealthica.com/login?lang=en" class="btn btn-transparent">Log in</a></li>
+              <li class="header__nav-btn enter"><a href="https://app.wealthica.com/sign-up" class="btn btn-purple"
+                                             data-g-event="user:signup"><b>Get Started</b></a></li>
+          </ul>
+        </nav>
+
+        <nav class="header__enter enter">
+            <a href="https://app.wealthica.com/login?lang=en" class="btn btn-transparent">Log in</a>
+            <a href="https://app.wealthica.com/sign-up" class="btn btn-purple" data-g-event="user:signup"><b>Get Started</b></a>
+        </nav>
+      </div>
+    </header>
+  </div>
+<section class="home-hero">
+  <div class="wrapper">
+  <div class="home-hero__inner" data-animation>
+    <div class="home-hero__review">
+      <svg width="90" height="14" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M7.265.046c.224.08.4.258.48.484L8.94 3.92c.11.31.397.521.723.53l3.568.099a.799.799 0 0 1 .46 1.427l-2.83 2.194a.8.8 0 0 0-.275.857l1.01 3.451a.797.797 0 0 1-.535.99.785.785 0 0 1-.67-.108l-2.944-2.034a.785.785 0 0 0-.894 0L3.61 13.36a.786.786 0 0 1-1.099-.206.802.802 0 0 1-.106-.676l1.01-3.451a.8.8 0 0 0-.276-.857L.308 5.976a.8.8 0 0 1-.144-1.117.788.788 0 0 1 .605-.31l3.568-.099a.79.79 0 0 0 .723-.53L6.256.53A.788.788 0 0 1 7.265.046Zm19 0c.224.08.4.258.48.484l1.195 3.39c.11.31.397.521.723.53l3.568.099a.799.799 0 0 1 .46 1.427l-2.83 2.194a.8.8 0 0 0-.275.857l1.01 3.451a.797.797 0 0 1-.535.99.785.785 0 0 1-.67-.108l-2.944-2.034a.785.785 0 0 0-.894 0L22.61 13.36a.786.786 0 0 1-1.099-.206.802.802 0 0 1-.106-.676l1.01-3.451a.8.8 0 0 0-.276-.857l-2.83-2.194a.8.8 0 0 1-.144-1.117.788.788 0 0 1 .605-.31l3.568-.099a.79.79 0 0 0 .723-.53L25.256.53a.788.788 0 0 1 1.009-.484Zm19 0c.224.08.4.258.48.484l1.195 3.39c.11.31.397.521.723.53l3.568.099a.799.799 0 0 1 .46 1.427l-2.83 2.194a.8.8 0 0 0-.275.857l1.01 3.451a.797.797 0 0 1-.535.99.785.785 0 0 1-.67-.108l-2.944-2.034a.785.785 0 0 0-.894 0L41.61 13.36a.786.786 0 0 1-1.099-.206.802.802 0 0 1-.106-.676l1.01-3.451a.8.8 0 0 0-.276-.857l-2.83-2.194a.8.8 0 0 1-.144-1.117.788.788 0 0 1 .605-.31l3.568-.099a.79.79 0 0 0 .723-.53L44.256.53a.788.788 0 0 1 1.009-.484Zm19 0c.224.08.4.258.48.484l1.195 3.39c.11.31.397.521.723.53l3.568.099a.799.799 0 0 1 .46 1.427l-2.83 2.194a.8.8 0 0 0-.275.857l1.01 3.451a.797.797 0 0 1-.535.99.785.785 0 0 1-.67-.108l-2.944-2.034a.785.785 0 0 0-.894 0L60.61 13.36a.786.786 0 0 1-1.099-.206.802.802 0 0 1-.106-.676l1.01-3.451a.8.8 0 0 0-.276-.857l-2.83-2.194a.8.8 0 0 1-.144-1.117.788.788 0 0 1 .605-.31l3.568-.099a.79.79 0 0 0 .723-.53L63.256.53a.788.788 0 0 1 1.009-.484Zm19 0c.224.08.4.258.48.484l1.195 3.39c.11.31.397.521.723.53l3.568.099a.799.799 0 0 1 .46 1.427l-2.83 2.194a.8.8 0 0 0-.275.857l1.01 3.451a.797.797 0 0 1-.535.99.785.785 0 0 1-.67-.108l-2.944-2.034a.785.785 0 0 0-.894 0L79.61 13.36a.786.786 0 0 1-1.099-.206.802.802 0 0 1-.106-.676l1.01-3.451a.8.8 0 0 0-.276-.857l-2.83-2.194a.8.8 0 0 1-.144-1.117.788.788 0 0 1 .605-.31l3.568-.099a.79.79 0 0 0 .723-.53L82.256.53a.788.788 0 0 1 1.009-.484Z"
+          fill="#FFAB42" fill-rule="evenodd"/>
+      </svg>
+      <p>“Incredible, amazing and useful!”</p>
+    </div>
+    <h1 class="home-hero__title second-font">All your <br class='home-hero__br-mobile'>Financial Accounts <br class='home-hero__br-mobile'>in <br class='home-hero__br-desktop'>One Place<br><b>Simplify your Financial Life</b></h1>
+    <a href="https://app.wealthica.com/sign-up" class="btn btn-purple btn--arrow-white" data-g-event="user:signup"
+    >Get Started</a>
+  </div>
+  <div class="home-hero__img" data-animation>
+    <picture>
+      <source media="(min-width: 1024px)"
+              srcset="/assets/img/hero-bg--desk-e770f1d80b.jpg 1x, /assets/img/hero-bg--desk@2x-f98f749150.jpg 2x">
+      <img src="/assets/img/hero-bg-0109ab30c0.jpg" width="389" height="335" alt="Wealthica">
+    </picture>
+  </div>
+  </div>
+</section>
+<section class="home-video" id="topVideo">
+  <div class="wrapper">
+    <div class="video" data-animation>
+      <script src="https://fast.wistia.com/embed/medias/23zcjkjo1n.jsonp" async></script>
+      <div class="wistia_responsive_padding" style="padding:56.25% 0 0 0;position:relative;">
+        <div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;">
+          <div class="wistia_embed wistia_async_23zcjkjo1n videoFoam=true"
+               style="height:100%;position:relative;width:100%">
+            <div class="wistia_swatch"
+                 style="height:100%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:100%;">
+              <img src="https://fast.wistia.com/embed/medias/23zcjkjo1n/swatch"
+                   style="filter:blur(5px);height:100%;object-fit:contain;width:100%;" alt="" aria-hidden="true"
+                   onload="this.parentNode.style.opacity=1;"/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="section-banner section-padding">
+  <div class="wrapper">
+    <p class="section-banner__subtitle">No Advertising, Transparent Privacy and Bank-Level Security</p>
+    <h2 class="section-banner__title second-font">We Run the Most <b>Powerful Investment Financial Tracker</b> and <b>Budgeting Tool</b> Including <b>Advanced Analysis</b> and <b>Reporting</b></h2>
+    <div class="section-banner__bottom" data-animation>
+        <div class="column column--0">
+          <p>20,000+</p>
+          <span>institutions supported</span>
+        </div>
+        <div class="column column--1">
+          <p>49B+</p>
+          <span>in aggregated assets and investments</span>
+        </div>
+        <div class="column column--2">
+          <p>100,000+</p>
+          <span>users served</span>
+        </div>
+    </div>
+    <a href="/how-it-works" class="btn btn--small btn-purple btn--arrow-white"
+       data-animation>How it Works</a>
+  </div>
+</section>
+<section class="our-apps section-padding">
+  <div class="wrapper">
+    <img loading="lazy" class="our-apps__img" src="/assets/img/our-app@1x-8e72eaf15d.jpg" srcset="/assets/img/our-app@2x-b032777097.jpg 2x"
+         width="988"
+         height="548" alt="our app" data-animation />
+
+    <p class="our-apps__top-text">Mobile</p>
+    <h2 class="our-apps__title second-font" data-animation="">Get the full featured web app or on-the-go mobile app</h2>
+    <p class="our-apps__text" data-animation="">Wealthica is available as a full featured web app or a mobile companion app on both iOS or Android. With Wealthica, you always have your net worth in your pocket.</p>
+
+    <div class="our-apps__stores" data-animation>
+      <a href="https://app.wealthica.com/sign-up" data-g-event="user:signup" target="_blank">
+        <img loading="lazy" class="app-badge web" src="/assets/img/app-web-badge-black-d1d190aed4.jpg"
+             srcset="/assets/img/app-web-badge-black@2x-58e3beaa1e.jpg 2x" width="190" height="57" alt="Web App">
+      </a>
+      <a href="https://itunes.apple.com/ca/app/wealthica/id1189909042" target="_blank" rel="nofollow noopener noreferrer">
+        <img loading="lazy" class="app-badge ios" src="/assets/img/app-ios-badge-black-e6a95ca77e.jpg"
+             srcset="/assets/img/app-ios-badge-black@2x-f54bdfe0f4.jpg 2x" width="190" height="57" alt="App Store">
+      </a>
+      <a href="https://play.google.com/store/apps/details?id=com.wealthica" target="_blank" rel="nofollow noopener noreferrer">
+        <img loading="lazy" class="app-badge android" src="/assets/img/app-android-badge-black-e2274196a3.jpg"
+             srcset="/assets/img/app-android-badge-black@2x-0ac5858bdc.jpg 2x" width="190" height="57" alt="Android Play">
+      </a>
+    </div>
+  </div>
+</section>
+<section class="as-seen-on section-padding">
+  <div class="wrapper">
+    <h2 class="as-seen-on__title second-font">Acclaimed and Praised by Media</h2>
+    <p class="as-seen-on__subtitle">As Seen On</p>
+
+    <div class="as-seen-on__list">
+        <div class="as-seen-on__item">
+          <img loading="lazy" src="/assets/img/as-seen-on/yahoo-5532e3c5fa.png" width="80" height="30"
+               srcset="/assets/img/as-seen-on/yahoo@2x-e4581015c9.png 2x" alt="yahoo">
+        </div>
+        <div class="as-seen-on__item">
+          <img loading="lazy" src="/assets/img/as-seen-on/globe-fa9fcb9e82.png" width="52" height="54"
+               srcset="/assets/img/as-seen-on/globe@2x-379e754a79.png 2x" alt="globe">
+        </div>
+        <div class="as-seen-on__item">
+          <img loading="lazy" src="/assets/img/as-seen-on/wp-90f4725b1c.png" width="82" height="82"
+               srcset="/assets/img/as-seen-on/wp@2x-1c337b247a.png 2x" alt="wp">
+        </div>
+        <div class="as-seen-on__item">
+          <img loading="lazy" src="/assets/img/as-seen-on/stockchase-53c47cc8bc.png" width="247" height="38"
+               srcset="/assets/img/as-seen-on/stockchase@2x-39d718e4f4.png 2x" alt="stockchase">
+        </div>
+        <div class="as-seen-on__item">
+          <img loading="lazy" src="/assets/img/as-seen-on/mdj-37c60670e7.png" width="180" height="46"
+               srcset="/assets/img/as-seen-on/mdj@2x-024fa40642.png 2x" alt="mdj">
+        </div>
+    </div>
+
+    <div class="as-seen-on__review-list" data-animation>
+        <div class="as-seen-on__review-item">
+          <p>Wealthica is already recognized for its state-of-the-art features, which include automated financial aggregation.</p>
+          <div class="as-seen-on__review-item-img">
+            <img loading="lazy" src="/assets/img/as-seen-on/review_yahoo-bb60ccb6c6.png"
+                 srcset="/assets/img/as-seen-on/review_yahoo@2x-f361f58589.png 2x"
+                 width="99" height="36" alt="yahoo"/>
+          </div>
+        </div>
+        <div class="as-seen-on__review-item">
+          <p>One of the best options for tracking your portfolio I... use it to aggregate all your investing accounts.</p>
+          <div class="as-seen-on__review-item-img">
+            <img loading="lazy" src="/assets/img/as-seen-on/review_globe-247dc53914.png"
+                 srcset="/assets/img/as-seen-on/review_globe@2x-fbb1a18634.png 2x"
+                 width="185" height="45" alt="globe"/>
+          </div>
+        </div>
+        <div class="as-seen-on__review-item">
+          <p>Wealthica is one of the best tools I came across for consolidating my investments and tracking portfolio.</p>
+          <div class="as-seen-on__review-item-img">
+            <img loading="lazy" src="/assets/img/as-seen-on/review_stockchase-1aae1b89a4.png"
+                 srcset="/assets/img/as-seen-on/review_stockchase@2x-c342802a33.png 2x"
+                 width="182" height="28" alt="stockchase"/>
+          </div>
+        </div>
+    </div>
+
+    <a href="/before-and-after/#as-seen-on" class="as-seen-on__more-link"
+       target="_blank">Read more Testimonials</a>
+  </div>
+</section>
+<section class="do-more-with-wealthica section-padding">
+  <div class="wrapper">
+    <div class="do-more-with-wealthica__top" data-animation>
+      <img loading="lazy" src="/assets/img/do-more-with-wealthica/do-more-e3dc634ec5.jpg"
+           srcset="/assets/img/do-more-with-wealthica/do-more@2x-a10e29896b.jpg 2x" width="550"
+           height="550"
+           alt="Do More with Wealthica" class="do-more-with-wealthica__top-img">
+      <div class="do-more-with-wealthica__top-inner">
+        <p class="do-more-with-wealthica__top-subtitle">
+          <span>The Best Stock Tracking App</span>
+          <svg width="96" height="24" viewBox="0 0 96 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="95.3321" height="24" fill="#FFC700" fill-opacity="0.22"/>
+          <path d="M11.8383 5.35957C11.9941 4.88014 12.6723 4.88014 12.8281 5.35957L14.2025 9.58952C14.2722 9.80393 14.472 9.94909 14.6974 9.94909L19.1451 9.94909C19.6492 9.94909 19.8587 10.5942 19.4509 10.8905L15.8527 13.5047C15.6703 13.6372 15.594 13.8721 15.6637 14.0865L17.0381 18.3165C17.1938 18.7959 16.6451 19.1946 16.2373 18.8983L12.6391 16.284C12.4567 16.1515 12.2097 16.1515 12.0273 16.284L8.42913 18.8983C8.02131 19.1946 7.47258 18.7959 7.62836 18.3165L9.00275 14.0865C9.07242 13.8721 8.9961 13.6372 8.81372 13.5047L5.2155 10.8905C4.80768 10.5942 5.01727 9.94909 5.52137 9.94909L9.96901 9.94909C10.1944 9.94909 10.3942 9.80393 10.4639 9.58952L11.8383 5.35957Z" fill="#FFA800"/>
+          <path d="M29.5043 5.35957C29.6601 4.88014 30.3384 4.88014 30.4941 5.35957L31.8685 9.58952C31.9382 9.80393 32.138 9.94909 32.3634 9.94909L36.8111 9.94909C37.3152 9.94909 37.5248 10.5942 37.1169 10.8905L33.5187 13.5047C33.3363 13.6372 33.26 13.8721 33.3297 14.0865L34.7041 18.3165C34.8599 18.7959 34.3111 19.1946 33.9033 18.8983L30.3051 16.284C30.1227 16.1515 29.8757 16.1515 29.6934 16.284L26.0951 18.8983C25.6873 19.1946 25.1386 18.7959 25.2944 18.3165L26.6688 14.0865C26.7384 13.8721 26.6621 13.6372 26.4797 13.5047L22.8815 10.8905C22.4737 10.5942 22.6833 9.94909 23.1874 9.94909L27.635 9.94909C27.8605 9.94909 28.0603 9.80393 28.1299 9.58952L29.5043 5.35957Z" fill="#FFA800"/>
+          <path d="M47.1713 5.35957C47.3271 4.88014 48.0054 4.88014 48.1611 5.35957L49.5355 9.58952C49.6052 9.80393 49.805 9.94909 50.0304 9.94909L54.4781 9.94909C54.9822 9.94909 55.1918 10.5942 54.7839 10.8905L51.1857 13.5047C51.0033 13.6372 50.927 13.8721 50.9967 14.0865L52.3711 18.3165C52.5269 18.7959 51.9781 19.1946 51.5703 18.8983L47.9721 16.284C47.7897 16.1515 47.5427 16.1515 47.3604 16.284L43.7621 18.8983C43.3543 19.1946 42.8056 18.7959 42.9614 18.3165L44.3358 14.0865C44.4054 13.8721 44.3291 13.6372 44.1467 13.5047L40.5485 10.8905C40.1407 10.5942 40.3503 9.94909 40.8544 9.94909L45.302 9.94909C45.5275 9.94909 45.7273 9.80393 45.7969 9.58952L47.1713 5.35957Z" fill="#FFA800"/>
+          <path d="M64.8373 5.35957C64.9931 4.88014 65.6714 4.88014 65.8271 5.35957L67.2015 9.58952C67.2712 9.80393 67.471 9.94909 67.6964 9.94909L72.1441 9.94909C72.6482 9.94909 72.8578 10.5942 72.4499 10.8905L68.8517 13.5047C68.6693 13.6372 68.593 13.8721 68.6627 14.0865L70.0371 18.3165C70.1929 18.7959 69.6441 19.1946 69.2363 18.8983L65.6381 16.284C65.4557 16.1515 65.2088 16.1515 65.0264 16.284L61.4282 18.8983C61.0203 19.1946 60.4716 18.7959 60.6274 18.3165L62.0018 14.0865C62.0714 13.8721 61.9951 13.6372 61.8127 13.5047L58.2145 10.8905C57.8067 10.5942 58.0163 9.94909 58.5204 9.94909L62.968 9.94909C63.1935 9.94909 63.3933 9.80393 63.4629 9.58952L64.8373 5.35957Z" fill="#FFA800"/>
+          <path d="M82.5043 5.35957C82.6601 4.88014 83.3384 4.88014 83.4941 5.35957L84.8685 9.58952C84.9382 9.80393 85.138 9.94909 85.3634 9.94909L89.8111 9.94909C90.3152 9.94909 90.5248 10.5942 90.1169 10.8905L86.5187 13.5047C86.3363 13.6372 86.26 13.8721 86.3297 14.0865L87.7041 18.3165C87.8599 18.7959 87.3111 19.1946 86.9033 18.8983L83.3051 16.284C83.1227 16.1515 82.8757 16.1515 82.6934 16.284L79.0951 18.8983C78.6873 19.1946 78.1386 18.7959 78.2944 18.3165L79.6688 14.0865C79.7384 13.8721 79.6621 13.6372 79.4797 13.5047L75.8815 10.8905C75.4737 10.5942 75.6833 9.94909 76.1874 9.94909L80.635 9.94909C80.8605 9.94909 81.0603 9.80393 81.1299 9.58952L82.5043 5.35957Z" fill="#FFA800"/>
+        </svg>
+        </p>
+        <h2 class="do-more-with-wealthica__top-title second-font">Designed for the financially-minded of every kind</h2>
+        <p class="do-more-with-wealthica__top-text">All holdings, across various accounts and institutions on one screen. It's financial wizardry. <b>— Rob I.</b></p>
+      </div>
+    </div>
+    <div class="do-more-with-wealthica__list">
+        <div class="do-more-with-wealthica__item" data-animation>
+          Unlimited<br>Transaction History
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Your Family’s One Page<br>Report Card
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Export to Excel, Google<br>Sheets or Yahoo Finance
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Share With Your Trusted<br>Advisor
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Accurately Assess<br>Fees
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Unbiased Portfolio<br>Analysis
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Secure Your<br>Financial Life
+        </div>
+        <div class="do-more-with-wealthica__item" data-animation>
+          Capital Gains (ACB)<br>and Income
+        </div>
+    </div>
+  </div>
+</section>
+<section class="section-body section-padding wrapper">
+  <div class="section-body__list">
+      <div class="section-body__item" data-animation>
+        <div class="section-body__item-inner">
+          <p class="section-body__item-subtitle">COMPLETE</p>
+          <h2 class="section-body__item-title second-font">Not Just Investments</h2>
+          <p class="section-body__item-cite">&quot;Wealthica has absolutely revolutionized my approach to how I track my money and financial life.&quot;</p>
+          <p class="section-body__item-author">-Nolan D.</p>
+          <p class="section-body__item-text">Wealthica keeps a historical view of how your net worth evolved over time and allows you to easily focus on the big picture while tracking your progress towards your financial, net worth or retirement goals.</p>
+        </div>
+        <img loading="lazy" src="/assets/img/home-body/item1-9208ec792e.jpg" srcset="/assets/img/home-body/item1@2x-cad4c88721.jpg 2x"
+             width="636" height="240" alt="item1"
+             class="section-body__item-img">
+      </div>
+      <div class="section-body__item" data-animation>
+        <div class="section-body__item-inner">
+          <p class="section-body__item-subtitle">DELIGHTFUL</p>
+          <h2 class="section-body__item-title second-font">Best Portfolio Tracker</h2>
+          <p class="section-body__item-cite">&quot;All holdings, across various accounts and institutions on one screen. It&#x27;s financial wizardry.&quot;</p>
+          <p class="section-body__item-author">-Rob L.</p>
+          <p class="section-body__item-text">Track stocks, ETFs, funds, cryptocurrency, private investments and more. Keep track of your portfolio without the hassle. Wealthica makes it simple and automated.</p>
+        </div>
+        <img loading="lazy" src="/assets/img/home-body/item2-0287fffa61.jpg" srcset="/assets/img/home-body/item2@2x-576d58649d.jpg 2x"
+             width="658" height="232" alt="item2"
+             class="section-body__item-img">
+      </div>
+      <div class="section-body__item" data-animation>
+        <div class="section-body__item-inner">
+          <p class="section-body__item-subtitle">PERSONALIZED</p>
+          <h2 class="section-body__item-title second-font">Powerful<br>Power Ups</h2>
+          <p class="section-body__item-cite">&quot;The multiple free and few paying power ups are priceless in my opinion!&quot;</p>
+          <p class="section-body__item-author">- Marie P.</p>
+          <p class="section-body__item-text">Create a budget, export to Google Spreadsheet, Excel or Yahoo! Portfolio, rebalance using Passiv, report on Capital Gains, Income or Fees. These are a few of the available Wealthica Power Ups.</p>
+        </div>
+        <img loading="lazy" src="/assets/img/home-body/item3-6d010acf88.jpg" srcset="/assets/img/home-body/item3@2x-f847417219.jpg 2x"
+             width="580" height="424" alt="item3"
+             class="section-body__item-img">
+      </div>
+  </div>
+</section>
+<section class="section-budget section-padding">
+  <div class="wrapper" data-animation>
+    <div class="section-budget__img">
+      <img loading="lazy" width="658" height="890" src="/assets/img/budget-bg-7e50508770.jpg"
+           srcset="/assets/img/budget-bg@2x-4c96e7529e.jpg 2x" alt="bg">
+    </div>
+    <div class="section-budget__texts">
+      <h2 class="section-budget__title second-font">Do Your Budget</h2>
+      <p class="section-budget__subtitle">Master your financial health</p>
+      <div class="section-budget__cite">
+        <p class="section-budget__cite-text">&quot;Easily follow all your expenses and set your budget goals&quot;</p>
+        <p class="section-budget__cite-author">- Ann R.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="data-entry section-padding">
+  <div class="wrapper" data-animation>
+    <div class="data-entry__content">
+      <div class="data-entry__header">
+        <h2 class="data-entry__title second-font">Say Goodbye to Data entry</h2>
+        <a href="/how-it-works" class="data-entry__btn btn btn--small btn-purple btn--arrow-white"
+        ><span>Learn more about</span><b>How it Works</b></a>
+      </div>
+      <ul class="data-entry__list">
+          <li class="data-entry__item second-font">
+            <div>Support for More Then 20,000+<br>Financial Institutions Worldwide</div>
+          </li>
+          <li class="data-entry__item second-font">
+            <div>Support Yodlee, Plaid, Vezgo<br>and Other Aggregators</div>
+          </li>
+          <li class="data-entry__item second-font">
+            <div>Connect 500+ Crypto Currency<br>Exchanges, Blockchains and Wallets</div>
+          </li>
+          <li class="data-entry__item second-font">
+            <div>Automatically Updated Data<br>Without Manual Intervention</div>
+          </li>
+      </ul>
+    </div>
+    <div class="data-entry__logos" data-animation>
+        <img loading="lazy" src="/assets/img/data-entry/robinhood-9c3aa0f43c.png"
+             alt="robinhood" width="216" height="44">
+        <img loading="lazy" src="/assets/img/data-entry/charles-373f8ccceb.png"
+             alt="charles" width="62" height="61">
+        <img loading="lazy" src="/assets/img/data-entry/fidelity-bda4229444.png"
+             alt="fidelity" width="178" height="100">
+        <img loading="lazy" src="/assets/img/data-entry/citi-717ac87421.png"
+             alt="citi" width="80" height="46">
+        <img loading="lazy" src="/assets/img/data-entry/bank-of-america-b22f8d6db6.png"
+             alt="bank-of-america" width="317" height="32">
+        <img loading="lazy" src="/assets/img/data-entry/vanguard-ec23c50d2a.png"
+             alt="vanguard" width="195" height="82">
+        <img loading="lazy" src="/assets/img/data-entry/american-express-db7fea040e.png"
+             alt="american-express" width="60" height="60">
+        <img loading="lazy" src="/assets/img/data-entry/binance-634654e38f.png"
+             alt="binance" width="201" height="40">
+        <img loading="lazy" src="/assets/img/data-entry/coinbase-b803ea7373.png"
+             alt="coinbase" width="190" height="34">
+    </div>
+  </div>
+</section>
+<section class="price-section wrapper">
+  <input id="price-yearly" style="display: none" type="checkbox" checked>
+  <div class="price-section__header" data-animation>
+    <h2 class="price-section__title">Thousands Use Wealthica to Track $49B of Assets</h2>
+    <div class="price-section__switch-wrap">
+      <label for="price-yearly">
+        <span>Monthly</span>
+        <i class="price-section__switch"></i>
+        <span>Yearly</span>
+      </label>
+    </div>
+  </div>
+
+  <ul class="price-section__list" data-animation>
+      <li class="price-section__item price-card">
+        <div class="price-card__header">
+          <img src="/assets/img/price-section/connect-bb54bdb484.png" width="52" height="52" alt="">
+          <h3>Connect</h3>
+        </div>
+        <div class="price-card__price-wrap">
+          <div class="price-card__price month">
+            <strong>$6.25</strong>
+            <span>Monthly</span>
+          </div>
+          <div class="price-card__price year">
+            <strong>$50</strong>
+            <span>Yearly</span>
+          </div>
+        </div>
+        <a href="https://app.wealthica.com/sign-up" target="_blank" class="btn btn--bold"
+           style="background: #E2ECFB;">
+          Start 14 day trial
+        </a>
+        <ul class="price-card__list">
+            <li class="price-card__item description-item">Up to 3 connections</li>
+            <li class="price-card__item description-item">Access to Power Ups</li>
+            <li class="price-card__item description-item">Daily Syncs</li>
+        </ul>
+      </li>
+      <li class="price-section__item price-card">
+        <div class="price-card__header">
+          <img src="/assets/img/price-section/unlimited-connect-7f49325de5.png" width="52" height="52" alt="">
+          <h3>Unlimited Connect</h3>
+        </div>
+        <div class="price-card__price-wrap">
+          <div class="price-card__price month">
+            <strong>$9.99</strong>
+            <span>Monthly</span>
+          </div>
+          <div class="price-card__price year">
+            <strong>$75</strong>
+            <span>Yearly</span>
+          </div>
+        </div>
+        <a href="https://app.wealthica.com/sign-up" target="_blank" class="btn btn--bold"
+           style="background: #EBF6EC;">
+          Start 14 day trial
+        </a>
+        <ul class="price-card__list">
+            <li class="price-card__item description-item">Everything in Connect plus:</li>
+            <li class="price-card__item description-item">Connect and synchronize all your accounts</li>
+            <li class="price-card__item description-item">Export &amp; Sync to Google Sheets</li>
+        </ul>
+      </li>
+      <li class="price-section__item price-card">
+        <div class="price-card__header">
+          <img src="/assets/img/price-section/premium-7f5f335521.png" width="52" height="52" alt="">
+          <h3>Premium</h3>
+        </div>
+        <div class="price-card__price-wrap">
+          <div class="price-card__price month">
+            <strong>$19.99</strong>
+            <span>Monthly</span>
+          </div>
+          <div class="price-card__price year">
+            <strong>$150</strong>
+            <span>Yearly</span>
+          </div>
+        </div>
+        <a href="https://app.wealthica.com/sign-up" target="_blank" class="btn btn--bold"
+           style="background: #FFEBD4;">
+          Start 14 day trial
+        </a>
+        <ul class="price-card__list">
+            <li class="price-card__item description-item">Everything in Connect Unlimited plus:</li>
+            <li class="price-card__item description-item">Fully enjoy our Reports, Analysis and Budget tools</li>
+            <li class="price-card__item description-item">Access all the functionality of Holdings and Transactions Power-Ups</li>
+            <li class="price-card__item description-item">Organize stocks in portfolios and split asset classes</li>
+            <li class="price-card__item description-item">15-min delayed stock prices</li>
+        </ul>
+      </li>
+      <li class="price-section__item price-card">
+        <div class="price-card__header">
+          <img src="/assets/img/price-section/prestige-8a42c13d52.png" width="52" height="52" alt="">
+          <h3>Prestige</h3>
+        </div>
+        <div class="price-card__price-wrap">
+          <div class="price-card__price month">
+            <strong>$29.99</strong>
+            <span>Monthly</span>
+          </div>
+          <div class="price-card__price year">
+            <strong>$250</strong>
+            <span>Yearly</span>
+          </div>
+        </div>
+        <a href="https://app.wealthica.com/sign-up" target="_blank" class="btn btn--bold"
+           style="background: #7C2DD430;">
+          Start 14 day trial
+        </a>
+        <ul class="price-card__list">
+            <li class="price-card__item description-item">Everything in Premium plus:</li>
+            <li class="price-card__item description-item">VIP Support</li>
+            <li class="price-card__item description-item">Custom attributes on manual assets</li>
+            <li class="price-card__item description-item">Plan and track your financial events</li>
+            <li class="price-card__item description-item">Access to Private Slack Community</li>
+        </ul>
+      </li>
+  </ul>
+
+  <div class="price-section__free free-card" data-animation>
+    <p class="free-card__top-text">or Track it manually for</p>
+    <h3 class="free-card__title">Free</h3>
+    <p class="free-card__subtitle">Join the thousands of people using Wealthica, today!</p>
+    <ul class="free-card__list">
+        <li class="free-card__item description-item">Manual tracking</li>
+        <li class="free-card__item description-item">Import from Stockchase</li>
+    </ul>
+    <a href="https://app.wealthica.com/sign-up" target="_blank"
+       class="btn btn--bold">Get Started - Free</a>
+  </div>
+</section>
+<footer class="footer">
+  <div class="wrapper">
+    <div class="footer__header">
+      <img src="/assets/svg/wealthica-7bd8f9c3ae.svg" width="177" height="46" alt="Wealthica">
+      <div><p>We are a team of passionate entrepreneurs and developers who want to make investment consolidation simple.</p><p>Learn more <a href=/about-us>about us</a> or <a href='mailto:hello@wealthica.com' class='freescout-widget-open' target='_blank'>contact us</a>. Tell us how we can help streamline your financial life!</p></div>
+    </div>
+    <div class="footer__body">
+      <nav class="footer__nav">
+        <h4>Information</h4>
+        <ul>
+          <li><a href="/about-us">About us</a></li>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+          <li><a href="/developers">API</a></li>
+          <li><a href="https://wealthica.com/blog/">Blog</a></li>
+          <li><a href="https://app.wealthica.com/login?lang=en">Login to app</a></li>
+          <li><a href="https://app.wealthica.com/sign-up" data-g-event="user:signup">Sign up</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__nav">
+        <h4>Who is it for?</h4>
+        <ul>
+          <li><a href="/">Investors</a></li>
+          <li><a href="/export-to-spreadsheet">Financial Spreadsheets</a></li>
+          <li><a href="/advisor">Advisors</a></li>
+          <li><a href="/institutional-partner">Institutional Partners</a></li>
+          <li><a href="/family-office">Family office</a></li>
+          <li><a href="/budget">Budgets</a></li>
+          <li><a href="/developers">Developers</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__nav">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/integrations/">Supported Institutions</a></li>
+          <li><a href="https://desk.wealthica.com/hc/3319738952">Knowledge Base</a></li>
+          <li><a href="https://status.wealthica.com/">Service Status</a></li>
+          <li><a href="https://wealthica.com/blog/category/product-updates/">Product Updates</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__nav">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/terms">Terms of service</a></li>
+          <li><a href="/privacy-policy">Privacy Policy</a></li>
+          <li><a href="/cookie-policy">Cookie Policy</a></li>
+        </ul>
+      </nav>
+      <nav class="footer__nav follow">
+        <h4>Follow</h4>
+        <ul>
+          <li>
+            <a href="https://www.facebook.com/wealthica/" target="_blank" rel="nofollow noopener noreferrer">
+              <div class="icon-wrapper">
+                <img src="/assets/svg/icon-facebook-8e61fb193a.svg" width="20" height="20" alt="F">
+              </div>
+              Facebook
+            </a>
+          </li>
+          <li>
+            <a href="https://www.youtube.com/@wealthica" target="_blank" rel="nofollow noopener noreferrer">
+              <div class="icon-wrapper youtube">
+                <img src="/assets/svg/icon-youtube-fa886bb926.svg" width="24" height="24" alt="L">
+              </div>
+              Youtube
+            </a>
+          </li>
+          <li>
+            <a href="https://www.linkedin.com/company/wealthica" target="_blank" rel="nofollow noopener noreferrer">
+              <div class="icon-wrapper">
+                <img src="/assets/svg/icon-linkedin-d8ed664b0c.svg" width="20" height="20" alt="L">
+              </div>
+              LinkedIn
+            </a>
+          </li>
+          <li>
+            <a href="http://twitter.com/wealthica" target="_blank" rel="nofollow noopener noreferrer">
+              <div class="icon-wrapper x">
+                <img src="/assets/svg/icon-x-37b88f6c4b.svg" width="20" height="20" alt="T">
+              </div>
+              X(Twitter)
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <p class="footer__copy">
+      &copy; 2015-2025 Wealthica Financial Technology Inc. <br/> <a href="mailto:hello@wealthica.com">hello@wealthica.com</a>
+    </p>
+  </div>
+</footer>
+</div>
+</body>
+</html>

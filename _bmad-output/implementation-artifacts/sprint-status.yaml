@@ -1,0 +1,90 @@
+# generated: 2025-12-21
+# project: Budgetsimple
+# project_key: budgetsimple
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ==============
+# - Mark epic as 'in-progress' when starting work on its first story
+# - SM typically creates next story ONLY after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then Dev runs code-review (fresh context, ideally different LLM)
+
+generated: 2025-12-21
+project: Budgetsimple
+project_key: budgetsimple
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-initialize-web-api-repos-from-starter-templates: review
+  1-2-configure-supabase-auth-baseline-user-data-isolation: backlog
+  1-3-sign-in-sign-out-ux-and-session-handling: backlog
+  1-4-display-currency-preference: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-create-accounts-transactions-data-model-user-scoped: backlog
+  2-2-csv-import-for-transactions-mvp-with-data-health-feedback: backlog
+  2-3-guided-onboarding-flow-to-baseline-dashboard: backlog
+  2-4-fx-rates-ingestion-and-report-time-conversion-ecb-boc: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-core-dashboard-kpis-and-visualizations-baseline: backlog
+  3-2-universal-explain-this-number-drilldown: backlog
+  3-3-action-items-panel-insight-recommendation: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-subscription-detection-recurring-pattern-candidates: backlog
+  4-2-subscription-review-and-confirmation-ui: backlog
+  4-3-subscription-summaries-subscriptions-per-month: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-cashflow-classification-rules-and-flow-graph-computation: backlog
+  5-2-cashflow-map-page-with-interactive-nodes: backlog
+  5-3-cashflow-drilldowns-and-cross-filtering: backlog
+  5-4-cashflow-narrative-summaries: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-envelopes-crud-contributions-tracking: backlog
+  6-2-plan-schedule-curve-deterministic: backlog
+  6-3-historical-pace-projection-curve-eta: backlog
+  6-4-two-curve-visualization-contribute-x-month-prompt: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-rent-identification-and-rent-spend-analytics: backlog
+  7-2-ingest-rent-benchmark-datasets-cmhc-carte-des-loyers: backlog
+  7-3-rent-benchmark-view-cross-country-normalization: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-brokerage-csv-import-for-holdings-and-transactions: backlog
+  8-2-secure-connector-framework-token-storage-server-side: backlog
+  8-3-questrade-connector-canada-for-transactions-and-holdings: backlog
+  8-4-saxo-connector-france-for-transactions-and-holdings: backlog
+  8-5-wealth-builder-net-worth-projections-compounding-scenarios: backlog
+  epic-8-retrospective: optional

@@ -1,0 +1,641 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saxo Bank Developer Portal</title>
+
+    <script type="text/javascript">
+		window.trackingInfo = {
+			userKey: '',
+			didSignIn: false,
+			isSaxoUser: false
+		};
+    </script>
+
+    <script async src="//assets.adobedtm.com/d2039d8b0d67346ec3f7db478b2d5de07d494123/satelliteLib-9c71db615bd022f5a71d6757b6250a919d151231.js"></script>
+
+    <link rel="shortcut icon" href="/assets/img/favicon.png" type="image/x-icon">
+    <link rel="icon" href="/assets/img/favicon.png" type="image/x-icon">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,300" rel="stylesheet">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/font-hack/2.020/css/hack.min.css">
+    <link rel="stylesheet" type="text/css" href="/Assets/css/opencss-white-v2.min.css">
+    <link rel="stylesheet" type="text/css" href="/Assets/css/custom-opencss.css">
+    <link rel="stylesheet" type="text/css" href="/Assets/css/railscasts.min.css">
+    <link rel="stylesheet" type="text/css" href="/Assets/css/pushy.min.css">
+    <link rel="stylesheet" type="text/css" href="/Assets/css/featherlight.min.css" />
+    <link rel="stylesheet" type="text/css" href="/Assets/css/admin.min.css" />
+    <link rel="stylesheet" type="text/css" href="/Assets/css/fixes.min.css" />
+    <link rel="stylesheet" type="text/css" href="/Assets/css/custom.min.css" />
+    <script src="/Assets/scripts/lib/jquery-3.7.1.min.js" type="text/javascript"></script>
+    
+</head>
+<body>
+
+	<div class="pushy pushy-left">
+		<div class="pushy-content">
+			
+    <ul class="menu">
+<li class="menu-item"><a href="/openapi/referencedocs/hist" class="t-truncate">Account History</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/atr" class="t-truncate">Asset Transfers</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/chart" class="t-truncate">Chart</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cm" class="t-truncate">Client Management</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cr" class="t-truncate">Client Reporting</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cs" class="t-truncate">Client Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ca" class="t-truncate">Corporate Actions</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/dm" class="t-truncate">Disclaimer Management</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ens" class="t-truncate">Ens</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/mkt" class="t-truncate">Market Overview</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/partnerintegration" class="t-truncate">Partner Integration</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/port" class="t-truncate">Portfolio</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ref" class="t-truncate">Reference Data</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/reg" class="t-truncate">Regulatory Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/root" class="t-truncate">Root Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/trade" class="t-truncate">Trading</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/vas" class="t-truncate">Value Add</a></li>
+</ul>
+
+
+		</div>
+	</div>
+
+	<div class="site-overlay"></div>
+
+	<header class="js-header header">
+    <div class="container container--header">
+        <div class="grid g--1of2 grid--cross-center">
+            <div class="grid-cell g--fit">
+                <a href="/">
+                    <div class="logo logo--primary"></div>
+                </a>
+
+            </div>
+            <div class="grid-cell g-fill">
+                <div class="current-space">
+OpenAPI                </div>
+            </div>
+        </div>
+        <div class="grid g--1of2 grid--main-end grid--serieslg grid--cross-center">
+            <div class="grid-cell g--fill">
+                <div class="header-search">
+                    <form action="/search" method="get">
+                        <input type="text" placeholder="Enter your search phrase" name="phrase" class="search-input" id="search-input" />
+                    </form>
+                </div>
+            </div>
+            <!-- TODO render module icons and buttons dynamically here -->
+            <div class="grid-cell">
+                <div class="header-search-icon-container">
+                    <i class="js-search  icon icon-oapi icon-oapi--search icon--xlg">
+
+                    </i>
+                </div>
+            </div>
+
+            <div class="grid-cell">
+                <div class="burger-icon-container js-burger-menu">
+                    <div class="burger-icon">
+                        <div class="burger-icon-top">
+                            <div class="burger-icon-line burger-icon-line-top">
+                            </div>
+                        </div>
+                        <div class="burger-icon-bottom">
+                            <div class="burger-icon-line burger-icon-line-bottom">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="burger-menu-content">
+    <div class="container">
+        <div class="burger-menu-oapi">
+            <a class="t-xxlarge" href="/openapi">Open API</a>
+                <span>
+                        <a href="/openapi/learn">Learn</a>
+                </span>
+                <span>
+                        <a href="/openapi/tutorial"><i class="icon icon-oapi icon-oapi--lock"></i> Tutorial</a>
+                </span>
+                <span>
+                        <a href="/openapi/referencedocs">Reference Docs</a>
+                </span>
+                <span>
+                        <a href="/openapi/explorer"><i class="icon icon-oapi icon-oapi--lock"></i> Explorer</a>
+                </span>
+                <span>
+                        <a href="/openapi/appmanagement"><i class="icon icon-oapi icon-oapi--lock"></i> Apps</a>
+                </span>
+                <span>
+                        <a href="/openapi/releasenotes">Updates</a>
+                </span>
+                <span>
+                        <a href="/openapi/token"><i class="icon icon-oapi icon-oapi--lock"></i> Get 24 Hour Token</a>
+                </span>
+            <span>
+                    <a href="/accounts/signin">Sign in</a>
+            </span>
+        </div>
+
+        <div class="burger-menu-products">
+            <span class="t-xxlarge"><span href="#">Other Products</span></span>
+                <span><a href="/fix"> FIX Trading API</a></span>
+                    <ul class="burger-menu-products-list">
+                            <li class="burger-menu-products-list-item"><a href="/fix/introduction">Introduction</a></li>
+                            <li class="burger-menu-products-list-item"><a href="/fix/message-definitions">Message Definitions</a></li>
+                            <li class="burger-menu-products-list-item"><a href="/fix/certification-test">Certification Test</a></li>
+                    </ul>
+                <span><a href="/cms"> Client Management Systems API</a></span>
+                    <ul class="burger-menu-products-list">
+                            <li class="burger-menu-products-list-item"><a href="/cms/overview">Overview</a></li>
+                    </ul>
+                <span><a href="/eod"> End-of-Day File Transfers</a></span>
+                    <ul class="burger-menu-products-list">
+                            <li class="burger-menu-products-list-item"><a href="/eod/eodfiles">End-of-Day-Files</a></li>
+                    </ul>
+                <span><a href="/tens"> Trade Event Notification System</a></span>
+                    <ul class="burger-menu-products-list">
+                            <li class="burger-menu-products-list-item"><a href="/tens/learn">Learn</a></li>
+                    </ul>
+                <span><a href="/excel"> OpenAPI for Excel</a></span>
+                    <ul class="burger-menu-products-list">
+                            <li class="burger-menu-products-list-item"><a href="/excel/home">Home</a></li>
+                            <li class="burger-menu-products-list-item"><a href="/excel/user-guide">User Guide</a></li>
+                            <li class="burger-menu-products-list-item"><a href="/excel/tutorials">Tutorial Series</a></li>
+                            <li class="burger-menu-products-list-item"><a href="/excel/blog">Blog</a></li>
+                    </ul>
+        </div>
+    </div>
+</div>
+
+
+<div class="dim-overlay"></div>
+
+	
+<div class="grid grid--y oapi-page">
+	<nav>
+<ul class="nav container">
+<li class="nav-item"><a href="/openapi/learn">Learn</a></li>
+<li class="nav-item nav-item--locked"><a href="/openapi/tutorial">Tutorial</a></li>
+<li class="nav-item nav-item--active"><a href="/openapi/referencedocs">Reference Docs</a></li>
+<li class="nav-item nav-item--locked"><a href="/openapi/explorer">Explorer</a></li>
+<li class="nav-item nav-item--locked"><a href="/openapi/appmanagement">Apps</a></li>
+<li class="nav-item"><a href="/openapi/releasenotes">Updates</a></li>
+<li class="nav-item nav-item--locked"><a href="/openapi/token">Get 24 Hour Token</a></li>
+<li class="nav-item nav-item--promo nav-item--right"><a href="/accounts/signin">Sign in</a></li>
+</ul>
+</nav>
+
+    
+    <div class="page-header">
+        <div class="container">
+            <div class="grid">
+                <aside class="grid-cell g--1of4 sidebar page-sidenav-header g--sidebar">
+                    
+<header class="api-refdoc-version">
+</header>
+
+                </aside>
+                    <aside class="mobile-menu">
+                        <i class="icon icon-oapi icon-oapi--menu icon--lg icon-white menu-btn"></i>
+                    </aside>
+                <div class="grid-cell header-title">
+                    
+	
+    <div class="h3">Welcome to Reference Documentation</div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+	<div class="grid-cell" style="height: 100%">
+        <div class="container">
+            <div class="grid">
+                <aside class="grid-cell g--sidebar">
+                    <ul class="menu">
+<li class="menu-item"><a href="/openapi/referencedocs/hist" class="t-truncate">Account History</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/atr" class="t-truncate">Asset Transfers</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/chart" class="t-truncate">Chart</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cm" class="t-truncate">Client Management</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cr" class="t-truncate">Client Reporting</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/cs" class="t-truncate">Client Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ca" class="t-truncate">Corporate Actions</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/dm" class="t-truncate">Disclaimer Management</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ens" class="t-truncate">Ens</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/mkt" class="t-truncate">Market Overview</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/partnerintegration" class="t-truncate">Partner Integration</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/port" class="t-truncate">Portfolio</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/ref" class="t-truncate">Reference Data</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/reg" class="t-truncate">Regulatory Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/root" class="t-truncate">Root Services</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/trade" class="t-truncate">Trading</a></li>
+<li class="menu-item"><a href="/openapi/referencedocs/vas" class="t-truncate">Value Add</a></li>
+</ul>
+
+                </aside>
+                <div class="grid-cell">
+                    
+<style>
+	/* TODO move these to _PageLayout and then to OpenCss */
+
+	/* Version selector */
+	.api-refdoc-version {
+		padding-top: 5px;
+	}
+
+	.api-refdoc-version label {
+		color: white;
+		padding-right: 10px;
+		font-weight: bold;
+	}
+
+	.api-refdoc-version select {
+		min-width: 50px;
+		background-color: transparent;
+		font-weight: bold;
+		color: white;
+		cursor: pointer;
+	}
+
+	.api-refdoc-version select option {
+		min-width: 50px;
+		background-color: transparent;
+		font-weight: bold;
+		color: black;
+		cursor: pointer;
+	}
+
+	.service-description ul li {
+		margin-left: 40px;
+	}
+
+</style>
+
+
+
+<main class="refdocs text-container container--refdocs">
+    <article>
+        <header>
+            <h1>Reference Documentation</h1>
+            <p>
+                The Open API provides services contained in the service groups listed below
+            </p>
+            <p>
+                Note that not all services are present in all API versions.
+                API version 1 is the base and contains all services.
+                Only services which are not backwards compatible are carried forward to the next version.
+            </p>
+        </header>
+
+        <section class="article-body">
+            <h2 class="article-body-title">Service Groups</h2>
+            <ul class="article-body-list">
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/hist">Account History</a>
+        </h2>
+    </header>
+    <div>
+        Account history services providing historical and performance data about clients and accounts.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/atr">Asset Transfers</a>
+        </h2>
+    </header>
+    <div>
+        AssetTransfers provide endpoints for asset transfer<div class=well style='border: 1px solid rgb(204, 82, 0); border-image: none; background-color: rgb(255, 209, 179);padding:1px;'> <strong>NOTE: </strong> This is a BETA version. It is currently only made available to select partners.</div>
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/chart">Chart</a>
+        </h2>
+    </header>
+    <div>
+        Services for getting chart data for instruments.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/cm">Client Management</a>
+        </h2>
+    </header>
+    <div>
+        The Client Management service group provides services to signup and manage leads and clients.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/cr">Client Reporting</a>
+        </h2>
+    </header>
+    <div>
+        The Client Reporting service group provides endpoints to retrieve various reports in .pdf/.xls format.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/cs">Client Services</a>
+        </h2>
+    </header>
+    <div>
+        The Client Services service group provides end points for getting reports, managing subscriptions, Mifid and transferring funds.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/ca">Corporate Actions</a>
+        </h2>
+    </header>
+    <div>
+        The Corporate Actions service group provides end points for getting voluntary/mandatory events, electing on events, & setting standing instructions for future events.<div class=well style='border: 1px solid rgb(204, 82, 0); border-image: none; background-color: rgb(255, 209, 179);padding:1px;'><strong> Note:</strong> </br>This service is subject to special licensing agreements and not generally available to all OpenAPI applications.</div>
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/dm">Disclaimer Management</a>
+        </h2>
+    </header>
+    <div>
+        The Disclaimer management service group provides services and end points that is used to manage legal text or notes
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/ens">Ens</a>
+        </h2>
+    </header>
+    <div>
+        The Event Notification Services service group provides end points for setting up subscriptions for clients activities.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/mkt">Market Overview</a>
+        </h2>
+    </header>
+    <div>
+        The MarketOverview service group provides end points for getting and subscribing to market movers such as winners and losers on an exchange.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/partnerintegration">Partner Integration</a>
+        </h2>
+    </header>
+    <div>
+        PartnerIntegration provide end points for partner integration with saxo.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/port">Portfolio</a>
+        </h2>
+    </header>
+    <div>
+        The Portfolio service group provides services and end points that serves information about the clients current portfolio, such as account balance, open positions etc.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/ref">Reference Data</a>
+        </h2>
+    </header>
+    <div>
+        The Reference Data service group provides reference data, such as instrument details, exchange info etc..
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/reg">Regulatory Services</a>
+        </h2>
+    </header>
+    <div>
+        Regulatory Services provide end points for regulatory information of client.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/root">Root Services</a>
+        </h2>
+    </header>
+    <div>
+        The root service group provides endpoints for central subscription management and session capabilities.
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/trade">Trading</a>
+        </h2>
+    </header>
+    <div>
+        The Trading service group provides end points for setting up price and quote subscriptions, polling prices and placing orders and trades (positions).
+    </div>
+</section>
+                    </li>
+                    <li>
+<section>
+    <header>
+        <h2>
+            <a href="/openapi/referencedocs/vas">Value Add</a>
+        </h2>
+    </header>
+    <div>
+        The Value Add service group provides services and end points that adds extra value for the client developer.
+    </div>
+</section>
+                    </li>
+            </ul>
+        </section>
+    </article>
+</main>
+<button href="#" class="scrollToTop">
+    <i class="icon icon-oapi icon-oapi--arrow-up icon--lg"></i>
+</button>
+
+
+                </div>
+            </div>
+        </div>
+	</div>
+</div>
+
+
+	
+<footer class="footer">
+    <div class="container">
+        <div class="grid grid--y">
+            <section class="grid-cell" style="height: 100%">
+                <section class="grid">
+                    <div class="grid-cell">
+                        <section class="footer-disclamer">
+                            <span class="t-upper">Disclaimer</span>
+                            <p class="footer-disclamer-text">Disclaimer - None of the information contained herein constitutes an offer to purchase or sell a financial instrument or to make any investments. Saxo Bank A/S and, or - its group companies (“Saxo Bank”) do not take into account your personal investment objectives or financial situation and make no representation, and assume no liability to the accuracy or completeness of the information provided, nor for any loss arising from any investment based on a recommendation, forecast or other information supplied from any employee of Saxo Bank, third party, or otherwise. Trades in accordance with the recommendations in an analysis, especially, but not limited to, leveraged investments such as foreign exchange trading and investment in derivatives, can be very speculative and may result in losses as well as profits. You should carefully consider your financial situation and consult your financial advisor(s) in order to understand the risks involved and ensure the suitability of your situation prior to making any investment or entering into any transactions. All expressions of opinion are subject to change without notice. Any opinions made may be personal to the author and may not reflect the opinions of Saxo Bank. Furthermore, please refer to Saxo Bank's full General Disclaimer.</p>
+                        </section>
+                    </div>
+                    <div class="grid-cell divider--vertical">
+                    </div>
+                    <div class="grid-cell">
+                        <div class="footer-links">
+                            <div class="grid grid--responsive-y grid--series">
+                                <div class="grid-cell is-hidden--tablet">
+                                    <span class="t-upper">All Products</span>
+                                    <ul class="footer-list">
+                                            <li class="footer-list-item"><a class="footer-link" href="/openapi">OpenAPI</a></li>
+                                            <li class="footer-list-item"><a class="footer-link" href="/fix">FIX Trading API</a></li>
+                                            <li class="footer-list-item"><a class="footer-link" href="/cms">Client Management Systems API</a></li>
+                                            <li class="footer-list-item"><a class="footer-link" href="/eod">End-of-Day File Transfers</a></li>
+                                            <li class="footer-list-item"><a class="footer-link" href="/tens">Trade Event Notification System</a></li>
+                                            <li class="footer-list-item"><a class="footer-link" href="/excel">OpenAPI for Excel</a></li>
+                                    </ul>
+                                </div>
+                                <div class="grid-cell">
+                                    <span class="t-upper">Get Support</span>
+                                    <ul class="footer-list">
+                                            <li class="footer-list-item">
+                                                <div>Open API</div>
+                                                <a class="footer-link" target="_blank" href="https://openapi.help.saxo/hc/en-us ">OpenAPI Support Centre</a>
+                                            </li>
+                                            <li class="footer-list-item">
+                                                <div>FIX</div>
+                                                    <a class="footer-link" href="mailto:etradingclientservices@saxobank.com">etradingclientservices@saxobank.com</a>
+                                            </li>
+                                            <li class="footer-list-item">
+                                                <div>CMS</div>
+                                                    <a class="footer-link" href="mailto:instpm@saxobank.com">instpm@saxobank.com</a>
+                                            </li>
+                                            <li class="footer-list-item">
+                                                <div>EOD</div>
+                                                    <a class="footer-link" href="mailto:instpm@saxobank.com">instpm@saxobank.com</a>
+                                            </li>
+                                            <li class="footer-list-item">
+                                                <div>TENS</div>
+                                                    <a class="footer-link" href="mailto:instpm@saxobank.com">instpm@saxobank.com</a>
+                                            </li>
+                                            <li class="footer-list-item">
+                                                <div>OpenAPI for Excel</div>
+                                                    <a class="footer-link" href="mailto:openapisupport@saxobank.com">openapisupport@saxobank.com</a>
+                                            </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+            <section class="grid-cell">
+                <p class="copyright">Copyright &copy; 2025 Saxo Bank A/S. All rights reserved.</p>
+            </section>
+        </div>
+    </div>
+</footer>
+
+	<section class="cookie-popup" style="display: none;">
+    <p class="cookie-popup-text">Saxo OpenAPI Developer Portal uses cookies to give you the best online experience. 
+    By using our website you agree to our use of cookies in accordance with our cookie policy.</p>
+    <button class="button button--small button--transparent uppercase" data-action="dismiss-cookie-popup">
+        I understand
+    </button>
+</section>
+	<article id="modal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <a data-action="modal-back" style="display: none;"><i class="icon icon-oapi icon-oapi--arrow-left"></i>Back</a>
+                <button type="button" class="close" data-dismiss="modal" >×</button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--large" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</article>
+
+	<!-- Scripts used by all pages -->
+	
+	
+	<script src="/Assets/scripts/lib/boostrap-modal-3.3.7.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/lib/jquery.mark.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/lib/uri.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/lib/featherlight.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/lib/pushy.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/openui.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/fn.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/application-form.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/cookie-popup.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/scroll-to-top.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/modal.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/refdocs.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/search-highlight.min.js" type="text/javascript"></script>
+	<script src="/Assets/scripts/app/article.min.js" type="text/javascript"></script>
+
+	<!-- Page specific scripts-->
+	
+    
+	
+
+
+
+	<script type="text/javascript">_satellite.pageBottom();</script>
+
+	<script>setInterval(_ => $.ajax({ url: '/_keepalive'}), 60000);</script>
+</body>
+</html>

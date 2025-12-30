@@ -1,0 +1,1251 @@
+ <!DOCTYPE html> <html lang="en" class="primary-font-loading primary-heading-font-loading sec-heading-font-loading"> <head> <meta charset="utf-8" /> <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="nagios-site-verification" content="www.questrade.com" /> <link rel="icon" type="image/x-icon" href="/favicon.ico"> <link rel="icon" type="image/x-icon" href="/favicon-32x32.ico"> <link rel="icon" type="image/x-icon" href="/favicon-48x48.ico"> <link rel="icon" type="image/x-icon" href="/favicon-96x96.ico"> <link rel="icon" type="image/x-icon" href="/favicon-144x144.ico"> <link rel="icon" type="image/x-icon" href="/favicon.svg"> <link rel="icon" type="image/x-icon" href="/favicon-32x32.svg"> <link rel="icon" type="image/x-icon" href="/favicon-48x48.svg"> <link rel="icon" type="image/x-icon" href="/favicon-96x96.svg"> <link rel="icon" type="image/x-icon" href="/favicon-144x144.svg"> <link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" as="style" crossorigin="anonymous" onload="this.rel='stylesheet'"> <!-- Adobe roc-grotesk font --> <link rel="stylesheet" href="https://use.typekit.net/oie3udl.css"> <!-- Material Icons --> <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"></noscript> <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.fonts.ready.then(function () {
+                document.querySelectorAll('.material-symbols-outlined').forEach(function (icon) {
+                    // Reset width and height after font loads
+                    icon.style.height = 'initial';
+                    icon.style.width = 'initial';
+                });
+            });
+        });
+    </script> <title>
+	API Security | Questrade API | Questrade Developer Platform
+</title> <script>
+                (function(d, h){
+                    var apiKey = "da76a418edd861f46bdf2fb5ae20093b";
+                    
+                    // TODO: Set a timeout in milliseconds for the anti-flicker.
+                    var timeout = 1000;
+                    
+                    // Hides the page and loads the script.
+                    var id = "amp-exp-css";
+                    try {
+                        if (!d.getElementById(id)) {
+                            var st = d.createElement("style");
+                            st.id = id;
+                            st.innerText = "* { visibility: hidden !important; background-image: none !important; }";
+                            h.appendChild(st);
+                            window.setTimeout(function () {st.remove()}, timeout);
+                            var sc = d.createElement("script");
+                            sc.src = "https://cdn.amplitude.com/script/"+apiKey+".experiment.js";
+                            sc.async = true;
+                            sc.onerror = function () {st.remove()};
+                            h.insertBefore(sc, d.currentScript || h.lastChild);
+                        }
+                    } catch(e) {console.error(e)}
+                })(document, document.head);
+            </script> <script src="https://cdn.amplitude.com/script/da76a418edd861f46bdf2fb5ae20093b.experiment.js"></script> <!-- OneTrust Cookies Consent Notice start for questrade.com --> <script type="text/javascript" src="https://cdn.cookielaw.org/consent/99771a87-5f28-4d67-a83f-fc7fdd119e57/OtAutoBlock.js"></script> <script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js" type="text/javascript" charset="UTF-8" data-domain-script="99771a87-5f28-4d67-a83f-fc7fdd119e57"></script> <script type="text/javascript">
+                function OptanonWrapper() {
+                    const pageLanguage = "en"
+
+                    if (!!pageLanguage && pageLanguage === "fr")
+                        OneTrust.changeLanguage('fr');
+                    }
+            </script> <!-- OneTrust Cookies Consent Notice end for questrade.com --> <script>window.dataLayer = window.dataLayer || [];window.dataLayer.push({"language":"english","application":"qcom","line_of_business":"investing","page_location":"https://www.questrade.com/api/documentation","page_title":"API Security | Questrade API | Questrade Developer Platform","page_name":"qcom:en:api:documentation:security","category":"api","sub_category":"documentation","uniquevv":"13E8DDDB394644B78425923682E46C73","digitalDataLoaded":"true","page.language":"english","page.name":"qcom:en:api:documentation:security","page.environment":"prod","user.uniqueVV":"13E8DDDB394644B78425923682E46C73"});</script><!-- Google Tag Manager --><script>(function(w, d, s, l, i) {w[l] = w[l] || []; w[l].push({'gtm.start': new Date().getTime(), event: 'gtm.js'});var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';j.async = true;j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl + '&gtm_auth=pZ5T8cGX-ibbGTaHcvL08Q&gtm_preview=env-2&gtm_cookies_win=x';j.setAttributeNode(d.createAttribute('data-ot-ignore'));j.setAttribute('class', 'optanon-category-C0001');f.parentNode.insertBefore(j, f);})(window, document, 'script', 'dataLayer', 'GTM-W968DCV');</script> <script>
+        window.addEventListener('pagehide', () => {
+            amplitude.setTransport('beacon') 
+            // Sets https transport to use `sendBeacon` API
+            amplitude.flush()
+            },
+        );
+        </script> <!--<script type="text/javascript">
+            window.targetGlobalSettings = {
+                secureOnly: true,--> <!--crossDomain: "enabled",--> <!--telemetryEnabled: false,--> <!--serverDomain: "target.questrade.com",--> <!--overrideMboxEdgeServer: false--> <!--};
+                    function targetPageParams() {
+                        return {
+                            "at_property": "6589d8e1-deb3-3822-7066-c5d5931b0c2d"
+                            };
+                    }
+                </script>--> <script type="text/javascript">
+            	    function targetPageParams() {return {"at_property": "6589d8e1-deb3-3822-7066-c5d5931b0c2d"};}
+                </script>  <script async="async" src="https://static.srcspot.com/libs/claribel.js" type="application/javascript"></script> <link rel="canonical" href="https://www.questrade.com/api/documentation/security" /><meta property="og:title" content="API Security | Questrade API | Questrade Developer Platform" /><meta property="og:url" content="" /><meta property="og:type" content="website" /><meta property="og:site_name" content="Trading API" /><link href="/Resources/qcom/dist/styleGuide2024.css" media="all" rel="stylesheet" type="text/css" /><style type="text/css" media="all">input[type="search"] {
+  /* 1. Removes the native "capsule" look of the input itself */
+  -webkit-appearance: none;
+  appearance: none;
+  
+  /* 2. Fixes an issue where Safari adds a corner radius by default */
+  border-radius: 0; 
+}
+
+/* 3. Hides the "X" cancel button */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+/* 4. Hides the magnifying glass icon (if the browser adds one) */
+input[type="search"]::-webkit-search-results-button {
+  display: none;
+}
+
+/* 5. Hides any extra decorations or spacing the OS adds */
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
+@media(min-width: 991px) {
+	.mega-header-seo:not(.scrolling-down) li.mega-seo-menu__top-nav-item:nth-child(4) {
+  	margin-right: 8px !important;
+  }
+}</style><script type="text/javascript">
+
+document.addEventListener("DOMContentLoaded", function() { 
+const navButton = document.querySelector(".mega-header-seo__body--mobile-menu-icon");
+
+
+navButton.addEventListener('click', () => {
+                                    const bannerButton = document.querySelector("#close-banner-btn-en");
+                                    if (bannerButton) {
+                          		bannerButton.click()	
+                          }
+                                    })
+
+});
+</script><link href="/Resources/qcom/dist/styleGuide2024.css" media="all" rel="stylesheet" type="text/css" /><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" media="all" rel="stylesheet" type="text/css" /><link rel="stylesheet" href="/Resources/qcom/dist/main.css?v=639015577720000000" /><script type="text/javascript" src="/Resources/qcom/dist/fallbackFontsStyling.bundle.js"></script><style type="text/css" media="all">
+
+@media only screen and (max-width: 564px) {
+  .hero--tertiary__2 .hero__image-wrapper {
+    top: 0px;
+  }
+  
+  .hero--tertiary__2 {
+	position: relative;
+  }
+}</style><style type="text/css" media="all">.sfPageEditorWrp .navigation-sidebar__dropdown,.editorMode{display:none}.sfPageEditorWrp .editorMode{display:block}.extend-content-styles a,.inline-link,.qt-blog-post-single__banner a,.standard-content-format a,.primary-green{color:#156218!important}.sfPageEditorWrp .questApi.navigation-sidebar{height:0}.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item span{display:inline-block;font-size:9px;color:#fff;font-weight:600;padding:7px 4px;background:#328636;line-height:0;border-radius:2px;margin-right:3px}.info--m{border-radius:5px;padding:30px 20px 30px 90px;border:1px solid #69788c;line-height:25px}.info--m:before{content:"/";font-family:icon;font-size:inherit;line-height:0;font-style:normal;font-weight:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-align:center;text-transform:none;font-size:40px;margin-left:-60px;padding-right:20px;vertical-align:middle;color:#3da542}span.indent-icn{width:6px;height:8px;display:inline-block;background:url(/Resources/TradingAPI/images/icn_indent.png) no-repeat 0 0;position:relative;top:-2px;left:-6px}.table-col__container table tbody .secondLevel td:first-child{white-space:nowrap}.table-col__container table .table-col-4 td{padding-left:0}.form-header__logo{position:relative}.mega-header__api--link{position:absolute;text-decoration:none;font-family:Open Sans,sans-serif;font-size:16px;color:#262d33;letter-spacing:.56px;top:38px;left:181px}@media screen and (max-width:600px){.table-col__container thead th{display:none}.table-col__container td,.table-col__container th{display:block;clear:both}.table-col__container td[data-th]:before{content:attr(data-th);float:left;font-weight:700;width:130px;word-wrap:break-word}.table-col__container table td{border-bottom:0;padding-left:0}.table-col__container table td>div{margin-left:130px}.table-col__container .table-col-4{border-bottom:1px solid #262d33}.table-col__container table tbody .thirdLevel td:first-child{padding-left:0}.table-1 table th{width:100%}.inline-link,.link-lightblue,.link-blue{word-wrap:break-word}.mega-header__api--link{top:28px;left:100px}}.questApi--restOpp .sideNavTitles{font-weight:700}.navigation-sidebar__item--active,.navigation-sidebar__item:focus,.navigation-sidebar__item:hover{font-weight:400}.navigation-sidebar__link:active,.navigation-sidebar__link:hover,.navigation-sidebar__link:focus{text-decoration:none}.questApi.navigation-sidebar--open .navigation-sidebar__dropdown{z-index:2}.questApi--restOpp.navigation-sidebar--open .navigation-sidebar__dropdown{z-index:1}@media screen and (min-width:600px){.table-col__container tr.table-col-4 th:last-child,.table-col__container tr.table-col-4 td:last-child{width:45%}.table-col__container table tbody .thirdLevel td:first-child{padding-left:25px;white-space:nowrap}.table-col__container table tbody .fourthLevel td:first-child{padding-left:45px;white-space:nowrap}}@media screen and (min-width:565px) and (max-width:768px){.mega-header__api--link{left:0;top:44px}}@media screen and (min-width:768px) and (max-width:1103px){.mega-header__api--link{top:28px;left:110px}}@media screen and (min-width:565px) and (max-width:1104px){.navigation-sidebar{min-width:300px}}@media only screen and (max-width:1103px){.navigation-sidebar__link{border-top:1px dashed #69788c}.navigation-sidebar__item{padding:0}.mega-header__api--link{font-size:13px}}@media only screen and (min-width:1104px){.sfPageEditorWrp .navigation-sidebar-api{min-height:0;background:#eee;border:1px dashed}.navigation-sidebar-api{min-height:1140px;height:100%}.questApi.navigation-sidebar{height:360px}.questApi .active{text-decoration:none;border-left:5px solid #69788c!important;background-color:#eeeef2}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li{border-top:1px solid #262d33;border-left:5px solid transparent;padding:10px 0 10px 15px}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li:hover{text-decoration:none;border-left:5px solid #69788c;background-color:#eeeef2}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li a{border-top:0}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li a:hover{text-decoration:none}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li:first-child{border-top:0}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li:last-child a{border-bottom:0}.navigation-sidebar-api .questApi .navigation-sidebar__dropdown li:last-child{border-bottom:1px solid #262d33}.questApi--restOpp .navigation-sidebar__dropdown li a.navigation-sidebar__item{font-size:12px;padding-left:15px}.questApi--restOpp .navigation-sidebar__dropdown li:last-child{border-bottom:1px dashed #69788c}.questApi--restOpp .sideNavTitles{font-weight:700}.questApi--restOpp .sideNavTitles:hover{font-weight:700!important;border-left:none!important;background-color:transparent!important;margin:0!important;border-top:0!important;border-bottom:0!important;padding-left:15px!important}.questApi--restOpp .navigation-sidebar__dropdown li{padding:0!important}.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item{padding:5px 0}.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item:hover{font-weight:400;padding-left:10px}.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item--active{font-weight:700!important}.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item:hover,.questApi--restOpp .navigation-sidebar__dropdown li .navigation-sidebar__item--active{text-decoration:none;border-left:5px solid #69788c;background-color:#eeeef2;margin:-1px 0;border-top:1px solid #262d33;border-bottom:1px solid #262d33}}</style><style type="text/css" media="all">/* PrismJS 1.12.2
+http://prismjs.com/download.html#themes=prism&languages=markup+css+clike+javascript */
+/**
+ * prism.js default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+pre[class*="language-"] {
+    margin: 20px 0 40px 0;
+}
+code[class*="language-"],
+pre[class*="language-"] {
+	color: black;
+	background: none;
+	text-shadow: 0 1px white;
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
+code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+pre[class*="language-"]::selection, pre[class*="language-"] ::selection,
+code[class*="language-"]::selection, code[class*="language-"] ::selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+@media print {
+	code[class*="language-"],
+	pre[class*="language-"] {
+		text-shadow: none;
+	}
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #f5f2f0;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: slategray;
+}
+
+.token.punctuation {
+	color: #999;
+}
+
+.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #905;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #690;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+	color: #a67f59;
+	background: hsla(0, 0%, 100%, .5);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+	color: #07a;
+}
+
+.token.function,
+.token.class-name {
+	color: #DD4A68;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+	color: #e90;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}</style><script type="text/javascript">
+/* PrismJS 1.12.2
+http://prismjs.com/download.html#themes=prism&languages=markup+css+clike+javascript */
+var _self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?self:{},Prism=function(){var e=/\blang(?:uage)?-(\w+)\b/i,t=0,n=_self.Prism={manual:_self.Prism&&_self.Prism.manual,disableWorkerMessageHandler:_self.Prism&&_self.Prism.disableWorkerMessageHandler,util:{encode:function(e){return e instanceof r?new r(e.type,n.util.encode(e.content),e.alias):"Array"===n.util.type(e)?e.map(n.util.encode):e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\u00a0/g," ")},type:function(e){return Object.prototype.toString.call(e).match(/\[object (\w+)\]/)[1]},objId:function(e){return e.__id||Object.defineProperty(e,"__id",{value:++t}),e.__id},clone:function(e,t){var r=n.util.type(e);switch(t=t||{},r){case"Object":if(t[n.util.objId(e)])return t[n.util.objId(e)];var a={};t[n.util.objId(e)]=a;for(var i in e)e.hasOwnProperty(i)&&(a[i]=n.util.clone(e[i],t));return a;case"Array":if(t[n.util.objId(e)])return t[n.util.objId(e)];var a=[];return t[n.util.objId(e)]=a,e.forEach(function(e,r){a[r]=n.util.clone(e,t)}),a}return e}},languages:{extend:function(e,t){var r=n.util.clone(n.languages[e]);for(var a in t)r[a]=t[a];return r},insertBefore:function(e,t,r,a){a=a||n.languages;var i=a[e];if(2==arguments.length){r=arguments[1];for(var l in r)r.hasOwnProperty(l)&&(i[l]=r[l]);return i}var o={};for(var s in i)if(i.hasOwnProperty(s)){if(s==t)for(var l in r)r.hasOwnProperty(l)&&(o[l]=r[l]);o[s]=i[s]}return n.languages.DFS(n.languages,function(t,n){n===a[e]&&t!=e&&(this[t]=o)}),a[e]=o},DFS:function(e,t,r,a){a=a||{};for(var i in e)e.hasOwnProperty(i)&&(t.call(e,i,e[i],r||i),"Object"!==n.util.type(e[i])||a[n.util.objId(e[i])]?"Array"!==n.util.type(e[i])||a[n.util.objId(e[i])]||(a[n.util.objId(e[i])]=!0,n.languages.DFS(e[i],t,i,a)):(a[n.util.objId(e[i])]=!0,n.languages.DFS(e[i],t,null,a)))}},plugins:{},highlightAll:function(e,t){n.highlightAllUnder(document,e,t)},highlightAllUnder:function(e,t,r){var a={callback:r,selector:'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'};n.hooks.run("before-highlightall",a);for(var i,l=a.elements||e.querySelectorAll(a.selector),o=0;i=l[o++];)n.highlightElement(i,t===!0,a.callback)},highlightElement:function(t,r,a){for(var i,l,o=t;o&&!e.test(o.className);)o=o.parentNode;o&&(i=(o.className.match(e)||[,""])[1].toLowerCase(),l=n.languages[i]),t.className=t.className.replace(e,"").replace(/\s+/g," ")+" language-"+i,t.parentNode&&(o=t.parentNode,/pre/i.test(o.nodeName)&&(o.className=o.className.replace(e,"").replace(/\s+/g," ")+" language-"+i));var s=t.textContent,u={element:t,language:i,grammar:l,code:s};if(n.hooks.run("before-sanity-check",u),!u.code||!u.grammar)return u.code&&(n.hooks.run("before-highlight",u),u.element.textContent=u.code,n.hooks.run("after-highlight",u)),n.hooks.run("complete",u),void 0;if(n.hooks.run("before-highlight",u),r&&_self.Worker){var g=new Worker(n.filename);g.onmessage=function(e){u.highlightedCode=e.data,n.hooks.run("before-insert",u),u.element.innerHTML=u.highlightedCode,a&&a.call(u.element),n.hooks.run("after-highlight",u),n.hooks.run("complete",u)},g.postMessage(JSON.stringify({language:u.language,code:u.code,immediateClose:!0}))}else u.highlightedCode=n.highlight(u.code,u.grammar,u.language),n.hooks.run("before-insert",u),u.element.innerHTML=u.highlightedCode,a&&a.call(t),n.hooks.run("after-highlight",u),n.hooks.run("complete",u)},highlight:function(e,t,a){var i=n.tokenize(e,t);return r.stringify(n.util.encode(i),a)},matchGrammar:function(e,t,r,a,i,l,o){var s=n.Token;for(var u in r)if(r.hasOwnProperty(u)&&r[u]){if(u==o)return;var g=r[u];g="Array"===n.util.type(g)?g:[g];for(var c=0;c<g.length;++c){var h=g[c],f=h.inside,d=!!h.lookbehind,m=!!h.greedy,p=0,y=h.alias;if(m&&!h.pattern.global){var v=h.pattern.toString().match(/[imuy]*$/)[0];h.pattern=RegExp(h.pattern.source,v+"g")}h=h.pattern||h;for(var b=a,k=i;b<t.length;k+=t[b].length,++b){var w=t[b];if(t.length>e.length)return;if(!(w instanceof s)){h.lastIndex=0;var _=h.exec(w),j=1;if(!_&&m&&b!=t.length-1){if(h.lastIndex=k,_=h.exec(e),!_)break;for(var P=_.index+(d?_[1].length:0),A=_.index+_[0].length,x=b,O=k,I=t.length;I>x&&(A>O||!t[x].type&&!t[x-1].greedy);++x)O+=t[x].length,P>=O&&(++b,k=O);if(t[b]instanceof s||t[x-1].greedy)continue;j=x-b,w=e.slice(k,O),_.index-=k}if(_){d&&(p=_[1]?_[1].length:0);var P=_.index+p,_=_[0].slice(p),A=P+_.length,N=w.slice(0,P),S=w.slice(A),C=[b,j];N&&(++b,k+=N.length,C.push(N));var E=new s(u,f?n.tokenize(_,f):_,y,_,m);if(C.push(E),S&&C.push(S),Array.prototype.splice.apply(t,C),1!=j&&n.matchGrammar(e,t,r,b,k,!0,u),l)break}else if(l)break}}}}},tokenize:function(e,t){var r=[e],a=t.rest;if(a){for(var i in a)t[i]=a[i];delete t.rest}return n.matchGrammar(e,r,t,0,0,!1),r},hooks:{all:{},add:function(e,t){var r=n.hooks.all;r[e]=r[e]||[],r[e].push(t)},run:function(e,t){var r=n.hooks.all[e];if(r&&r.length)for(var a,i=0;a=r[i++];)a(t)}}},r=n.Token=function(e,t,n,r,a){this.type=e,this.content=t,this.alias=n,this.length=0|(r||"").length,this.greedy=!!a};if(r.stringify=function(e,t,a){if("string"==typeof e)return e;if("Array"===n.util.type(e))return e.map(function(n){return r.stringify(n,t,e)}).join("");var i={type:e.type,content:r.stringify(e.content,t,a),tag:"span",classes:["token",e.type],attributes:{},language:t,parent:a};if(e.alias){var l="Array"===n.util.type(e.alias)?e.alias:[e.alias];Array.prototype.push.apply(i.classes,l)}n.hooks.run("wrap",i);var o=Object.keys(i.attributes).map(function(e){return e+'="'+(i.attributes[e]||"").replace(/"/g,"&quot;")+'"'}).join(" ");return"<"+i.tag+' class="'+i.classes.join(" ")+'"'+(o?" "+o:"")+">"+i.content+"</"+i.tag+">"},!_self.document)return _self.addEventListener?(n.disableWorkerMessageHandler||_self.addEventListener("message",function(e){var t=JSON.parse(e.data),r=t.language,a=t.code,i=t.immediateClose;_self.postMessage(n.highlight(a,n.languages[r],r)),i&&_self.close()},!1),_self.Prism):_self.Prism;var a=document.currentScript||[].slice.call(document.getElementsByTagName("script")).pop();return a&&(n.filename=a.src,n.manual||a.hasAttribute("data-manual")||("loading"!==document.readyState?window.requestAnimationFrame?window.requestAnimationFrame(n.highlightAll):window.setTimeout(n.highlightAll,16):document.addEventListener("DOMContentLoaded",n.highlightAll))),_self.Prism}();"undefined"!=typeof module&&module.exports&&(module.exports=Prism),"undefined"!=typeof global&&(global.Prism=Prism);
+Prism.languages.markup={comment:/<!--[\s\S]*?-->/,prolog:/<\?[\s\S]+?\?>/,doctype:/<!DOCTYPE[\s\S]+?>/i,cdata:/<!\[CDATA\[[\s\S]*?]]>/i,tag:{pattern:/<\/?(?!\d)[^\s>\/=$<%]+(?:\s+[^\s>\/=]+(?:=(?:("|')(?:\\[\s\S]|(?!\1)[^\\])*\1|[^\s'">=]+))?)*\s*\/?>/i,inside:{tag:{pattern:/^<\/?[^\s>\/]+/i,inside:{punctuation:/^<\/?/,namespace:/^[^\s>\/:]+:/}},"attr-value":{pattern:/=(?:("|')(?:\\[\s\S]|(?!\1)[^\\])*\1|[^\s'">=]+)/i,inside:{punctuation:[/^=/,{pattern:/(^|[^\\])["']/,lookbehind:!0}]}},punctuation:/\/?>/,"attr-name":{pattern:/[^\s>\/]+/,inside:{namespace:/^[^\s>\/:]+:/}}}},entity:/&#?[\da-z]{1,8};/i},Prism.languages.markup.tag.inside["attr-value"].inside.entity=Prism.languages.markup.entity,Prism.hooks.add("wrap",function(a){"entity"===a.type&&(a.attributes.title=a.content.replace(/&amp;/,"&"))}),Prism.languages.xml=Prism.languages.markup,Prism.languages.html=Prism.languages.markup,Prism.languages.mathml=Prism.languages.markup,Prism.languages.svg=Prism.languages.markup;
+Prism.languages.css={comment:/\/\*[\s\S]*?\*\//,atrule:{pattern:/@[\w-]+?.*?(?:;|(?=\s*\{))/i,inside:{rule:/@[\w-]+/}},url:/url\((?:(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1|.*?)\)/i,selector:/[^{}\s][^{};]*?(?=\s*\{)/,string:{pattern:/("|')(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,greedy:!0},property:/[-_a-z\xA0-\uFFFF][-\w\xA0-\uFFFF]*(?=\s*:)/i,important:/\B!important\b/i,"function":/[-a-z0-9]+(?=\()/i,punctuation:/[(){};:]/},Prism.languages.css.atrule.inside.rest=Prism.languages.css,Prism.languages.markup&&(Prism.languages.insertBefore("markup","tag",{style:{pattern:/(<style[\s\S]*?>)[\s\S]*?(?=<\/style>)/i,lookbehind:!0,inside:Prism.languages.css,alias:"language-css",greedy:!0}}),Prism.languages.insertBefore("inside","attr-value",{"style-attr":{pattern:/\s*style=("|')(?:\\[\s\S]|(?!\1)[^\\])*\1/i,inside:{"attr-name":{pattern:/^\s*style/i,inside:Prism.languages.markup.tag.inside},punctuation:/^\s*=\s*['"]|['"]\s*$/,"attr-value":{pattern:/.+/i,inside:Prism.languages.css}},alias:"language-css"}},Prism.languages.markup.tag));
+Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/,lookbehind:!0},{pattern:/(^|[^\\:])\/\/.*/,lookbehind:!0}],string:{pattern:/(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,greedy:!0},"class-name":{pattern:/((?:\b(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[\w.\\]+/i,lookbehind:!0,inside:{punctuation:/[.\\]/}},keyword:/\b(?:if|else|while|do|for|return|in|instanceof|function|new|try|throw|catch|finally|null|break|continue)\b/,"boolean":/\b(?:true|false)\b/,"function":/[a-z0-9_]+(?=\()/i,number:/\b0x[\da-f]+\b|(?:\b\d+\.?\d*|\B\.\d+)(?:e[+-]?\d+)?/i,operator:/--?|\+\+?|!=?=?|<=?|>=?|==?=?|&&?|\|\|?|\?|\*|\/|~|\^|%/,punctuation:/[{}[\];(),.:]/};
+Prism.languages.javascript=Prism.languages.extend("clike",{keyword:/\b(?:as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield)\b/,number:/\b(?:0[xX][\dA-Fa-f]+|0[bB][01]+|0[oO][0-7]+|NaN|Infinity)\b|(?:\b\d+\.?\d*|\B\.\d+)(?:[Ee][+-]?\d+)?/,"function":/[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*(?=\s*\()/i,operator:/-[-=]?|\+[+=]?|!=?=?|<<?=?|>>?>?=?|=(?:==?|>)?|&[&=]?|\|[|=]?|\*\*?=?|\/=?|~|\^=?|%=?|\?|\.{3}/}),Prism.languages.insertBefore("javascript","keyword",{regex:{pattern:/(^|[^\/])\/(?!\/)(\[[^\]\r\n]+]|\\.|[^\/\\\[\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/,lookbehind:!0,greedy:!0},"function-variable":{pattern:/[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*(?=\s*=\s*(?:function\b|(?:\([^()]*\)|[_$a-z\xA0-\uFFFF][$\w\xA0-\uFFFF]*)\s*=>))/i,alias:"function"}}),Prism.languages.insertBefore("javascript","string",{"template-string":{pattern:/`(?:\\[\s\S]|[^\\`])*`/,greedy:!0,inside:{interpolation:{pattern:/\$\{[^}]+\}/,inside:{"interpolation-punctuation":{pattern:/^\$\{|\}$/,alias:"punctuation"},rest:Prism.languages.javascript}},string:/[\s\S]+/}}}),Prism.languages.markup&&Prism.languages.insertBefore("markup","tag",{script:{pattern:/(<script[\s\S]*?>)[\s\S]*?(?=<\/script>)/i,lookbehind:!0,inside:Prism.languages.javascript,alias:"language-javascript",greedy:!0}}),Prism.languages.js=Prism.languages.javascript;
+</script></head> <body> <!-- Google Tag Manager (noscript) --><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W968DCV&gtm_auth=pZ5T8cGX-ibbGTaHcvL08Q&gtm_preview=env-2&gtm_cookies_win=x"  height="0" width="0" style="display: none; visibility: hidden"></iframe></noscript>  
+
+<div >
+    <div ><div id="info-banner-en" class="banner bg-green-100" role="alert" style="padding: 20px 0"><div class="base-layout"><div class="d-flex a-center j-space-between w-full"><div class="d-flex a-start"><span class="material-symbols-outlined color-green-500 margin-right-400" aria-hidden="true">info</span>
+
+ <div><a href="/campaigns/q4-investing-deadline" class="ff-open-sans fs-300 fw-600 lh-500 color-grey-700 link" aria-label="Win up to $175,000 on TFSA, RESP and FHSA - Learn more">Win up to $175,000 on TFSA, RESP and FHSA.</a>
+
+ <p class="ff-open-sans fs-200 fw-400 lh-400 color-grey-700 margin-top-100">Get a chance to win your down payment, your child's education, or even your long-term wealth. Ends Dec 29.
+
+                        <a href="/campaigns/q4-investing-deadline" class="link fw-400 color-green-500" aria-label="Learn more about Q4 Investing Deadline contest">Learn more</a>
+
+ </p></div></div><button data-close-target="info-banner-en" id="close-banner-btn-en" aria-label="Close banner" style="border: none; cursor: pointer" class="js-close-target margin-left-400"><span class="material-symbols-outlined color-grey-700">close</span>
+
+ </button></div></div></div></div>    
+
+</div>
+
+
+
+
+
+                <script defer src="/Resources/qcom/dist/main.bundle.js?v=639015577720000000" type="text/javascript"></script>
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Roboto+Slab:wght@100;300;400;700&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet" media="print" onload="this.onload=null;this.removeAttribute('media');">
+
+
+<script async>
+    window.addEventListener('load', () => {
+        (function(d){
+            var s = d.createElement("script");
+            /* uncomment the following line to override default position*/
+            /* s.setAttribute("data-position", 3);*/
+            /* uncomment the following line to override default size (values: small, large)*/
+            /* s.setAttribute("data-size", "small");*/
+            /* uncomment the following line to override default language (e.g., fr, de, es, he, nl, etc.)*/
+            /* s.setAttribute("data-language", "language");*/
+            /* uncomment the following line to override color set via widget (e.g., #053f67)*/
+            /* s.setAttribute("data-color", "#053e67");*/
+            /* uncomment the following line to override type set via widget (1=person, 2=chair, 3=eye, 4=text)*/
+            /* s.setAttribute("data-type", "1");*/
+            /* s.setAttribute("data-statement_text:", "Our Accessibility Statement");*/
+            /* s.setAttribute("data-statement_url", "http://www.example.com/accessibility")";*/
+            /* uncomment the following line to override support on mobile devices*/
+            /* s.setAttribute("data-mobile", true);*/
+            /* uncomment the following line to set custom trigger action for accessibility menu*/
+            s.setAttribute("data-trigger", "accessabilityWidget")
+            s.setAttribute("data-account", "WGXnDlhd6x");
+            s.setAttribute("src", "https://cdn.userway.org/widget.js");
+            (d.body || d.head).appendChild(s);
+        })(document)
+    });
+</script>
+<script async src="https://gc-web-messenger.questrade.com/chat/qt-messenger-widget.js" id="investingGenesysSourceScript"></script>
+
+<script async>
+    window.openChat = function () {
+        window.Genesys("command", "Messenger.open");
+    }
+</script>
+
+
+
+
+
+<script async src="/Resources/qcom/dist/lazyLoad.bundle.js"></script><script async>
+    (function () {
+        fetch("/api/documentation/security/ClearSessionStorage/")
+    })();
+</script><style type="text/css">
+    .sfPageEditor .editorView {
+        display: block;
+        width: 200px;
+    }
+
+    .sfPageEditor .editorView-menu {
+        display: block;
+        width: 300px;
+    }
+
+    .sfPageEditor .editorView-mobile {
+        display: block;
+        width: 40px;
+    }
+
+    .sfPageEditor .editorView-login-mobile {
+        display: block !important;
+        width: 200px;
+    }
+
+    .sfPageEditor .mega-header-seo {
+        display: block !important;
+    }
+
+    .sfPageEditor .mega-header-seo {
+        position: static !important;
+        z-index: 1000 !important;
+    }
+</style>
+
+<header class="mega-header-seo">
+    <div class="mega-header-seo--masthead">
+        <div class="mega-header-seo__wrapper">
+            <div class="mega-header-seo__body">
+                <div id="Contentplaceholder1_T006A136C047_Col00" class="sf_colsIn d-flex flex-1 editorView" data-sf-element="Container" data-placeholder-label="QcomLogo">
+<div >
+    <div ><div class="d-flex"><a class="mega-header-seo__logo" href="/"><img alt="Questrade logo" class="hidden-seo-sm" src="/images/librariesprovider11/default-album/logos/questrade-logo-desktop.svg "><svg class="hidden-seo-lg hidden-seo-md" width="42" height="32" viewBox="0 0 42 32" fill="none">
+<path d="M15.0525 17.1659C17.9688 11.7957 21.8099 7.73079 25.3006 5.84378L21.795 0.324447C21.5191 -0.108149 21.079 -0.108149 20.818 0.324447L1.63456 30.5614C1.35859 30.994 1.58981 31.1208 2.08953 31.1208H11.2412C11.0995 27.2125 12.2705 22.2601 15.0525 17.1659Z" fill="#3EA448"></path>
+<path d="M26.4945 9.28111C24.615 8.25183 20.5575 12.0632 17.4324 17.7988C14.3147 23.527 13.3078 29.009 15.1873 30.0457C16.5523 30.7841 18.8495 28.8374 21.3034 25.6377V18.3134C21.3034 17.5527 21.7807 17.135 22.1387 17.7988L24.1824 21.6623C24.2122 21.6176 24.2271 21.5803 24.2569 21.5355C27.3821 15.7999 28.3815 10.3179 26.4945 9.28111Z" fill="#3EA448"></path>
+<path d="M40.9931 30.5612L33.2512 18.3516C32.5799 20.6488 31.5879 23.0803 30.2752 25.4894C29.589 26.7424 28.8581 27.9209 28.0898 29.0322L29.5517 31.1206H40.5382C41.0379 31.1206 41.2691 30.9938 40.9931 30.5612Z" fill="#3EA448"></path>
+</svg></a>
+</div></div>    
+
+</div></div>
+                <div id="Contentplaceholder1_T006A136C047_Col01" class="sf_colsIn d-flex hidden-seo-md hidden-seo-sm editorView" data-sf-element="Container" data-placeholder-label="Search">
+
+
+<form role="search" id="bc80f45d-21a2-41d5-b906-5f6ddf0a518e">
+    <div class="form-group-seo form-group-seo--search">
+        <span class="material-symbols-outlined search-masthead__icon" aria-hidden="true">search</span>
+        <input title="Search input" id="0b98ec2f-3ac6-4635-9db1-586b36d0eb5f" placeholder="Search" class="search-masthead" type="search" aria-label="Search Questrade" value="" data-qt="txtSearch" />
+    </div>
+    
+    <input type="hidden" data-sf-role="resultsUrl" value="/api/search-results" />
+    <input type="hidden" data-sf-role="indexCatalogue" value="trading-api-search-index" />
+    <input type="hidden" data-sf-role="wordsMode" value="AllWords" />
+    <input type="hidden" data-sf-role="disableSuggestions" value='false' />
+    <input type="hidden" data-sf-role="minSuggestionLength" value="3" />
+    <input type="hidden" data-sf-role="suggestionFields" value="Title,Content" />
+    <input type="hidden" data-sf-role="language" value="" />
+    <input type="hidden" data-sf-role="suggestionsRoute" value="/restapi/search/suggestions" />
+    <input type="hidden" data-sf-role="searchTextBoxId" value='#0b98ec2f-3ac6-4635-9db1-586b36d0eb5f' />
+    <input type="hidden" data-sf-role="searchButtonId" value='#646d6662-f069-4655-9563-2acaed5e1270' />
+</form></div>
+                <div id="Contentplaceholder1_T006A136C047_Col02" class="sf_colsIn d-flex mega-header-seo__body--login hidden-seo-sm editorView" data-sf-element="Container" data-placeholder-label="Log in">
+<div >
+    <div ><a class="btn-tertiary btn-tertiary-light btn--l" data-qt-event="login" data-qt-label="Login" data-qt-ui="link:main navigation|login" data-qt="btnLogin" href="https://login.questrade.com" aria-label="Log in">Log in</a></div>    
+
+</div></div>
+                <div id="Contentplaceholder1_T006A136C047_Col03" class="sf_colsIn d-flex mega-header-seo__body--btn editorView" data-sf-element="Container" data-placeholder-label="OpenAccount">
+<div >
+    <div ><a data-qt-label="Open an account button" href="/account-selection" data-qt="btnOpenAnAccount" aria-label="Open an account" data-qt-event="oaa" class="btn-primary btn-primary--light btn--responsive" data-qt-ui="btn:main navigation|open an account">Open an account
+</a></div>    
+
+</div></div>
+                <div id="Contentplaceholder1_T006A136C047_Col04" class="sf_colsIn editorView-mobile mega-header-seo__body--mobile-menu-icon" data-sf-element="Container" data-placeholder-label="Menu Button (Mobile)">
+<div >
+    <div ><button><span id="toggle-mobile-nav" class="material-symbols-outlined vertical-align--middle mega-header-seo__body--mobile-menu-icon">menu</span></button></div>    
+
+</div></div>
+                <button class="mega-header-seo__body--sticky-button"><span
+                        class="material-symbols-outlined vertical-align--middle mega-header-seo__body--sticky-icon"
+                        aria-hidden="true" aria-label="expand menu" style="height: initial; width: initial"
+                        aria-expanded="false">menu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="mega-header-seo__wrapper mega-header-seo__wrapper--navbar">
+        <div class="mega-header-seo__body">
+            <div id="Contentplaceholder1_T006A136C047_Col05" class="sf_colsIn flex-1 editorView-menu" data-sf-element="Container" data-placeholder-label="MegaMenu">
+<div >
+    <div ><nav aria-label="Main navigation" class="mega-header-seo__nav"><button class="hidden-seo-lg mega-header-seo__nav-back-button fixed-legal-600 fixed-legal-600--compact"><span class="material-symbols-outlined size-32" aria-hidden="true">chevron_left</span>
+Back
+</button>
+<ul class="mega-seo-menu">
+    <li class="mega-seo-menu__top-nav-item hidden-global-lg">
+    <div class="mega-seo-menu__search-mbl"><input class="mega-seo-menu__search-mbl--input" type="text" name="search" placeholder="Search" aria-label="Search"></div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item"><button class="mega-seo-menu__top-nav-item--link"><a class="mega-seo-menu__top-nav-item--link__title" aria-label="Self-Directed Investing">Self-Directed
+    Investing
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel">
+    <div class="mega-seo-menu__panel-container d-flex">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400">
+    <div><a href="/self-directed-investing" aria-label="Self-Directed Investing" class="mega-seo-menu__panel-group--link-heading">Self-Directed Investing
+    </a>
+    <p class="padding-top-200 padding-bottom-200 padding-bottom-lg-500 caption-legal">
+    Whatever your financial goal may be, we have an account that can help you get there.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/self-directed-investing" aria-label="Self-Directed Investing">Go to Self-Directed
+    Investing
+    <span class="material-symbols-outlined float-right" aria-hidden="true">arrow_forward</span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards">
+    <ul>
+        <li class="d-flex margin-bottom-lg-800">
+        <div class="mega-seo-menu__panel-container--wrapper-cards padding-bottom-0 padding-top-0 padding-right-0 padding-left-0 margin-right-400">
+        <p class="padding-bottom-400 padding-top-500 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        Investment Products
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/investment-products/stocks" aria-label="Stocks" class="mega-seo-menu__panel-group--link-subheading__account">Stocks</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/investment-products/etfs" aria-label="ETFs" class="mega-seo-menu__panel-group--link-subheading__account">ETFs</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/investment-products/options" aria-label="Options" class="mega-seo-menu__panel-group--link-subheading__account">Options</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/investment-products" aria-label="Investment Products" class="mega-seo-menu__panel-group--link-subheading__account">All Investment Products</a>
+        </p>
+        </div>
+        <div class="mega-seo-menu__panel-container--wrapper-cards padding-bottom-0 padding-top-0 padding-right-0 padding-left-0">
+        <p class="padding-bottom-400 padding-top-500 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        Trading Platforms</p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms/questrade-trading" aria-label="Questrade Trading" class="mega-seo-menu__panel-group--link-subheading__account">Questrade Trading</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms/questmobile" aria-label="QuestMobile" class="mega-seo-menu__panel-group--link-subheading__account">QuestMobile</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms/edge" aria-label="Questrade Edge" class="mega-seo-menu__panel-group--link-subheading__account">Questrade Edge</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms/edge-mobile" aria-label="Edge Mobile" class="mega-seo-menu__panel-group--link-subheading__account">Edge Mobile</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms/questrade-global" aria-label="Questrade Global" class="mega-seo-menu__panel-group--link-subheading__account">Questrade Global</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/trading-platforms" aria-label="Trading Platforms" class="mega-seo-menu__panel-group--link-subheading__account">All trading platforms</a>
+        </p>
+        </div>
+        </li>
+        <li class="d-flex">
+        <div class="mega-seo-menu__panel-container--wrapper-cards padding-bottom-0 padding-top-0 padding-right-0 padding-left-0 margin-right-400">
+        <p class="padding-bottom-400 padding-top-500 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        For active traders</p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/active-trader#platforms-and-tools" aria-label="Platforms and tools" class="mega-seo-menu__panel-group--link-subheading__account">Platforms and tools</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/active-trader#competitive-pricing" aria-label="Competitive pricing" class="mega-seo-menu__panel-group--link-subheading__account">Competitive pricing</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/active-trader#flexible-trading" aria-label="Flexible trading" class="mega-seo-menu__panel-group--link-subheading__account">Flexible trading</a>
+        </p>
+        </div>
+        <div class="mega-seo-menu__panel-container--wrapper-cards padding-bottom-0 padding-top-0 padding-right-0 padding-left-0">
+        <p class="padding-bottom-400 padding-top-500 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        Tools</p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/tools#news" aria-label="News" class="mega-seo-menu__panel-group--link-subheading__account">News, insights &amp; research</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/tools#tradingTools" aria-label="Trading tools" class="mega-seo-menu__panel-group--link-subheading__account">Investing and trading tools</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/self-directed-investing/tools#monitoring" aria-label="Monitoring" class="mega-seo-menu__panel-group--link-subheading__account">Investment monitoring</a>
+        </p>
+        <p class="padding-top-300 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+        <a href="/partner-centre" aria-label="Partners center" class="mega-seo-menu__panel-group--link-subheading__account">Partners center</a>
+        </p>
+        </div>
+        </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item "><button class="mega-seo-menu__top-nav-item--link "><a class="mega-seo-menu__top-nav-item--link__title" aria-label="Questwealth Portfolios">Questwealth
+    Portfolios
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel">
+    <div class="mega-seo-menu__panel-container d-flex">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400">
+    <div class=" "><a href="/questwealth-portfolios" aria-label="Questwealth Portfolios" class="mega-seo-menu__panel-group--link-heading">Questwealth Portfolios
+    </a>
+    <p class="padding-top-200 padding-bottom-600 padding-bottom-lg-500 caption-legal">Get a
+    diversified low-fee portfolio managed by a team of experts so you can get to your goals
+    faster.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/questwealth-portfolios" aria-label="Questwealth Portfolios">Go to Questwealth
+    Portfolios
+    <span class="material-symbols-outlined float-right" aria-hidden="true">arrow_forward
+    </span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards">
+    <ul>
+        <li class="d-flex "><a href="/questwealth-portfolios/etf-portfolios" aria-label="ETF Portfolios" class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 margin-right-lg-200 padding-top-md-500 padding-top-sm-500"><span class="mega-seo-menu__panel-group--link-subheading">ETF Portfolios</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Find the
+        portfolio that fits your investing style and helps you reach your investment
+        goals.</p>
+        </a>
+        <a href="/questwealth-portfolios/features" aria-label="Features" class="mega-seo-menu__panel-group--cards margin-bottom-lg-200  "><span class="mega-seo-menu__panel-group--link-subheading">Features</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Actively
+        managed, proven returns, real-time rebalancing, everything you need to help your
+        savings grow.
+        </p>
+        </a>
+        </li>
+        <li class="d-flex"><a href="/questwealth-portfolios/socially-responsible-investing" aria-label="SRI Portfolios" class="mega-seo-menu__panel-group--cards"><span class="mega-seo-menu__panel-group--link-subheading">SRI Portfolios</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Invest in
+        companies that focus on environmental, social and corporate governance
+        qualities.
+        </p>
+        </a>
+        </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item "><button class="mega-seo-menu__top-nav-item--link "><a class="mega-seo-menu__top-nav-item--link__title" aria-label="Account types">Account types
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel">
+    <div class="mega-seo-menu__panel-container d-flex">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400">
+    <div><a href="/account-types" aria-label="Account Types" class="mega-seo-menu__panel-group--link-heading">Account Types
+    </a>
+    <p class="padding-top-200 padding-bottom-600 padding-bottom-lg-500 caption-legal">Whatever
+    your financial goal may be, we have an account that can help you get there.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/account-types" aria-label="Account Types">Go to Account Types
+    <span class="material-symbols-outlined float-right" aria-hidden="true">arrow_forward
+    </span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards">
+    <p class="padding-bottom-400 padding-top-500 padding-top-lg-0 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    Investment accounts
+    </p>
+    <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    <a href="/account-types/tfsa" aria-label="Tax-Free Savings Account (TFSA)" class="mega-seo-menu__panel-group--link-subheading__account">Tax-Free Savings Account
+    (TFSA)</a>
+    </p>
+    <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    <a href="/account-types/rrsp" aria-label="Registered Retirement Savings Plan (RRSP)" class="mega-seo-menu__panel-group--link-subheading__account">Registered Retirement
+    Savings Plan (RRSP)</a>
+    </p>
+    <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    <a href="/account-types/fhsa" aria-label="First Home Savings Account (FHSA)" class="mega-seo-menu__panel-group--link-subheading__account">First Home Savings Account
+    (FHSA)</a>
+    </p>
+    <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    <a href="/account-types/resp" aria-label="Registered Education Savings Plan (RESP)" class="mega-seo-menu__panel-group--link-subheading__account">Registered Education
+    Savings Plan (RESP)</a>
+    </p>
+    <p class="padding-top-300 padding-top-lg-0 padding-bottom-300 mega-seo-menu__panel-container--wrapper-cards__subheading">
+    <a href="/account-types" aria-label="Account types" class="mega-seo-menu__panel-group--link-subheading__account">All account types</a>
+    </p>
+    </div>
+    </div>
+    </div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item "><button class="mega-seo-menu__top-nav-item--link "><a class="mega-seo-menu__top-nav-item--link__title" aria-label="Pricing">Pricing
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel">
+    <div class="mega-seo-menu__panel-container d-flex">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400">
+    <div><a href="/pricing" aria-label="Pricing" class="mega-seo-menu__panel-group--link-heading">Pricing</a>
+    <p class="padding-top-200 padding-bottom-600 padding-bottom-lg-500 caption-legal">Low fees.
+    No hidden fees. Keep more of your money with Canada’s low-cost leader in online
+    investing.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/pricing" aria-label="Pricing">Go to Pricing
+    <span class="material-symbols-outlined float-right" aria-hidden="true">arrow_forward
+    </span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards">
+    <ul>
+        <li class="d-flex"><a href="/pricing/self-directed-commissions-plans-fees" aria-label="Self-Directed Investing" class="mega-seo-menu__panel-group--cards margin-right-lg-200 padding-top-md-500 padding-top-sm-500"><span class="mega-seo-menu__panel-group--link-subheading">Self-Directed
+        Investing</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        See
+        Questrade’s low fees for trading, market data and margin trading.</p>
+        </a>
+        <a href="/pricing/questwealth-portfolios-fees" aria-label="Questwealth Portfolio Pricing" class="mega-seo-menu__panel-group--cards margin-bottom-lg-200"><span class="mega-seo-menu__panel-group--link-subheading">Questwealth Portfolio
+        Pricing</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Low-fees and
+        no unnecessary fees on diversified ETF portfolios.
+        </p>
+        </a>
+        </li>
+        <li class="d-flex"><a href="/pricing/self-directed-commissions-plans-fees/active-trader" aria-label="Active Trader Pricing" class="mega-seo-menu__panel-group--cards"><span class="mega-seo-menu__panel-group--link-subheading">Active Trader Pricing</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Active traders
+        enjoy special pricing plans and fee rebates with Questrade.
+        </p>
+        </a>
+        </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item "><button class="mega-seo-menu__top-nav-item--link "><a class="mega-seo-menu__top-nav-item--link__title" aria-label="Learning">Learning
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel">
+    <div class="mega-seo-menu__panel-container d-flex">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400">
+    <div><a href="/learning" aria-label="Learning" class="mega-seo-menu__panel-group--link-heading">Learning</a>
+    <p class="padding-top-200 padding-bottom-600 padding-bottom-lg-500 caption-legal">Sound
+    investment decisions are built on a foundation of knowledge. Come hone your investing
+    expertise.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/learning" aria-label="Learning">Go to Learning
+    <span class="material-symbols-outlined float-right" aria-hidden="true">arrow_forward
+    </span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards">
+    <ul>
+        <li class="d-flex "><a href="/learning/questrade-basics" aria-label="Questrade Basics" class="mega-seo-menu__panel-group--cards margin-right-lg-200 padding-top-md-500 padding-top-sm-500"><span class="mega-seo-menu__panel-group--link-subheading ">Questrade Basics</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        See
+        Questrade’s low fees for trading, market data and margin trading.</p>
+        </a>
+        <a href="/learning/the-markets " aria-label="The Markets " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">The Markets</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Learn about
+        what happens in the markets and the theories that can help explain why it moves
+        the way it does.
+        </p>
+        </a>
+        </li>
+        <li class="d-flex "><a href="/learning/platform-tutorials " aria-label="Platform Tutorials " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 margin-right-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">Platform Tutorials</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Learn the
+        ins and outs of the trading platforms and other available investing tools.
+        </p>
+        </a>
+        <a href="/learning/goal-tracking " aria-label="Goal Tracking " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">Goal Tracking</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Figure out
+        where you want your investing to take you, and how to make a plan that gets you
+        there.</p>
+        </a>
+        </li>
+        <li class="d-flex "><a href="/learning/investment-concepts " aria-label="Investment Concepts " class="mega-seo-menu__panel-group--cards margin-right-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">Investment Concepts</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        The theory,
+        strategies, ideas and calculations you can use to make smart investing
+        strategies.
+        </p>
+        </a>
+        <a href="/learning/faqs " aria-label="FAQs " class="mega-seo-menu__panel-group--cards "><span class="mega-seo-menu__panel-group--link-subheading ">FAQs</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Quick
+        answers to your most common questions.
+        </p>
+        </a>
+        </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </li>
+    <li class="mega-seo-menu__top-nav-item "><button class="mega-seo-menu__top-nav-item--link "><a class="mega-seo-menu__top-nav-item--link__title" aria-label="About us">About us
+    <span class="mega-seo-menu__top-nav-item--link__icon material-symbols-outlined size-18 vertical-align--middle" aria-hidden="true">chevron_right</span></a>
+    </button>
+    <div class="mega-seo-menu__panel ">
+    <div class="mega-seo-menu__panel-container d-flex ">
+    <div class="mega-seo-menu__panel-container--wrapper mega-seo-menu__panel-group border-bottom border-width-100 border-grey-400 ">
+    <div><a href="/about-us " aria-label="About Us " class="mega-seo-menu__panel-group--link-heading ">About Us
+    </a>
+    <p class="padding-top-200 padding-bottom-600 padding-bottom-lg-500 caption-legal">See how
+    Questrade gives Canadians better ways to take charge of their financial future.
+    </p>
+    </div>
+    <a class="mega-seo-menu__panel-group--link-subheading__arrow hidden-seo-md hidden-seo-sm" href="/about-us " aria-label="About Us ">Go to About Us
+    <span class="material-symbols-outlined float-right " aria-hidden="true">arrow_forward</span></a>
+    </div>
+    <div class="mega-seo-menu__panel-container--wrapper-cards ">
+    <ul>
+        <li class="d-flex "><a href="/about-us/who-we-are " aria-label="Who we are " class="mega-seo-menu__panel-group--cards margin-right-lg-200 padding-top-md-500 padding-top-sm-500"><span class="mega-seo-menu__panel-group--link-subheading ">Who we are</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Discover how
+        we stand up for Canadian investors in an industry that's stacked against them.
+        </p>
+        </a>
+        <a href="/about-us/programs-promotions " aria-label="Programs &amp; Promotions " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading
+        ">Programs &amp; Promotions</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Make your
+        money work harder. Take advantage of offers, programs and promotions.
+        </p>
+        </a>
+        </li>
+        <li class="d-flex "><a href="/about-us/why-questrade" aria-label="Why Questrade " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 margin-right-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">Why Questrade</span>
+        <p class=" mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        See the
+        reasons people switch and hear how they're taking control of their financial
+        future.
+        </p>
+        </a>
+        <a href="/about-us/press-and-media " aria-label="Press &amp; Media " class="mega-seo-menu__panel-group--cards margin-bottom-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading ">Press &amp; Media</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        See what's
+        new and noteworthy in the world of Questrade.</p>
+        </a>
+        </li>
+        <li class="d-flex "><a href="/about-us/reviews " aria-label="Reviews " class="mega-seo-menu__panel-group--cards margin-right-lg-200 "><span class="mega-seo-menu__panel-group--link-subheading
+        ">Reviews</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        Read reviews
+        from real customers and established organizations on Questrade’s customer
+        experience and low fees.
+        </p>
+        </a>
+        <a href="/about-us/careers " aria-label="Careers " class="mega-seo-menu__panel-group--cards "><span class="mega-seo-menu__panel-group--link-subheading ">Careers</span>
+        <p class="mega-seo-menu__panel-group--cards__copy padding-top-200 padding-top-lg-400">
+        We’re
+        always on the hunt for new talent to help us build the future of financial
+        technology.
+        </p>
+        </a>
+        </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </li>
+</ul>
+<div class="dropdownLang__mbl-menu hidden-global-lg">
+<div class="dropdownLang__mbl-select">
+<div class="dropdownLang__mbl-trigger">English
+</div>
+<div class="dropdownLang__mbl-options">
+<p class="dropdownLang__mbl-system-fr">We noticed your browser/system language is set to French. Would
+you like to browse Questrade.com in French?
+</p>
+<a class="dropdownLang__mbl-option dropdownLang__mbl-option--en" data-qt-event="language" data-qt-label="toggle to english" data-qt-ui="link:main navigation:language toggle:English" aria-label="View english version" href="/home?language=en" data-sf-ec-immutable="">English</a>
+<a class="dropdownLang__mbl-option dropdownLang__mbl-option--fr" data-qt-event="language" data-qt-label="toggle to francais" data-qt-ui="link:main navigation:language toggle:francais" aria-label="Voir la version française" href="/fr/home?language=fr" data-sf-ec-immutable="">Français</a>
+</div>
+</div>
+</div>
+</nav></div>    
+
+</div>
+            </div>
+            <div id="Contentplaceholder1_T006A136C047_Col06" class="sf_colsIn d-flex editorView hidden-seo-sm hidden-seo-md" data-sf-element="Container" data-placeholder-label="LanguageToggle"></div>
+            <div id="Contentplaceholder1_T006A136C047_Col07" class="sf_colsIn d-flex mega-header-seo__body--login--mobile hidden-seo-md editorView" data-sf-element="Container" data-placeholder-label="Log in (Mobile)">
+<div >
+    <div ><a class="btn-secondary-light btn-full-width--mobile hidden-seo-md hidden-seo-lg" data-qt-event="login" data-qt-label="Login" data-qt-ui="link:main navigation|login" data-qt="btnLogin" href="https://login.questrade.com" aria-label="Log in">Log in</a></div>    
+
+</div></div>
+        </div>
+</header><main>
+    <div id="Contentplaceholder1_T006A136C048_Col00" class="sf_colsIn" data-sf-element="main content" data-placeholder-label="main content"><div id="Contentplaceholder1_TDA0A569F023_Col00" class="sf_colsIn" data-sf-element="Container" data-placeholder-label="Banner">
+<div >
+    <div ><div class="hero hero--secondary"><div class="hero__container primary-black-background"><div class="hero__image-wrapper"><picture class="hero__image-inner-wrapper"><source media="(max-width: 564px)" srcset="https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-mobile.jpg, https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-mobile@2x.jpg 2x"><source media="(max-width: 1103px)" srcset="https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-tablet.jpg, https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-tablet@2x.jpg 2x"><source media="(min-width: 1104px)" srcset="https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-desktop.jpg, https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-desktop@2x.jpg 2x"><img alt="Young man smiling" class="hero__image object-fit-polyfill" srcset="https://cdn.questrade.com/questrade-site-assets/banners/man-at-desk-on-computer-desktop@2x.jpg"></picture>
+ </div><div class="hero__content-wrapper container"><div class="grid primary-white"><h1 class="heading-1 col-md-12 col-lg-12">Documentation</h1><p class="body-copy m-t-s col-sm-12 col-md-5 col-lg-5">The Questrade API allows developers to create their own fully featured trading and analytical applications through their brokerage account.</p></div></div></div></div></div>    
+
+</div><div id="Contentplaceholder1_TDA0A569F024_Col00" class="sf_colsIn container" data-sf-element="Container" data-placeholder-label="Body"><div class="grid m-b-l m-t-l" data-sf-element="Row">
+    <div id="Contentplaceholder1_T006A136C025_Col00" class="sf_colsIn col-sm-12 col-md-3 col-lg-3 navigation-sidebar-api" data-sf-element="Column 1" data-placeholder-label="Side Navigation">
+<div >
+    <div ><h2 class="heading-5 heading-5--bold editorMode">Side Nav</h2></div>    
+
+</div>
+
+
+<nav class="questApi navigation-sidebar">
+    <a href="#" class="navigation-sidebar__dropdown-header" aria-hidden="true"><span class="navigation-sidebar__dropdown-header-text">Security</span></a>
+    <ul class="navigation-sidebar__dropdown">
+     <li class="">
+        <a href="/api/home" target="_self" class="navigation-sidebar__link">Overview</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/getting-started" target="_self" class="navigation-sidebar__link">Getting started</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/release-notes" target="_self" class="navigation-sidebar__link">Release notes</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/authorization" target="_self" class="navigation-sidebar__link">Authorization</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/streaming" target="_self" class="navigation-sidebar__link">Streaming</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/rate-limiting" target="_self" class="navigation-sidebar__link">Rate limiting</a>
+    </li>
+     <li class="">
+        <a href="/api/documentation/error-handling" target="_self" class="navigation-sidebar__link">Error handling</a>
+    </li>
+     <li class="active">
+        <a href="/api/documentation/security" target="_self" class="navigation-sidebar__link">Security</a>
+    </li>
+    </ul>
+</nav>
+
+
+
+<div >
+    <div ><h3 class="heading-5 heading-5--bold m-b-m m-t-m text-nowrap">Rest operations</h3></div>    
+
+</div>
+
+
+<nav class="questApi--restOpp navigation-sidebar">
+    <a href="#" class="navigation-sidebar__dropdown-header" aria-hidden="true"><span class="navigation-sidebar__dropdown-header-text">Account calls</span></a>
+    
+    <ul class="navigation-sidebar__dropdown">
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls" target="_self" class="navigation-sidebar__item">Account calls</a>
+        </li>
+             <li class="">
+            <li class="navigation-sidebar__item" >
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts-id-activities" target="_self" class="navigation-sidebar__item">Get accounts/:id/activities</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts-id-orders" target="_self" class="navigation-sidebar__item">GET accounts/:id/orders</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts-id-executions" target="_self" class="navigation-sidebar__item">Get accounts/:id/executions</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts-id-balances" target="_self" class="navigation-sidebar__item">Get accounts/:id/balances</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts-id-positions" target="_self" class="navigation-sidebar__item">Get accounts/:id/positions</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/accounts" target="_self" class="navigation-sidebar__item">Get accounts</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/account-calls/time" target="_self" class="navigation-sidebar__item">Get time</a>
+        </li>
+             <li class="">
+    </li>
+            </li>
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls" target="_self" class="navigation-sidebar__item">Market calls</a>
+        </li>
+             <li class="">
+            <li class="navigation-sidebar__item" >
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/markets-candles-id" target="_self" class="navigation-sidebar__item">GET markets/candles/:id</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/markets-quotes-strategies" target="_self" class="navigation-sidebar__item">GET markets/quotes/strategies</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/markets-quotes-options" target="_self" class="navigation-sidebar__item">GET markets/quotes/options</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/markets-quotes-id" target="_self" class="navigation-sidebar__item">GET markets/quotes/:id</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/markets" target="_self" class="navigation-sidebar__item">GET markets</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/symbols-id-options" target="_self" class="navigation-sidebar__item">GET symbols/:id/options</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/symbols-search" target="_self" class="navigation-sidebar__item">GET symbols/search</a>
+        </li>
+             <li class="">
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/market-calls/symbols-id" target="_self" class="navigation-sidebar__item">GET symbols/:id</a>
+        </li>
+             <li class="">
+    </li>
+            </li>
+    </li>
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/enumerations" target="_self" class="navigation-sidebar__item">Enumerations</a>
+        </li>
+             <li class="">
+            <li class="navigation-sidebar__item" >
+    <div style="margin-bottom: 0" class="divider__horizontal--dotted"></div>
+        <li style="padding: 5px 0">
+            <a href="/api/documentation/rest-operations/enumerations/enumerations" target="_self" class="navigation-sidebar__item">Enumerations</a>
+        </li>
+             <li class="">
+    </li>
+            </li>
+    </li>
+    </ul>
+</nav>
+
+
+
+
+
+
+    </div>
+    <div id="Contentplaceholder1_T006A136C025_Col01" class="sf_colsIn col-sm-12 col-md-12 col-lg-9" data-sf-element="Column 2" data-placeholder-label="Column 2">
+<div >
+    <div ><h2 class="heading-2 m-b-m">Security</h2></div>    
+
+</div>
+<div >
+    <div ><p class="body-copy m-b-m">The security measures implemented by Questrade support the OAuth 2.0 version security protocol. Any OAuth library can be used to make requests against the Questrade API.</p><p class="body-copy m-b-m">Questrade only allows API requests via HTTPS (TLS) and refuse connections when accessed via HTTP. In addition, the required HTTP method (GET, POST etc.) must also be defined.</p></div>    
+
+</div>
+<div >
+    <div ><h3 class="heading-3 heading-3--bold m-b-m">Obtaining a refresh token</h3><p class="body-copy">To make an authenticated call via your API application:</p><ol class="ordered-list p-t-s body-copy "><li class="body-copy p-t-s">In the API section of the Questrade security center, register your API application and obtain a client ID (an alpha-numeric identifier that Questrade assigns to a registered application).</li><li class="body-copy p-t-s">Generate a refresh token for your API application.</li><li class="body-copy p-t-s m-b-m">Redeem&nbsp; the refresh token for an access token.</li></ol></div>    
+
+</div>
+<div >
+    <div ><h3 class="heading-3 heading-3--bold m-b-m">Obtaining an access token</h3><p class="body-copy">Once you have a refresh token, you can redeem it for an access token to make authenticated calls through your API application. Redeeming the authorization code requires making a request to the access token endpoint using the following request parameters:</p></div>    
+
+</div>
+<div >
+    <div ><h4 class="heading-5 heading-5--bold m-b-m m-t-m">Request parameters</h4><div class="table-1 body-copy table-col__container m-b-m"><table><thead><tr><th><strong>Parameter</strong></th><th><strong>Type</strong></th><th><strong>Description</strong></th></tr></thead><tbody><tr class="table-col-4"><td data-th="Parameter"><div>grant_type</div></td><td data-th="Type"><div>String</div></td><td data-th="Description"><div>Always set to “refresh_token”.</div></td></tr><tr class="table-col-4"><td data-th="Parameter"><div>refresh_token</div></td><td data-th="Type"><div>String</div></td><td data-th="Description"><div>Refresh token you receive from the security centre.</div></td></tr></tbody></table></div></div>    
+
+</div>
+<div >
+    <div ><h4 class="heading-5 heading-5--bold m-b-m m-t-m">Response properties</h4><div class="table-1 body-copy table-col__container m-b-m"><table><thead><tr><th><strong>Property</strong></th><th><strong>Type</strong></th><th><strong>Description</strong></th></tr></thead><tbody><tr class="table-col-4"><td data-th="Property"><div>access_token</div></td><td data-th="Type"><div>String</div></td><td data-th="Description"><div>Access token for making authenticated calls.</div></td></tr><tr class="table-col-4"><td data-th="Property"><div>token_type</div></td><td data-th="Type"><div>String</div></td><td data-th="Description"><div>Type of token (always set to “Bearer”).</div></td></tr><tr class="table-col-4"><td data-th="Property"><div>expires_in</div></td><td data-th="Type"><div>Integer</div></td><td data-th="Description"><div>Duration of the time token in which it became active (in seconds).</div></td></tr><tr class="table-col-4"><td data-th="Property"><div>api_server</div></td><td data-th="Type"><div>String</div></td><td data-th="Description"><div>URL of the API server that the client application should contact.</div></td></tr></tbody></table></div></div>    
+
+</div>
+<div >
+    <div ><h5 class="subhead-2 subhead-2--bold">Sample request</h5><pre class="language-html"> <span class="link-blue">
+  POST /oauth2/token HTTP/1.1
+  Host: https://login.questrade.com
+  grant_type=refresh_token&amp;refresh_token=p4VTj45GhS8lY7aFoKDNZxB8yQHMOr+f</span>
+</pre><div class="m-t-m"></div></div>    
+
+</div>
+<div >
+    <div ><h5 class="subhead-2 subhead-2--bold">Sample JSON response</h5><pre class="language-html"><span class="link-blue">
+      {
+         "access_token": </span><span class="primary-green">"p4VTj45GhS8lY7aFoKDNZxB8yQHMOr+f"</span><span class="link-blue">,
+         "token_type": </span><span class="primary-green">"Bearer"</span> <span class="link-blue">,
+         "expires_in": </span><span class="primary-green">1800</span><span class="link-blue">, 
+         "refresh_token": </span><span class="primary-green">"aSBe7wAAdx88QTbwut0tiu3SYic3ox8F"</span> <span class="link-blue">,
+         "api_server":</span> <span class="primary-green">"https://api01.iq.questrade.com/v1"</span> <span class="link-blue">
+      }   </span>
+   </pre><div class="m-t-m"></div></div>    
+
+</div>
+<div >
+    <div ><h3 class="heading-3 heading-3--bold m-b-m">Revoking authorization</h3><p class="body-copy">To revoke authorization, you can do one of the following:</p><ol class="ordered-list p-t-s body-copy "><li class="body-copy p-t-s">Go to API Centre &gt; Personal applications, and click Revoke to immediately expire the token that was issued previously or click Delete to delete the personal app.</li><p class="body-copy m-t-s">OR</p><li class="body-copy p-t-s">Use the revoke endpoint to revoke the authorization from your application code as per the example below: <br>Revoke endpoint URL: <a class="inline-link" href="https://login.questrade.com/oauth2/revoke">https://login.questrade.com/oauth2/revoke</a></li></ol></div>    
+
+</div>
+<div >
+    <div ><h4 class="subhead-2 subhead-2--bold m-t-m">Revoke endpoint example</h4><pre class="language-html"> <span class="link-blue">
+  POST /oauth2/revoke HTTP/1.1
+  Host: https://login.questrade.com
+  Content-Type: application/x-www-form-urlencoded
+  token=p4VTj45GhS8lY7aFoKDNZxB8yQHMOr+f</span>   
+</pre><div class="m-t-m"></div></div>    
+
+</div>
+<div >
+    <div ><h3 class="heading-3 heading-3--bold m-b-m">Making an authorized request</h3><p class="body-copy">Authorized requestes can be made toward API servers. The URL of the API servers will be provided to your application as a response to every access token request you make. Once your application obtains an access token and URL of proxy server to contact,
+    it can then make authenticated calls on behalf of the user that authorized the application using a number of REST endpoints.</p><p class="body-copy m-t-m">Your API application must pass the access token in the “Authorization” HTTP header as described in the sample request below:</p></div>    
+
+</div>
+<div >
+    <div ><h4 class="subhead-2 subhead-2--bold m-t-m">Sample authorized request</h4><pre class="language-html"> <span class="link-blue">
+   GET /v1/accounts HTTP/1.1
+   Host: https://api01.iq.questrade.com
+   Authorization: Bearer p4VTj45GhS8lY7aFoKDNZxB8yQHMOr+f
+</span>
+</pre><div class="m-t-m"></div></div>    
+
+</div>
+<div >
+    <div ><h4 class="subhead-2 subhead-2--bold m-t-m m-b-s">IQ API OAuth scopes</h4><p class="body-copy">As part of its OAuth 2.0 implementation, IQ API defines OAuth scopes – permissions that the account holders grants to the authorized API client application. Each API call belongs to one and only scope.</p><p class="body-copy m-t-s">The following table describes scopes that the API provides and the mapping of API calls to these scopes.</p></div>    
+
+</div>
+<div >
+    <div ><h5 class="subhead-2 subhead-2--bold p-t-s">Release notes:</h5><div class="table-1 body-copy table-col__container"><table><thead><tr><th><strong>Scope</strong></th><th><strong>Scope identifier</strong></th><th><strong>API calls</strong></th></tr></thead><tbody><tr class="table-col-4"><td data-th="Scope"><div>Read account information</div></td><td data-th="Scope identifier"><div>read_acc </div></td><td data-th="API calls"><div>GET time GET accounts <br>GET accounts/:id/positions <br>GET accounts/:id/balances<br>GET accounts/:id/executions <br>GET accounts/:id/orders
+                        <br>GET symbols/:id<br>GET symbols/:id/options<br>GET markets</div></td></tr><tr class="table-col-4"><td data-th="Scope"><div>Read market data</div></td><td data-th="Scope identifier"><div>read_md</div></td><td data-th="API calls"><div>GET markets/quotes/:id<br>GET markets/candles/:id</div></td></tr><tr class="table-col-4"><td data-th="Scope"><div>Trade (partner developers only)</div></td><td data-th="Scope identifier"><div>trade</div></td><td data-th="API calls"><div>POST accounts/:id/orders[/:orderId] <br>POST accounts/:id/orders[:/orderId]/impact<br>DELETE accounts/:id/orders/:orderId</div></td></tr></tbody></table></div></div>    
+
+</div>
+    </div>
+</div>
+
+<div >
+    <div ><div class="expand-off-grid p-t-l p-b-l tone-lightgrey-background product-nav-section" id="downloads"><div class="text-center m-b-m"><h2 class="col-sm-12 col-md-12 col-lg-12 heading-2 ">Downloads</h2></div><div class="grid p-t-s p-b-s"><div class="col-sm-12 col-md-3 col-lg-3 m-b-m vertically-centered__parent"><div class="p-b-s p-t-s vertically-centered"><img alt="C plus plus" class="image-responsive image-responsive--center" height="87" src="/images/librariesprovider15/default-album/logos/c_plus_icon.png" width="79"></div></div><div class="col-sm-12 col-md-9 col-lg-9 m-b-m"><div class="table-1 body-copy"><p class="body-copy--bold">C ++</p><table><tbody><tr><th>Dec 18, 2015</th><td>Version 1.1.0</td></tr><tr><th>Release notes</th><td><a href="https://media.questrade.com/iq_downloads/QuestradeTradingAPIcpp.exe" class="tertiary-link ">Download API<span class="tertiary-link__icon tertiary-link__icon--right icon icon__chevron-right"></span></a>
+ </td></tr></tbody></table></div></div><div class="col-sm-12 col-md-3 col-lg-3 m-b-m vertically-centered__parent"><div class="p-b-s p-t-s vertically-centered"><img alt="C sharp" class="image-responsive image-responsive--center" src="/images/librariesprovider15/default-album/logos/c_sharp_icon.png" width="79" height="87"></div></div><div class="col-sm-12 col-md-9 col-lg-9 m-b-m"><div class="table-1 body-copy"><p class="body-copy--bold">C #/Active X</p><table><tbody><tr><th>Dec 18, 2015</th><td>Version 1.1.0</td></tr><tr><th>Release notes</th><td><a href="https://media.questrade.com/iq_downloads/QuestradeTradingAPIcsharp.exe" class="tertiary-link">Download API<span class="tertiary-link__icon tertiary-link__icon--right icon icon__chevron-right"></span></a>
+ </td></tr></tbody></table></div></div></div></div></div>    
+
+</div>
+<div >
+    <div ><div class="expand-off-grid content-block-1 primary-white"><div class="grid"><div class="col-sm-12 col-md-7 col-lg-7 content-block-2__left"><div class="content-block-2__bleeding-image lazy-img lazy-img--simple lazy-img--hidden" data-src="/images/librariesprovider15/default-album/api/women-at-desk-looking-at-computer_desktop.png" data-src-medium="/images/librariesprovider15/default-album/api/women-at-desk-looking-at-computer_tablet.png" data-src-small="/images/librariesprovider15/default-album/api/women-at-desk-looking-at-computer_mobile.png"></div></div><div class="col-sm-12 col-md-5 col-lg-5 vertically-centered__parent content-block-2__right"><div class="p-b-l p-t-l vertically-centered"><h2 class="heading-2 m-b-m">Already a Questrade client?</h2><p class="body-copy">Create your first application using your Questrade account.</p><div><a class="primary-btn m-t-m" href="/api/documentation/getting-started" aria-label="Getting Started">Create your app</a></div></div></div></div></div></div>    
+
+</div>
+<div >
+    <div ><div class="expand-off-grid content-block-1 primary-white"><div class="grid"><div class="col-sm-12 col-md-5 col-lg-5 vertically-centered__parent content-block-1__left"><div class="p-b-m p-t-m vertically-centered"><h2 class="heading-2 m-b-s">Integrate your application with Questrade API</h2><div><a class="primary-btn m-t-m" href="/cdn-cgi/l/email-protection#d2f2b3a2bba1a7a2a2bda0a692a3a7b7a1a6a0b3b6b7fcb1bdbf" aria-label="Email (opens in a new tab)">Become a partner</a></div></div></div><div class=" col-sm-12 col-md-7 col-lg-7 content-block-1__right"><div class="content-block-1__bleeding-image lazy-img lazy-img--simple lazy-img--hidden" data-src="/images/librariesprovider15/default-album/api/developer-on-multiple-screens_desktop.png" data-src-medium="/images/librariesprovider15/default-album/api/developer-on-multiple-screens_tablet.png" data-src-small="/images/librariesprovider15/default-album/api/developer-on-multiple-screens_mobile.png"></div></div></div></div></div>    
+
+</div>
+<div >
+    <div ><div class="expand-off-grid p-t-l p-b-l tone-lightgrey-background product-nav-section" id="support"><h3 class="heading-2 m-b-m text-center">Support</h3><div class="grid m-b-m justify-center"><div class="col-lg-4 col-md-4 col-sm-12 m-b-m"><h4 class="body-copy body-copy--bold">Report an issue</h4><p class="body-copy">Have questions about Questrade's API? Tell us how we can help, send us an email.</p><a class="tertiary-link m-t-s" href="/cdn-cgi/l/email-protection#95b5f4e5fce6e0e5e5fae7e1d5e4e0f0e6e1e7f4f1f0bbf6faf8" aria-label="Email (opens in a new tab)">Get Started<span class="tertiary-link__icon tertiary-link__icon--right icon icon__chevron-right"></span></a>
+ </div><div class="col-lg-4 col-md-4 col-sm-12 m-b-m"><h4 class="body-copy body-copy--bold">Request a feature</h4><p class="body-copy">We want your ideas on how we can improve our API. If you have a suggestion for a minor tweak, a major overhaul, or something brand new, please share it with us.
+            </p><a class="tertiary-link m-t-s" href="/cdn-cgi/l/email-protection#e4c485948d979194948b9690a4959181979096858081ca878b89" aria-label="Email (opens in a new tab)">Get Started<span class="tertiary-link__icon tertiary-link__icon--right icon icon__chevron-right"></span></a>
+ </div></div></div></div>    
+
+</div>
+<div >
+    <div ><div class="expand-off-grid p-t-m p-b-m tone-mediumgrey-background"><p class="caption-legal p-b-s">If you are using an api app developed by a third party, you are required to read, understand and accept the end-user license agreement for application program interface. If you are utilizing api access for an api-enabled app you built, you are required
+        to read, understand and accept the Questrade personal application program interface ("api") license agreement ("license agreement"). This agreement can be found below. You may be bound by both agreements.
+    </p><a class="tertiary-link" href="/learning" aria-label="Learning">See All<span class="tertiary-link__icon tertiary-link__icon--right icon icon__chevron-right"></span></a>
+</div></div>    
+
+</div>
+</div>
+
+</div>
+</div>
+</main><footer>
+    <div id="Contentplaceholder1_T006A136C049_Col00" class="sf_colsIn footer-seo" data-sf-element="footer content" data-placeholder-label="footer content">
+<div >
+    <div ><div class="footer-seo__container-nav"><div class="footer-seo__container-nav--wrapper padding-sm-800"><div class="grid-layout grid-layout--footer-full-width"><div class="grid-col-sm-1 grid-col-xs-md-8 grid-col-md-8 grid-col-lg-3"><a class="lazy-img lazy-img--simple  footer-seo__logo " href="/" aria-label="Questrade Home"><img alt="Questrade logo in footer" src="/images/librariesprovider11/default-album/logos/questrade-logo.svg" width="150" height="70"></a>
+ <div class=" footer-seo__container-nav--wrapper__content"><p class="footer-seo__legal--copy margin-top-lg-600 margin-top-500 margin-bottom-lg-600 margin-bottom-500 color-grey-600">We care deeply about making Canadians much more financially successful and secure</p></div><a data-qt-label="Open an account button" href="/account-selection" data-qt="btnOpenAnAccount" aria-label="Open an account" data-qt-event="oaa" class="btn-primary btn-primary--light btn--s btn--w-full--xs" data-qt-ui="btn:footer|open an account">Open an account
+</a>
+ </div><div class="grid-col-sm-1 grid-col-xs-md-3 grid-col-md-3 grid-col-lg-3 "><div class="footer-seo__tabs-button color-grey-700 padding-top-sm-700 padding-bottom-400 padding-bottom-md-300">Trade &amp; Invest</div><div class="footer-seo__tabs--content"><ul class="footer-seo__tabs--list"><li class="footer-seo__tabs--item"><a class="footer-seo__tabs--link color-grey-700 " href="/self-directed-investing">Self-directed investing</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/questwealth-portfolios" aria-label="Questwealth Portfolios">Managed
+ Investing</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/self-directed-investing/active-trader" aria-label="Active Trader">For Active Traders</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/self-directed-investing/investment-products" aria-label="Investment products">Investment products</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/self-directed-investing/trading-platforms" aria-label="Trading platforms">Trading
+ platforms</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/pricing" aria-label="Pricing">pricing</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/learning" aria-label="Learning">Learning Centre</a>
+ </li></ul></div></div><div class="grid-col-sm-1 grid-col-xs-md-3 grid-col-md-3 grid-col-lg-3 "><div class="footer-seo__tabs-button color-grey-700 padding-bottom-400 padding-bottom-md-300">Account Types
+                </div><div class="footer-seo__tabs--content"><ul class="footer-seo__tabs--list"><li class="footer-seo__tabs--item"><a class="footer-seo__tabs--link color-grey-700 " href="/account-types/tfsa" aria-label="Tax-Free Savings Account (TFSA)">Tax-Free Savings
+    Account (TFSA)</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/account-types/rrsp" aria-label="Registered Retirement Savings Plan (RRSP)">Registered Retirement Savings
+    Plan (RRSP)</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/account-types/fhsa" aria-label="First Home Saving Account (FHSA)">First Home Saving Account (FHSA)</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/account-types/resp" aria-label="Registered Education Savings Plan (RESP)">Registered Education Savings Plan
+    (RESP)</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/account-types" aria-label="Account types">All account types</a>
+ </li></ul></div></div><div class="grid-col-sm-1 grid-col-xs-md-3  grid-col-md-3 grid-col-lg-3 footer-seo--affiliation "><div class="footer-seo__tabs-button color-grey-700 padding-bottom-400 padding-bottom-md-300">Company
+ </div><div class="footer-seo__tabs--content"><ul class="footer-seo__tabs--list"><li class="footer-seo__tabs--item"><a class="footer-seo__tabs--link color-grey-700 " href="/about-us" aria-label="About Us">About Us</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/affiliates/overview" aria-label="Affiliate Program">Affiliate Program</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700" href="/about-us/press-and-media" aria-label="Press &amp; Media">Press &amp; Media</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/partner-centre" aria-label="Partners Centre">Partners Centre</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/about-us/careers" aria-label="Careers">Careers</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " id="accessabilityWidget" tabindex="0" aria-label="Click for Accessibility">Accessibility Tool</a>
+ </li><li class="footer-seo__tabs--item padding-top-300"><a class="footer-seo__tabs--link color-grey-700 " href="/learning/support" aria-label="Support">Support</a>
+ </li></ul></div></div><div class="grid-col-sm-1 grid-col-xs-md-8 grid-col-md-8 grid-col-lg-3 "><div class="footer-seo__logos padding-top-sm-400"><a href="https://www.ciro.ca/" aria-label="Canadian Investment Regulatory Organization (CIRO) (opens in a new tab)" target="_blank" rel="noopener noreferrer"><img class="lazy-img lazy-img--simple footer-seo__logos--item " src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/images/librariesprovider11/default-album/logos/clip-path-group-tablet_mobile.svg "></a>
+ <a href="https://www.cipf.ca/" aria-label="CIPF (opens in a new tab)" target="_blank" rel="noopener noreferrer"><img class="lazy-img lazy-img--simple footer-seo__logos--item padding-top-lg-500 padding-left-md-700 padding-left-sm-800" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/images/librariesprovider11/default-album/logos/canadian-investor-protection-fund-cipf-vector-logo-2023-tablet_mobile.svg" alt="Canadian Investor Protection Fund - CIPF logo"></a>
+ </div></div></div></div><div class="footer-seo__container-discl"><div class="footer-seo__container-discl--wrapper padding-to-sm-500"><ul class="footer-seo__legal--list"><li class="footer-seo__legal--item "><a class="footer-seo__legal--item__link" href="/disclosure/legal-notice-and-disclosures" aria-label="Legal and Disclosures">Legal notices
+    &amp; disclosures</a>
+ </li><li class="footer-seo__legal--item"><a class="footer-seo__legal--item__link" href="/disclosure/privacy-policy-and-security/privacy-centre" aria-label="Privacy Centre">Privacy &amp; Security</a>
+ </li><li class="footer-seo__legal--item"><a class="footer-seo__legal--item__link" href="/sitemap" aria-label="Site map">Site map</a>
+ </li><li class="footer-seo__legal--item"><a class="footer-seo__legal--item__link" href="/disclosure/legal-notice-and-disclosures/2018/07/26/accessibility" aria-label="Accessibility Statement">Accessibility Statement</a>
+ </li><li class="footer-seo__legal--item"><a class="footer-seo__legal--item__link" href="https://www.ciro.ca/office-investor/know-your-advisor-advisor-report" aria-label="CIRO AdvisorReport">CIRO AdvisorReport</a>
+ </li></ul><p class="footer-seo__legal--copy padding-bottom-500">Questrade Wealth Management Inc. (QWM) and Questrade, Inc. are wholly owned subsidiaries of Questrade Financial Group Inc. Questrade, Inc. is a registered investment dealer, a member of the Canadian Investment Regulatory Organization (CIRO)
+                and a member of the Canadian Investor Protection Fund (CIPF), the benefits of which are limited to the activities undertaken by Questrade, Inc. QWM is not a member of CIRO or the CIPF. Questrade, Inc. provides administrative, trade execution,
+                custodial and reporting services to you. QWM is a registered Portfolio Manager, Investment Fund Manager, and Exempt Market Dealer and is responsible for managing your account and the investment portfolios within it by providing trade instructions
+                to Questrade, Inc. Questwealth Portfolios® is a service provided by QWM.</p><p class="footer-seo__legal--copy padding-bottom-500 padding-bottom-md-600">This webpage is being provided to you for information purposes only, and should not be used or construed as investment, tax or financial advice.</p><div class="footer-seo__legal"><p class=" footer-seo__legal--copy footer-seo__legal--copy__rights padding-bottom-sm-500 padding-bottom-md-500">&copy; <span class="footer__copyright-year">2024</span>, Questrade, Inc. All Rights Reserved.
+                </p><div class=" footer-seo__legal--icons"><a class=" footer-seo__legal--icons__item" href=" https://www.instagram.com/questrade" target="_blank" rel="noopener noreferrer" aria-label="Instagram (opens in a new tab)"><span class="instagram-20 margin-right-500"></span></a>
+ <a class=" footer-seo__legal--icons__item" href="https://www.tiktok.com/@questrade" target="_blank" rel="noopener noreferrer" aria-label="TikTok (opens in a new tab)"><span class="tiktok-20 margin-right-500"></span></a>
+ <a class=" footer-seo__legal--icons__item" href="https://www.linkedin.com/company/questrade" target="_blank" rel="noopener noreferrer" aria-label="Linkedin (opens in a new tab)"><span class="linkedin-20 margin-right-500"></span></a>
+ <a class=" footer-seo__legal--icons__item" href="https://www.youtube.com/user/Questrade" target="_blank" rel="noopener noreferrer" aria-label="Youtube (opens in a new tab)"><span class="youtube-20 margin-right-500"></span></a>
+ <a class=" footer-seo__legal--icons__item" href="https://twitter.com/questrade" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter) (opens in a new tab)"><span class="twitter-20 margin-right-500"></span></a>
+ <a class=" footer-seo__legal--icons__item" href="https://www.facebook.com/questrade" target="_blank" rel="noopener noreferrer" aria-label="Facebook (opens in a new tab)"><span class="facebook-20 "></span></a>
+ </div></div></div></div></div></div>    
+
+</div></div>
+</footer>
+
+
+
+
+
+
+
+
+ <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/javascript">
+function addSpanTag() {
+  var restOpLink = document.querySelectorAll('a.navigation-sidebar__item');
+  var i;
+
+  for (i = 0; i < restOpLink.length; i++) {
+    var words = restOpLink[i].innerHTML.split(' ');
+    var allGet = words.indexOf('GET');
+    var allLowercaseGet = words.indexOf('Get');
+    var allPost = words.indexOf('POST');
+    var allDelete = words.indexOf('DELETE');
+    var acntCalls = words.indexOf('Account');
+    var mktCalls = words.indexOf('Market');
+
+    if (allGet >= 0 || allPost >= 0 || allDelete >= 0 || allLowercaseGet >= 0) {
+      restOpLink[i].innerHTML = '<span>' + words[0] + '</span> ' + words[1];
+    }
+
+    if (acntCalls >= 0 || mktCalls >= 0) {
+      restOpLink[i].classList.toggle('sideNavTitles');
+    }
+  }
+
+  var enumeration = document.querySelectorAll('.navigation-sidebar__dropdown > li > a');
+  var beforeLastChild = enumeration[enumeration.length - 2];
+  beforeLastChild.className += ' sideNavTitles';
+}
+
+addSpanTag();
+</script><script type="text/javascript">
+function selectActiveNav() {
+  var mainSideNav = document.querySelector('.navigation-sidebar__dropdown');
+  var getNavLinks = mainSideNav.getElementsByClassName('navigation-sidebar__link');
+
+  var _loop = function _loop(i) {
+    getNavLinks[i].addEventListener("click", function () {
+      var current = document.getElementsByClassName("active");
+
+      if (current.length > 0) {
+        current[0].className = current[0].className.replace(" active", "");
+      } else if (document.location.href.indexOf(getNavLinks[i].href) >= 0) {
+        getNavLinks[i].className = ' active';
+      }
+    });
+  };
+
+  for (var i = 0; i < getNavLinks.length; i++) {
+    _loop(i);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', selectActiveNav);
+</script><script type="text/javascript">
+(function () {
+  var link = document.createElement('a');
+  var linkText = document.createTextNode("Developer Platform");
+  link.appendChild(linkText);
+  link.setAttribute('href', '/api');
+  link.setAttribute('class', 'mega-header__wm-logo');
+
+  function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+  }
+
+  var parent = document.querySelector('.mega-header__logo');
+  insertAfter(link, parent);
+})();
+</script> <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b1060bc1ee83cce',t:'MTc2NjI0NjY5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body> </html>

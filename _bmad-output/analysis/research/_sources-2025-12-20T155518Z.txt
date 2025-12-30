@@ -1,0 +1,17 @@
+# Canada
+https://www.canada.ca/en/financial-consumer-agency/services/banking/open-banking.html
+https://www.bankofcanada.ca/rates/exchange/
+https://www.cmhc-schl.gc.ca/professionals/housing-markets-data-and-research/housing-data/data-tables/rental-market
+https://www150.statcan.gc.ca/n1/en/type/data
+
+# France / EU
+https://www.ecb.europa.eu/stats/eurofxref/
+https://www.insee.fr/en/statistiques
+https://www.data.gouv.fr/en/
+https://www.service-public.fr/particuliers/vosdroits/F1311?lang=en
+
+# Aggregators / connectivity (vendor docs)
+https://www.wealthica.com/
+https://www.powens.com/
+https://www.truelayer.com/
+https://tink.com/

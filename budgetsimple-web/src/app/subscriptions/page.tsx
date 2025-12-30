@@ -1,0 +1,613 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+interface SubscriptionCandidate {
+  id: string
+  merchant: string
+  categoryId?: string
+  estimatedMonthlyAmount: number
+  frequency: 'monthly' | 'bi-weekly' | 'quarterly' | 'annual'
+  firstDetectedDate: string
+  confidenceScore: number
+  status: 'pending' | 'confirmed' | 'rejected'
+  occurrenceCount: number
+  averageAmount: number
+  variancePercentage: number
+}
+
+export default function SubscriptionsPage() {
+  const [candidates, setCandidates] = useState<SubscriptionCandidate[]>([])
+  const [loading, setLoading] = useState(true)
+  const [detecting, setDetecting] = useState(false)
+  const [selectedCandidate, setSelectedCandidate] = useState<SubscriptionCandidate | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [detectionMessage, setDetectionMessage] = useState<string | null>(null)
+  const [detectionMonths, setDetectionMonths] = useState(6)
+
+  useEffect(() => {
+    loadCandidates()
+  }, [])
+
+  const loadCandidates = async () => {
+    try {
+      setLoading(true)
+      const url = `${API_BASE}/api/subscriptions/candidates?status=pending`
+      console.log('Fetching candidates from:', url)
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add mode and credentials for CORS
+        mode: 'cors',
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+      }
+      
+      const data = await response.json()
+      console.log('Candidates loaded:', data)
+      setCandidates(data.candidates || [])
+    } catch (error: any) {
+      console.error('Error loading candidates:', error)
+      // Show user-friendly error message
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        console.error('Connection error - is the backend API running on', API_BASE, '?')
+      }
+      setCandidates([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleConfirm = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/subscriptions/${id}/confirm`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'demo-user' })
+      })
+      if (response.ok) {
+        await loadCandidates()
+        setSelectedCandidate(null)
+      }
+    } catch (error) {
+      console.error('Error confirming subscription:', error)
+    }
+  }
+
+  const handleReject = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/subscriptions/${id}/reject`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'demo-user' })
+      })
+      if (response.ok) {
+        await loadCandidates()
+        setSelectedCandidate(null)
+      }
+    } catch (error) {
+      console.error('Error rejecting subscription:', error)
+    }
+  }
+
+  const handleUpdate = async (id: string, updates: Partial<SubscriptionCandidate>) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/subscriptions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'demo-user', ...updates })
+      })
+      if (response.ok) {
+        await loadCandidates()
+        setSelectedCandidate(null)
+      }
+    } catch (error) {
+      console.error('Error updating subscription:', error)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount)
+  }
+
+  const formatConfidence = (score: number) => {
+    return `${(score * 100).toFixed(0)}%`
+  }
+
+  const handleDetect = async () => {
+    try {
+      setDetecting(true)
+      setDetectionMessage(null)
+
+      // Calculate date range based on selected months
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setMonth(startDate.getMonth() - detectionMonths)
+
+      const url = `${API_BASE}/api/subscriptions/detect`
+      const requestBody = {
+        userId: 'demo-user',
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        minOccurrences: 2,
+        amountVarianceTolerance: 0.05
+      }
+
+      console.log('Detecting subscriptions:', url, requestBody)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        // Add mode and credentials for CORS
+        mode: 'cors',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: errorText || 'Unknown error' }
+        }
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const detectedCount = data.candidates?.length || 0
+      const totalTransactions = data.metadata?.totalTransactions || 0
+
+      console.log('Detection result:', { detectedCount, totalTransactions, candidates: data.candidates })
+
+      if (detectedCount > 0) {
+        setDetectionMessage(`Successfully detected ${detectedCount} subscription candidate${detectedCount !== 1 ? 's' : ''}! Review them below.`)
+        // Reload candidates to show the newly detected ones
+        await loadCandidates()
+        // Auto-dismiss success message after 5 seconds
+        setTimeout(() => setDetectionMessage(null), 5000)
+      } else {
+        // Provide more helpful error message
+        let message = 'No subscription patterns detected. '
+        if (totalTransactions === 0) {
+          message += 'No transactions found in the selected date range. Please check your date range and ensure you have expense transactions.'
+        } else {
+          message += `Found ${totalTransactions} transactions but no recurring patterns. Try: (1) Expanding the date range to include more months, (2) Ensuring transactions have merchant names, (3) Checking if subscriptions are already categorized.`
+        }
+        setDetectionMessage(message)
+      }
+    } catch (error: any) {
+      console.error('Error detecting subscriptions:', error)
+      let errorMsg = error.message || 'Failed to detect subscriptions.'
+      
+      // Provide helpful error messages
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        errorMsg = `Cannot connect to backend API at ${API_BASE}. Make sure the backend server is running on port 3001.`
+      }
+      
+      setDetectionMessage(`Error: ${errorMsg}`)
+    } finally {
+      setDetecting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="view" data-view="subscriptions">
+        <div className="page-head">
+          <h1>Subscriptions</h1>
+          <p className="muted">Loading...</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="view" data-view="subscriptions">
+      <div className="page-head">
+        <div>
+          <h1>Subscriptions</h1>
+          <p className="muted">Review and manage your recurring subscriptions</p>
+        </div>
+        <button className="btn btn-accent" onClick={() => setShowAddForm(true)}>
+          Add Subscription
+        </button>
+      </div>
+
+      {candidates.length === 0 ? (
+        <section className="panel">
+          <div className="panel-body">
+            <p className="muted">No pending subscription candidates. Run detection to find subscriptions from your transaction history.</p>
+            <div className="small muted" style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+              <strong>API Endpoint:</strong> {API_BASE}
+              <br />
+              Make sure the backend server is running: <code>cd budgetsimple-api && npm run dev</code>
+            </div>
+            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+              <div className="row" style={{ gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                <label className="label" style={{ margin: 0 }}>
+                  Analyze last
+                </label>
+                <select
+                  className="select"
+                  value={detectionMonths}
+                  onChange={(e) => setDetectionMonths(parseInt(e.target.value))}
+                  disabled={detecting}
+                  style={{ width: 'auto' }}
+                >
+                  <option value={3}>3 months</option>
+                  <option value={6}>6 months</option>
+                  <option value={12}>12 months</option>
+                  <option value={24}>24 months</option>
+                </select>
+                <label className="label" style={{ margin: 0 }}>
+                  of transactions
+                </label>
+              </div>
+              <button 
+                className="btn btn-accent" 
+                onClick={handleDetect}
+                disabled={detecting}
+              >
+                {detecting ? 'Detecting...' : 'Detect Subscriptions'}
+              </button>
+            </div>
+            {detectionMessage && (
+              <div 
+                className={detectionMessage.startsWith('Error') ? 'small' : 'small muted'}
+                style={{ 
+                  marginTop: '12px',
+                  padding: '8px 12px',
+                  backgroundColor: detectionMessage.startsWith('Error') ? '#fee' : '#efe',
+                  borderRadius: '4px',
+                  color: detectionMessage.startsWith('Error') ? '#c33' : '#3c3'
+                }}
+              >
+                {detectionMessage}
+                <button
+                  className="btn btn-quiet"
+                  onClick={() => setDetectionMessage(null)}
+                  style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+            <div className="small muted" style={{ marginTop: '12px' }}>
+              <p>Detection analyzes your transactions to find recurring patterns (same merchant, similar amount, regular intervals).</p>
+              <p>Requires at least 2 occurrences with consistent amounts (±5% variance allowed).</p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <div className="grid">
+          <section className="panel">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Pending Candidates</div>
+                <div className="panel-sub">{candidates.length} subscription{candidates.length !== 1 ? 's' : ''} detected</div>
+              </div>
+              <button 
+                className="btn btn-quiet" 
+                onClick={handleDetect}
+                disabled={detecting}
+                title="Run detection again to find more subscriptions"
+              >
+                {detecting ? 'Detecting...' : 'Detect Again'}
+              </button>
+            </div>
+            <div className="panel-body">
+              {detectionMessage && (
+                <div 
+                  className={detectionMessage.startsWith('Error') ? 'small' : 'small muted'}
+                  style={{ 
+                    marginBottom: '16px',
+                    padding: '8px 12px',
+                    backgroundColor: detectionMessage.startsWith('Error') ? '#fee' : '#efe',
+                    borderRadius: '4px',
+                    color: detectionMessage.startsWith('Error') ? '#c33' : '#3c3'
+                  }}
+                >
+                  {detectionMessage}
+                </div>
+              )}
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Merchant</th>
+                      <th>Amount</th>
+                      <th>Frequency</th>
+                      <th>Confidence</th>
+                      <th>Occurrences</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {candidates.map((candidate) => (
+                      <tr key={candidate.id}>
+                        <td>{candidate.merchant}</td>
+                        <td>{formatCurrency(candidate.estimatedMonthlyAmount)}</td>
+                        <td>{candidate.frequency}</td>
+                        <td>{formatConfidence(candidate.confidenceScore)}</td>
+                        <td>{candidate.occurrenceCount}</td>
+                        <td>
+                          <div className="row" style={{ gap: '8px' }}>
+                            <button
+                              className="btn btn-quiet"
+                              onClick={() => setSelectedCandidate(candidate)}
+                            >
+                              Review
+                            </button>
+                            <button
+                              className="btn btn-accent"
+                              onClick={() => handleConfirm(candidate.id)}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="btn btn-quiet"
+                              onClick={() => handleReject(candidate.id)}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          {selectedCandidate && (
+            <section className="panel">
+              <div className="panel-head">
+                <div>
+                  <div className="panel-title">Subscription Details</div>
+                  <div className="panel-sub">{selectedCandidate.merchant}</div>
+                </div>
+                <button className="btn btn-quiet" onClick={() => setSelectedCandidate(null)}>
+                  Close
+                </button>
+              </div>
+              <div className="panel-body">
+                <SubscriptionDetail
+                  candidate={selectedCandidate}
+                  onUpdate={(updates) => handleUpdate(selectedCandidate.id, updates)}
+                  onConfirm={() => handleConfirm(selectedCandidate.id)}
+                  onReject={() => handleReject(selectedCandidate.id)}
+                />
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {showAddForm && (
+        <AddSubscriptionForm
+          onClose={() => setShowAddForm(false)}
+          onSuccess={() => {
+            setShowAddForm(false)
+            loadCandidates()
+          }}
+        />
+      )}
+    </section>
+  )
+}
+
+function SubscriptionDetail({
+  candidate,
+  onUpdate,
+  onConfirm,
+  onReject
+}: {
+  candidate: SubscriptionCandidate
+  onUpdate: (updates: Partial<SubscriptionCandidate>) => void
+  onConfirm: () => void
+  onReject: () => void
+}) {
+  const [merchant, setMerchant] = useState(candidate.merchant)
+  const [amount, setAmount] = useState(candidate.estimatedMonthlyAmount)
+  const [frequency, setFrequency] = useState(candidate.frequency)
+
+  const handleSave = () => {
+    onUpdate({
+      merchant,
+      estimatedMonthlyAmount: amount,
+      frequency
+    })
+  }
+
+  return (
+    <div>
+      <div className="form">
+        <div className="row">
+          <label className="label">Merchant</label>
+          <input
+            className="input"
+            type="text"
+            value={merchant}
+            onChange={(e) => setMerchant(e.target.value)}
+          />
+        </div>
+        <div className="row">
+          <label className="label">Monthly Amount</label>
+          <input
+            className="input"
+            type="number"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(parseFloat(e.target.value))}
+          />
+        </div>
+        <div className="row">
+          <label className="label">Frequency</label>
+          <select
+            className="select"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as any)}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="bi-weekly">Bi-weekly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annual">Annual</option>
+          </select>
+        </div>
+        <div className="row">
+          <div className="small muted">
+            Confidence: {(candidate.confidenceScore * 100).toFixed(0)}% | 
+            Occurrences: {candidate.occurrenceCount} | 
+            First detected: {new Date(candidate.firstDetectedDate).toLocaleDateString()}
+          </div>
+        </div>
+        <div className="row" style={{ gap: '8px', marginTop: '16px' }}>
+          <button className="btn btn-accent" onClick={handleSave}>
+            Save & Confirm
+          </button>
+          <button className="btn" onClick={onConfirm}>
+            Confirm as-is
+          </button>
+          <button className="btn btn-quiet" onClick={onReject}>
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AddSubscriptionForm({
+  onClose,
+  onSuccess
+}: {
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [merchant, setMerchant] = useState('')
+  const [amount, setAmount] = useState('')
+  const [frequency, setFrequency] = useState<'monthly' | 'bi-weekly' | 'quarterly' | 'annual'>('monthly')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${API_BASE}/api/subscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'demo-user',
+          merchant,
+          estimatedMonthlyAmount: parseFloat(amount),
+          frequency
+        })
+      })
+
+      if (response.ok) {
+        onSuccess()
+      } else {
+        alert('Error creating subscription')
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error)
+      alert('Error creating subscription')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <section className="panel" style={{ maxWidth: '500px', width: '90%' }}>
+        <div className="panel-head">
+          <div>
+            <div className="panel-title">Add Subscription</div>
+            <div className="panel-sub">Create a subscription manually</div>
+          </div>
+          <button className="btn btn-quiet" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <div className="panel-body">
+          <form className="form" onSubmit={handleSubmit}>
+            <div className="row">
+              <label className="label">Merchant</label>
+              <input
+                className="input"
+                type="text"
+                required
+                value={merchant}
+                onChange={(e) => setMerchant(e.target.value)}
+                placeholder="e.g., Netflix"
+              />
+            </div>
+            <div className="row">
+              <label className="label">Monthly Amount</label>
+              <input
+                className="input"
+                type="number"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="row">
+              <label className="label">Frequency</label>
+              <select
+                className="select"
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value as any)}
+              >
+                <option value="monthly">Monthly</option>
+                <option value="bi-weekly">Bi-weekly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annual">Annual</option>
+              </select>
+            </div>
+            <div className="row" style={{ gap: '8px', marginTop: '16px' }}>
+              <button className="btn btn-accent" type="submit" disabled={loading}>
+                {loading ? 'Creating...' : 'Create Subscription'}
+              </button>
+              <button className="btn btn-quiet" type="button" onClick={onClose}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  )
+}
+

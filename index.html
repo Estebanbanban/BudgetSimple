@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>budgetsimple</title>
+  <link rel="stylesheet" href="styles.css?v=26" />
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <button class="brand brand-btn" id="brandHome" type="button" title="Go to dashboard">
+        <span class="logo" aria-hidden="true"></span>
+        <div>
+          <div class="brand-name">budgetsimple</div>
+          <div class="brand-sub">Local-first budget & investing tracker</div>
+        </div>
+      </button>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btnToggleNav" type="button" title="Toggle sidebar" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M4 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Zm0 6a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Zm0 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z" />
+          </svg>
+        </button>
+        <select id="currencySelect" class="select select-compact" aria-label="Currency">
+          <option value="USD" selected>USD</option>
+          <option value="CAD">CAD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="CHF">CHF</option>
+          <option value="JPY">JPY</option>
+        </select>
+        <button class="icon-btn" id="btnOpenRange" type="button" title="Change range" aria-label="Change range">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 6.5v13A2.5 2.5 0 0 1 19.5 22h-15A2.5 2.5 0 0 1 2 19.5v-13A2.5 2.5 0 0 1 4.5 4H6V3a1 1 0 0 1 1-1Zm12.5 6h-15a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5ZM7 12h4v4H7v-4Z" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="btnQuickAdd" type="button" title="Quick add" aria-label="Quick add">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="btnExportSummaryCsv" type="button" title="Export" aria-label="Export summary CSV">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 3a1 1 0 0 1 1 1v9.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="btnSetup" type="button" title="Settings" aria-label="Open settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M19.14 12.94a7.77 7.77 0 0 0 .05-.94 7.77 7.77 0 0 0-.05-.94l2.03-1.58a1 1 0 0 0 .23-1.3l-1.92-3.32a1 1 0 0 0-1.2-.45l-2.39.96a7.5 7.5 0 0 0-1.63-.94l-.36-2.54A1 1 0 0 0 12.9 1h-3.8a1 1 0 0 0-.99.86l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a1 1 0 0 0-1.2.45L.6 8.15a1 1 0 0 0 .23 1.3l2.03 1.58c-.03.31-.05.62-.05.94s.02.63.05.94L.83 14.5a1 1 0 0 0-.23 1.3l1.92 3.32a1 1 0 0 0 1.2.45l2.39-.96c.51.4 1.05.71 1.63.94l.36 2.54a1 1 0 0 0 .99.86h3.8a1 1 0 0 0 .99-.86l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96a1 1 0 0 0 1.2-.45l1.92-3.32a1 1 0 0 0-.23-1.3l-2.03-1.56ZM11 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
+          </svg>
+        </button>
+        <button class="icon-btn icon-btn-danger" id="btnResetAll" type="button" title="Reset"
+          aria-label="Reset all data">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9 3a1 1 0 0 0-1 1v1H5a1 1 0 1 0 0 2h1v13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7h1a1 1 0 1 0 0-2h-3V4a1 1 0 0 0-1-1H9Zm1 4a1 1 0 0 1 1 1v10a1 1 0 1 1-2 0V8a1 1 0 0 1 1-1Zm5 1v10a1 1 0 1 1-2 0V8a1 1 0 0 1 2 0Z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <nav class="nav" aria-label="Primary">
+      <button class="nav-edge-toggle" id="navEdgeToggle" type="button" aria-label="Toggle sidebar"
+        title="Toggle sidebar">
+        <svg class="nav-edge-ico nav-edge-ico-expand" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M15.5 19a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 0-1.4l6-6a1 1 0 1 1 1.4 1.4L11.91 12l4.29 4.3A1 1 0 0 1 15.5 19Z" />
+        </svg>
+        <svg class="nav-edge-ico nav-edge-ico-collapse" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M8.5 19a1 1 0 0 1-.7-1.7l4.29-4.3-4.3-4.3a1 1 0 0 1 1.42-1.4l6 6a1 1 0 0 1 0 1.4l-6 6c-.2.2-.45.3-.71.3Z" />
+        </svg>
+      </button>
+      <div class="nav-scroll" id="navScroll" aria-label="Sidebar">
+        <button class="nav-item is-active" data-route="dashboard" type="button" title="Dashboard"
+          aria-label="Dashboard">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M4 13a1 1 0 0 1 1-1h5v8H5a1 1 0 0 1-1-1v-6Zm10-9h5a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-5V4Zm-9 0h5v6H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" />
+            </svg></span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-route="import" type="button" title="Import" aria-label="Import">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4A1 1 0 1 1 8.6 10.3l2.4 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z" />
+            </svg></span>
+          <span class="nav-label">Import</span>
+        </button>
+        <button class="nav-item" data-route="income" type="button" title="Income" aria-label="Income">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 3a1 1 0 0 1 1 1v12.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4A1 1 0 1 1 8.6 14.3l2.4 2.3V4a1 1 0 0 1 1-1Z" />
+            </svg></span>
+          <span class="nav-label">Income</span>
+        </button>
+        <button class="nav-item" data-route="investing" type="button" title="Investing" aria-label="Investing">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M4 19a1 1 0 0 1 1-1h2V9H5a1 1 0 0 1 0-2h3a1 1 0 0 1 1 1v10h2V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13h2v-7a1 1 0 0 1 2 0v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
+            </svg></span>
+          <span class="nav-label">Investing</span>
+        </button>
+        <button class="nav-item" data-route="envelopes" type="button" title="Envelopes" aria-label="Envelopes">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 2a7 7 0 0 1 7 7c0 2.22-1.05 4.22-2.7 5.5V21a1 1 0 0 1-1.64.77L12 19.5l-2.66 2.27A1 1 0 0 1 7.7 21v-6.5A6.98 6.98 0 0 1 5 9a7 7 0 0 1 7-7Zm0 2a5 5 0 0 0-3.5 8.57 1 1 0 0 1 .2.61v5.66l1.66-1.41a1 1 0 0 1 1.28 0l1.66 1.41v-5.66a1 1 0 0 1 .2-.61A5 5 0 0 0 12 4Z" />
+            </svg></span>
+          <span class="nav-label">Envelopes</span>
+        </button>
+        <button class="nav-item" data-route="budgets" type="button" title="Budgets" aria-label="Budgets">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Zm2 0v10h12V7H6Zm2 2h8v2H8V9Zm0 4h6v2H8v-2Z" />
+            </svg></span>
+          <span class="nav-label">Budgets</span>
+        </button>
+        <button class="nav-item" data-route="transactions" type="button" title="Transactions" aria-label="Transactions">
+          <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path
+                d="M6 4h12a2 2 0 0 1 2 2v2H4V6a2 2 0 0 1 2-2Zm-2 6h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Zm4 3a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2H8Z" />
+            </svg></span>
+          <span class="nav-label">Transactions</span>
+        </button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <section class="view" data-view="dashboard">
+        <div class="toolbar">
+          <div class="toolbar-group" id="rangeControls" hidden>
+            <label class="label">Range</label>
+            <select id="rangePreset" class="select">
+              <option value="month" selected>This month</option>
+              <option value="quarter">This quarter</option>
+              <option value="ytd">Year to date</option>
+              <option value="12m">Last 12 months</option>
+              <option value="all">All time</option>
+              <option value="custom">Custom</option>
+            </select>
+            <div class="toolbar-group" id="customRangeGroup" hidden>
+              <label class="label">From</label>
+              <input id="rangeFrom" class="input" type="date" />
+              <label class="label">To</label>
+              <input id="rangeTo" class="input" type="date" />
+              <button class="btn" id="applyCustomRange" type="button">Apply</button>
+            </div>
+            <button class="btn btn-quiet" id="btnCloseRange" type="button">Done</button>
+          </div>
+          <div class="toolbar-spacer"></div>
+          <div class="toolbar-group">
+            <button class="btn btn-accent" id="btnClearFilter" type="button" hidden>Clear drilldown</button>
+          </div>
+        </div>
+
+        <div class="cards" id="summaryCards" aria-label="Summary"></div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Expenses by category</div>
+                <div class="panel-sub" id="pieSubtitle">Click a slice to drill into transactions</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-quiet" id="btnExportPiePng" type="button">PNG</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap">
+                <div id="expensePie" class="chart" role="img" aria-label="Expense category pie chart"></div>
+                <div class="chart-empty" id="expensePieEmpty" hidden>No expenses in range</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Month over month</div>
+                <div class="panel-sub">Savings (green) = income - expenses - invested</div>
+              </div>
+              <div class="panel-actions">
+                <label class="toggle">
+                  <input id="momAsPercent" type="checkbox" />
+                  <span>% income</span>
+                </label>
+                <label class="toggle">
+                  <input id="momStacked" type="checkbox" checked />
+                  <span>breakdown</span>
+                </label>
+                <button class="btn btn-quiet" id="btnExportMoMPng" type="button">PNG</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap">
+                <div id="momBars" class="chart" role="img" aria-label="Month over month bar chart"></div>
+                <div class="chart-empty" id="momBarsEmpty" hidden>No data yet</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Investing</div>
+                <div class="panel-sub">Monthly % of income invested + breakdown</div>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-quiet" id="btnExportInvestPng" type="button">PNG</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap">
+                <div id="investBars" class="chart" role="img" aria-label="Investing bar chart"></div>
+                <div class="chart-empty" id="investBarsEmpty" hidden>No investments in range</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Budgets</div>
+                <div class="panel-sub">Monthly progress (alerts at 80%/100%)</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="budgetProgress" class="budget-list" aria-label="Budget progress"></div>
+              <div class="chart-empty" id="budgetEmpty" hidden>No budgets set yet</div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Top merchants</div>
+                <div class="panel-sub">Biggest spenders in range</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table class="table" id="topMerchantsTable"></table>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Daily spending</div>
+                <div class="panel-sub">Last 30 days (expenses only)</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap" style="min-height:220px">
+                <div id="dailySpend" class="chart" role="img" aria-label="Daily spending chart"></div>
+                <div class="chart-empty" id="dailySpendEmpty" hidden>No data yet</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" data-view="import" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Import transactions</h1>
+            <p class="muted">Upload a CSV, map columns, then categorize. Everything stays on your device.</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">1) Upload CSV</div>
+              <div class="panel-sub">Required: date + amount</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="dropzone" id="txDropzone" role="button" tabindex="0" aria-label="Upload transactions CSV">
+              <div class="dropzone-title">Drop your transactions CSV here</div>
+              <div class="dropzone-sub muted">or</div>
+              <div class="row">
+                <input id="txCsvFile" class="input" type="file" accept=".csv,text/csv" hidden />
+                <button class="btn" id="btnChooseTxCsv" type="button">Choose CSV</button>
+                <span class="small muted" id="txAnalyzing" hidden>Analyzing…</span>
+              </div>
+            </div>
+            <div class="small muted" id="txFileNote"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Quick rent</div>
+              <div class="panel-sub">Optional: track rent even if it’s missing from your CSV.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <input id="importRentAmount" class="input" type="number" step="0.01" placeholder="Monthly rent amount" />
+              <select id="importRentMode" class="select" aria-label="Rent mode">
+                <option value="monthly" selected>Monthly</option>
+                <option value="once">Once</option>
+                <option value="off">Budget only</option>
+              </select>
+              <button class="btn" id="btnSaveRentFromImport" type="button">Save</button>
+              <span class="small muted" id="importRentSavedNote"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="mappingPanel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">2) Map columns</div>
+              <div class="panel-sub">Map what exists; use fixed values for anything missing.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="mapping-grid" id="mappingGrid"></div>
+            <div class="row row-gap">
+              <label class="toggle">
+                <input id="inferTypeFromSign" type="checkbox" checked />
+                <span>Infer type from amount sign</span>
+              </label>
+              <label class="toggle">
+                <input id="doNotDeduplicate" type="checkbox" checked />
+                <span>Import everything (do not skip duplicates)</span>
+              </label>
+            </div>
+            <div class="row">
+              <button class="btn" id="btnImportTx" type="button">Import</button>
+              <div class="small muted" id="importResult"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="previewPanel" hidden>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Preview</div>
+              <div class="panel-sub">First 50 rows</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table" id="previewTable"></table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="income" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Income</h1>
+            <p class="muted">Upload an income CSV or add income sources manually.</p>
+          </div>
+        </div>
+
+        <div class="grid income-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Upload income CSV</div>
+                <div class="panel-sub">Required: date + amount</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="dropzone" id="incomeDropzone" role="button" tabindex="0" aria-label="Upload income CSV">
+                <div class="dropzone-title">Drop your income CSV here</div>
+                <div class="dropzone-sub muted">or</div>
+                <div class="row">
+                  <input id="incomeCsvFile" class="input" type="file" accept=".csv,text/csv" hidden />
+                  <button class="btn" id="btnChooseIncomeCsv" type="button">Choose CSV</button>
+                  <button class="btn" id="btnLoadIncomeCsv" type="button" disabled>Preview</button>
+                </div>
+              </div>
+              <div class="small muted" id="incomeFileNote"></div>
+              <div id="incomeMappingWrap" hidden>
+                <div class="divider"></div>
+                <div class="mapping-grid" id="incomeMappingGrid"></div>
+                <div class="row">
+                  <button class="btn" id="btnImportIncome" type="button">Import income</button>
+                  <div class="small muted" id="incomeImportResult"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Manual income</div>
+                <div class="panel-sub">Add sources like “Job”, “Parents”, etc.</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <form id="manualIncomeForm" class="form">
+                <div class="row">
+                  <input id="manualIncomeDate" class="input" type="date" required />
+                  <select id="manualIncomeSourceSelect" class="select" required></select>
+                  <input id="manualIncomeSourceCustom" class="input" type="text" placeholder="Custom source" hidden />
+                  <input id="manualIncomeAmount" class="input" type="number" step="0.01" placeholder="Amount"
+                    required />
+                  <button class="btn" type="submit">Add</button>
+                </div>
+                <div class="small muted">Tip: use positive amounts. Income is never treated as an expense.</div>
+              </form>
+              <div class="table-wrap">
+                <table class="table" id="incomeTable"></table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" data-view="investing" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Investing</h1>
+            <p class="muted">Manual entries now; connectors require a secure cloud backend (see Deploy in footer).</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Connect accounts (coming soon)</div>
+              <div class="panel-sub">Powens (Budget Insight), Plaid, finAPI require server-side OAuth + token storage.
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <button class="btn btn-quiet" id="btnConnectPowens" type="button" disabled>Connect Powens</button>
+              <button class="btn btn-quiet" id="btnConnectPlaid" type="button" disabled>Connect Plaid</button>
+              <button class="btn btn-quiet" id="btnConnectFinapi" type="button" disabled>Connect finAPI</button>
+            </div>
+            <div class="small muted">Enable cloud mode to securely sync accounts and keep secrets off the browser.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Add investment</div>
+              <div class="panel-sub">Use positive amounts; they’ll be tracked as invested outflows.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="investmentForm" class="form">
+              <div class="row">
+                <input id="investmentDate" class="input" type="date" required />
+                <select id="investmentInstrument" class="select" required></select>
+                <input id="investmentInstrumentCustom" class="input" type="text" placeholder="Custom instrument"
+                  hidden />
+                <input id="investmentAmount" class="input" type="number" step="0.01" placeholder="Amount" required />
+                <button class="btn" type="submit">Add</button>
+              </div>
+            </form>
+            <div class="table-wrap">
+              <table class="table" id="investmentTable"></table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Accounts</div>
+              <div class="panel-sub">Used for envelope contributions and (later) investment connectors.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="accountCreateForm" class="form">
+              <div class="row">
+                <input id="accountName" class="input" type="text" placeholder="Account name (e.g., Bank, TFSA, PEA)"
+                  required />
+                <select id="accountKind" class="select" required>
+                  <option value="bank" selected>Bank</option>
+                  <option value="savings">Savings</option>
+                  <option value="brokerage">Brokerage</option>
+                  <option value="retirement">Retirement</option>
+                  <option value="crypto">Crypto</option>
+                  <option value="cash">Cash</option>
+                </select>
+                <button class="btn" type="submit">Add</button>
+              </div>
+            </form>
+            <div class="table-wrap">
+              <table class="table" id="accountsTable"></table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="envelopes" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Envelopes</h1>
+            <p class="muted">Goal-based savings buckets. Contributions appear in Cashflow under Savings → Envelopes.</p>
+          </div>
+        </div>
+
+        <div id="envelopesHero"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Your envelopes</div>
+              <div class="panel-sub">Click a card to open it (contributions + projection).</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="envelopesGrid"></div>
+            <div class="table-wrap" hidden>
+              <table class="table" id="envelopesTable"></table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="budgets" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Budgets</h1>
+            <p class="muted">Set monthly budgets per category. Rent has a dedicated shortcut.</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Cashflow map</div>
+              <div class="panel-sub">How income flows into expenses, investing, and savings (in range)</div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-accent" id="btnClearFlowDrill" type="button" hidden>Clear drilldown</button>
+              <button class="btn btn-quiet" id="btnExportFlowPng" type="button">PNG</button>
+              <button class="btn btn-quiet" id="btnCenterFlow" type="button">Center</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="pan-wrap" id="flowPan" aria-label="Cashflow map pan container">
+              <div id="flowSankey" class="chart" role="img" aria-label="Cashflow Sankey diagram"></div>
+            </div>
+            <div class="chart-empty" id="flowSankeyEmpty" hidden>No data yet</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Rent</div>
+              <div class="panel-sub">Quick monthly target (creates/updates “Rent” budget)</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <input id="rentAmount" class="input" type="number" step="0.01" placeholder="Monthly rent budget" />
+              <select id="rentMode" class="select" aria-label="Rent mode">
+                <option value="monthly" selected>Monthly</option>
+                <option value="once">Once</option>
+                <option value="off">Budget only</option>
+              </select>
+              <button class="btn" id="btnSaveRent" type="button">Save</button>
+              <div class="small muted" id="rentSavedNote"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Category budgets</div>
+              <div class="panel-sub">Budgets apply monthly.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="budgetForm" class="form">
+              <div class="row">
+                <select id="budgetCategory" class="select"></select>
+                <input id="budgetAmount" class="input" type="number" step="0.01" placeholder="Monthly budget"
+                  required />
+                <button class="btn" type="submit">Set</button>
+              </div>
+            </form>
+            <div class="table-wrap">
+              <table class="table" id="budgetsTable"></table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view="transactions" hidden>
+        <div class="page-head">
+          <div>
+            <h1>Transactions</h1>
+            <p class="muted">Filter, edit categories/types, and remember rules for future imports.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <input id="txSearch" class="input" type="search" placeholder="Search description, category, account…" />
+          </div>
+          <div class="toolbar-group">
+            <select id="txTypeFilter" class="select">
+              <option value="all" selected>All types</option>
+              <option value="expense">Expenses</option>
+              <option value="income">Income</option>
+              <option value="investment">Investments</option>
+              <option value="transfer">Transfers</option>
+            </select>
+          </div>
+          <div class="toolbar-group">
+            <select id="txCategoryFilter" class="select"></select>
+          </div>
+          <div class="toolbar-group">
+            <select id="txAccountFilter" class="select"></select>
+          </div>
+          <div class="toolbar-spacer"></div>
+          <div class="toolbar-group">
+            <button class="btn btn-quiet" id="btnExportTransactionsCsv" type="button">Export CSV</button>
+          </div>
+        </div>
+
+        <section class="panel" id="drillPanel" hidden>
+          <div class="panel-head">
+            <div>
+              <div class="panel-title" id="drillTitle">Category</div>
+              <div class="panel-sub" id="drillSub">Trend + quick breakdown</div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-quiet" id="btnBackToDashboard" type="button">Back</button>
+              <button class="btn btn-accent" id="btnClearDrill" type="button">Clear drilldown</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap" style="min-height:220px">
+              <div id="drillChart" class="chart" role="img" aria-label="Category trend chart"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="txTablePanel">
+          <div class="panel-body">
+            <div class="toolbar" id="txPager" hidden></div>
+            <div class="table-wrap">
+              <table class="table" id="txTable"></table>
+            </div>
+            <div class="small muted" id="txTableNote"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-left">
+        <div class="muted small">Local-first by default. Your data stays on this device unless you enable cloud sync.
+        </div>
+      </div>
+      <div class="footer-right">
+        <a class="footer-link" href="#" id="footerExport">Export</a>
+        <a class="footer-link" href="#" id="footerPrivacy">Privacy</a>
+        <a class="footer-link" href="#" id="footerDocs">Deploy</a>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <div class="modal" id="quickAdd" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Quick add">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Quick add</div>
+          <div class="modal-sub muted">Add income, an expense, or an investment without leaving the dashboard.</div>
+        </div>
+        <button class="btn btn-quiet" type="button" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="onboard-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="onboard-step">
+            <div class="onboard-kicker">Income</div>
+            <div class="onboard-title">Add income</div>
+            <div class="row row-gap">
+              <input id="qaIncomeDate" class="input" type="date" />
+              <input id="qaIncomeSource" class="input" type="text" placeholder="Source (e.g., Job)" />
+              <input id="qaIncomeAmount" class="input" type="number" step="0.01" placeholder="Amount" />
+              <button class="btn" id="qaAddIncome" type="button">Add</button>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-kicker">Expense</div>
+            <div class="onboard-title">Add expense</div>
+            <div class="row row-gap">
+              <input id="qaExpenseDate" class="input" type="date" />
+              <select id="qaExpenseCategory" class="select"></select>
+              <input id="qaExpenseAmount" class="input" type="number" step="0.01" placeholder="Amount" />
+              <input id="qaExpenseDesc" class="input" type="text" placeholder="Description" />
+              <input id="qaExpenseAccount" class="input" type="text" placeholder="Account" />
+              <button class="btn" id="qaAddExpense" type="button">Add</button>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-kicker">Invest</div>
+            <div class="onboard-title">Add investment</div>
+            <div class="row row-gap">
+              <input id="qaInvestDate" class="input" type="date" />
+              <select id="qaInvestInstrument" class="select"></select>
+              <input id="qaInvestAmount" class="input" type="number" step="0.01" placeholder="Amount" />
+              <button class="btn" id="qaAddInvest" type="button">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-quiet" type="button" data-close>Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="onboarding" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Welcome to budgetsimple">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Welcome to budgetsimple</div>
+          <div class="modal-sub muted">3 steps to your first dashboard.</div>
+        </div>
+        <button class="btn btn-quiet" type="button" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="onboard-grid">
+          <div class="onboard-step">
+            <div class="onboard-kicker">Step 1</div>
+            <div class="onboard-title">Rent (optional)</div>
+            <div class="onboard-text muted">Track rent even if it’s missing from your CSV.</div>
+            <div class="row row-gap">
+              <input id="onboardRent" class="input" type="number" step="0.01" placeholder="Monthly rent budget" />
+              <select id="onboardRentMode" class="select" aria-label="Rent mode">
+                <option value="monthly" selected>Monthly</option>
+                <option value="once">Once</option>
+                <option value="off">Budget only</option>
+              </select>
+              <button class="btn" id="btnOnboardSaveRent" type="button">Save</button>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-kicker">Step 2</div>
+            <div class="onboard-title">Import expenses</div>
+            <div class="onboard-text muted">Upload your bank CSV and map columns once.</div>
+            <div class="dropzone" id="onboardTxDropzone" role="button" tabindex="0"
+              aria-label="Upload transactions CSV in setup">
+              <div class="dropzone-title">Drop your transactions CSV here</div>
+              <div class="dropzone-sub muted">or</div>
+              <div class="row">
+                <input id="onboardTxCsvFile" class="input" type="file" accept=".csv,text/csv" hidden />
+                <button class="btn" id="btnOnboardChooseTxCsv" type="button">Choose CSV</button>
+                <button class="btn" id="btnOnboardLoadTxCsv" type="button" disabled>Use file</button>
+              </div>
+            </div>
+            <div class="row row-gap">
+              <button class="btn" id="btnGoImport" type="button">Open Import</button>
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-kicker">Step 3</div>
+            <div class="onboard-title">Add income</div>
+            <div class="onboard-text muted">Import income or enter it manually (Job, Parents, etc.).</div>
+            <div class="row row-gap">
+              <input id="onboardIncomeTotal" class="input" type="number" step="0.01"
+                placeholder="Income total (optional)" />
+              <button class="btn" id="btnOnboardAddIncomeTotal" type="button">Add</button>
+            </div>
+            <div class="row row-gap">
+              <button class="btn" id="btnGoIncome" type="button">Open Income</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-quiet" id="btnOnboardDone" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="settings" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Settings</div>
+          <div class="modal-sub muted">Customize your calendar, sidebar, and housing preferences.</div>
+        </div>
+        <button class="btn btn-quiet" type="button" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="form">
+          <div class="row row-gap">
+            <div style="min-width:220px">
+              <div style="font-weight:650">Month starts on</div>
+              <div class="small muted">Used everywhere (dashboard, budgets, cashflow).</div>
+            </div>
+            <select id="settingsMonthStart" class="select" aria-label="Month start day"></select>
+          </div>
+          <div class="row row-gap">
+            <div style="min-width:220px">
+              <div style="font-weight:650">Default dashboard range</div>
+              <div class="small muted">What you see when you open the app.</div>
+            </div>
+            <select id="settingsDefaultRange" class="select" aria-label="Default dashboard range">
+              <option value="month" selected>This month</option>
+              <option value="quarter">This quarter</option>
+              <option value="ytd">Year to date</option>
+              <option value="12m">Last 12 months</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+          <div class="row row-gap">
+            <div style="min-width:220px">
+              <div style="font-weight:650">Housing</div>
+              <div class="small muted">Rent affects charts and budgets.</div>
+            </div>
+            <select id="settingsHousing" class="select" aria-label="Housing mode">
+              <option value="rent" selected>Rent</option>
+              <option value="own">Own</option>
+            </select>
+            <input id="settingsRentPayDay" class="input" type="number" min="1" max="31" step="1"
+              placeholder="Rent day (1-31)" />
+          </div>
+          <div class="row row-gap">
+            <div style="min-width:220px">
+              <div style="font-weight:650">Sidebar</div>
+              <div class="small muted">Collapse to icons by default.</div>
+            </div>
+            <label class="toggle">
+              <input id="settingsNavCollapsed" type="checkbox" />
+              <span>Collapsed</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="btnSaveSettings" type="button">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="envelopeModal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Envelope details">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="envelopeModalTitle">Envelope</div>
+          <div class="modal-sub muted" id="envelopeModalSub"></div>
+        </div>
+        <button class="btn btn-quiet" type="button" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="row row-gap">
+          <div class="chart-wrap" style="min-height:220px; width:100%">
+            <div id="envelopeChart" class="chart" role="img" aria-label="Envelope balance over time"></div>
+            <div class="chart-empty" id="envelopeChartEmpty" hidden>No contributions yet</div>
+          </div>
+        </div>
+        <div class="panel" style="box-shadow:none; border:1px solid rgba(17,18,22,0.08); margin-top:12px">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Add contribution</div>
+              <div class="panel-sub">Moves money into this goal.</div>
+            </div>
+            <div class="panel-actions">
+              <button class="icon-btn icon-btn-sm" id="btnToggleEnvelopeContrib" type="button" title="Add contribution"
+                aria-label="Add contribution">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="envelopeContribFormWrap" hidden>
+              <form id="envelopeContribForm" class="form">
+                <div class="row">
+                  <input id="envelopeContribDate" class="input" type="date" required />
+                  <select id="envelopeFromAccount" class="select" aria-label="From account"></select>
+                  <select id="envelopeToAccount" class="select" aria-label="To account"></select>
+                  <input id="envelopeContribAmount" class="input" type="number" step="0.01" placeholder="Amount"
+                    required />
+                  <input id="envelopeContribNote" class="input" type="text" placeholder="Note (optional)" />
+                  <button class="btn" type="submit">Add</button>
+                  <button class="btn btn-quiet" id="btnCancelEnvelopeContrib" type="button">Cancel</button>
+                </div>
+              </form>
+            </div>
+            <div class="table-wrap">
+              <table class="table" id="envelopeContribTable"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=26" defer></script>
+</body>
+
+</html>
