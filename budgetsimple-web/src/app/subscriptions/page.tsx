@@ -20,6 +20,7 @@ interface SubscriptionCandidate {
 
 export default function SubscriptionsPage() {
   const [candidates, setCandidates] = useState<SubscriptionCandidate[]>([])
+  const [summary, setSummary] = useState<{ totalMonthly: number; count: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [detecting, setDetecting] = useState(false)
   const [selectedCandidate, setSelectedCandidate] = useState<SubscriptionCandidate | null>(null)
@@ -27,40 +28,87 @@ export default function SubscriptionsPage() {
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null)
   const [detectionMonths, setDetectionMonths] = useState(6)
 
+  // MVP: Local-first - use IndexedDB data
+  const USE_BACKEND_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_USE_BACKEND_SUBSCRIPTIONS === 'true'
+
   useEffect(() => {
     loadCandidates()
+    loadLocalSummary()
   }, [])
+
+  const loadLocalSummary = () => {
+    // Try to get summary from local runtime
+    if (typeof window !== 'undefined' && (window as any).budgetsimpleRuntime) {
+      try {
+        const runtime = (window as any).budgetsimpleRuntime
+        if (typeof runtime.analyzeMerchants === 'function') {
+          const analysis = runtime.analyzeMerchants()
+          const subTotal = analysis.subscriptions.reduce(
+            (sum: number, row: any) => sum + (row.monthly || 0),
+            0
+          )
+          setSummary({
+            totalMonthly: subTotal,
+            count: analysis.subscriptions.length
+          })
+        }
+      } catch (error) {
+        console.error('Error loading local summary:', error)
+      }
+    }
+  }
 
   const loadCandidates = async () => {
     try {
       setLoading(true)
-      const url = `${API_BASE}/api/subscriptions/candidates?status=pending`
-      console.log('Fetching candidates from:', url)
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Add mode and credentials for CORS
-        mode: 'cors',
-        credentials: 'include'
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+
+      // MVP: Local-first - compute from IndexedDB
+      if (!USE_BACKEND_SUBSCRIPTIONS && typeof window !== 'undefined') {
+        const runtime = (window as any).budgetsimpleRuntime
+        if (runtime && typeof runtime.analyzeMerchants === 'function') {
+          const analysis = runtime.analyzeMerchants()
+          // Convert local analysis to candidate format
+          const localCandidates: SubscriptionCandidate[] = analysis.subscriptions.map((sub: any, index: number) => ({
+            id: `local-${index}`,
+            merchant: sub.merchant,
+            estimatedMonthlyAmount: sub.monthly,
+            frequency: 'monthly' as const,
+            firstDetectedDate: new Date().toISOString(),
+            confidenceScore: 0.8,
+            status: 'pending' as const,
+            occurrenceCount: sub.count || 0,
+            averageAmount: sub.monthly,
+            variancePercentage: 0
+          }))
+          setCandidates(localCandidates)
+          setLoading(false)
+          return
+        }
       }
-      
-      const data = await response.json()
-      console.log('Candidates loaded:', data)
-      setCandidates(data.candidates || [])
+
+      // Fallback to API if backend is enabled
+      if (USE_BACKEND_SUBSCRIPTIONS) {
+        const url = `${API_BASE}/api/subscriptions/candidates?status=pending`
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors',
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        setCandidates(data.candidates || [])
+      } else {
+        setCandidates([])
+      }
     } catch (error: any) {
       console.error('Error loading candidates:', error)
-      // Show user-friendly error message
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-        console.error('Connection error - is the backend API running on', API_BASE, '?')
-      }
       setCandidates([])
     } finally {
       setLoading(false)

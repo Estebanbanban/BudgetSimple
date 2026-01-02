@@ -2279,6 +2279,74 @@ function createRuntime() {
       label: string;
     }> = [];
 
+    // MVP: Use deterministic insights engine (loaded dynamically to avoid circular deps)
+    try {
+      const month = range.to
+        ? range.to.slice(0, 7)
+        : new Date().toISOString().slice(0, 7);
+      
+      // Dynamically import insights engine
+      const { generateInsights } = await import('./insightsEngine')
+      
+      // Prepare transaction data for insights engine
+      const txData = transactions.map(tx => ({
+        id: tx.id,
+        date: tx.dateISO,
+        amount: tx.amount,
+        description: tx.description,
+        category: config.categories.find(c => c.id === tx.categoryId)?.name || 'Uncategorized',
+        merchant: tx.description
+      }))
+
+      const insights = generateInsights(txData, config.budgets || {}, month)
+
+      // Add monthly delta insights
+      for (const delta of insights.monthlyDelta.slice(0, 2)) {
+        if (delta.change > 0) {
+          items.push({
+            title: `Spending increase: ${delta.category}`,
+            sub: `${formatCurrency(delta.change)} (${delta.changePercent.toFixed(1)}%) higher than last month`,
+            url: buildDrilldownUrl({
+              source: "category-spike",
+              category: delta.category,
+            }),
+            label: "View details",
+          })
+        }
+      }
+
+      // Add budget pace insights
+      for (const pace of insights.budgetPace.slice(0, 1)) {
+        if (pace.paceStatus === 'overspending') {
+          items.push({
+            title: `Budget alert: ${pace.category}`,
+            sub: `Projected to overspend by ${formatCurrency(pace.projectedOverspend)} this month`,
+            url: buildDrilldownUrl({
+              source: "category-spike",
+              category: pace.category,
+            }),
+            label: "View details",
+          })
+        }
+      }
+
+      // Add new recurring insights
+      for (const recurring of insights.recurringNew.slice(0, 1)) {
+        if (recurring.confidence === 'high') {
+          items.push({
+            title: `New subscription detected: ${recurring.merchant}`,
+            sub: `${formatCurrency(recurring.monthlyAmount)}/month (${recurring.occurrenceCount} occurrences)`,
+            url: buildDrilldownUrl({ source: "subscriptions" }),
+            label: "Review",
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error generating insights:', error)
+      // Fallback to simple rules
+    }
+
+    // Fallback: Simple category spike detection
     const month = range.to
       ? range.to.slice(0, 7)
       : new Date().toISOString().slice(0, 7);
@@ -2290,7 +2358,7 @@ function createRuntime() {
     const currentSpend = categorySpendForMonth(month);
     const prevSpend = categorySpendForMonth(prevMonth);
     const currentTop = topCategoryFromMap(currentSpend);
-    if (currentTop) {
+    if (currentTop && items.length < 3) {
       const prevValue = prevSpend[currentTop.name] || 0;
       if (prevValue > 0 && currentTop.value > prevValue * 1.25) {
         const diff = currentTop.value - prevValue;
@@ -2306,31 +2374,17 @@ function createRuntime() {
       }
     }
 
+    // Add subscriptions total
     const analysis = analyzeMerchants();
     const subTotal = analysis.subscriptions.reduce(
       (sum, row) => sum + row.monthly,
       0
     );
-    if (subTotal > 0) {
+    if (subTotal > 0 && items.length < 3) {
       items.push({
         title: "Subscriptions total",
         sub: `${formatCurrency(subTotal)} per month across recurring merchants`,
         url: buildDrilldownUrl({ source: "subscriptions" }),
-        label: "View drilldown",
-      });
-    }
-
-    const envelopeBehind = findEnvelopeBehindPace(month);
-    if (envelopeBehind) {
-      items.push({
-        title: `Envelope behind pace: ${envelopeBehind.name}`,
-        sub: `Contributed ${formatCurrency(
-          envelopeBehind.current
-        )} of ${formatCurrency(envelopeBehind.target)} this month`,
-        url: buildDrilldownUrl({
-          source: "envelope",
-          envelopeId: envelopeBehind.id,
-        }),
         label: "View drilldown",
       });
     }
@@ -8613,4 +8667,14 @@ function createStore() {
   }
 
   return { getAll, put, remove, bulkPut, clearAll };
+}
+
+// Expose runtime functions to window for React components
+if (typeof window !== 'undefined') {
+  (window as any).budgetsimpleRuntime = {
+    analyzeMerchants: () => analyzeMerchants(),
+    transactions: () => transactions,
+    income: () => income,
+    config: () => config
+  };
 }
