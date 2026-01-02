@@ -63,7 +63,8 @@ export default function InvestingPage() {
         </div>
       </section>
 
-      <section className="panel">
+      {/* PAUSED: Account management - not in MVP golden path (keep for manual investment tracking) */}
+      {/* <section className="panel">
         <div className="panel-head">
           <div>
             <div className="panel-title">Accounts</div>
@@ -97,7 +98,7 @@ export default function InvestingPage() {
             <table className="table" id="accountsTable" />
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="panel">
         <div className="panel-head">

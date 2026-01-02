@@ -1811,8 +1811,9 @@ function createRuntime() {
     renderCashflowMap();
     renderCashflowExplain();
     renderCashflowNarrative();
-    renderEnvelopes();
-    renderEnvelopeProjection();
+    // PAUSED: Envelope features - not in MVP golden path
+    // renderEnvelopes();
+    // renderEnvelopeProjection();
     renderIncomeTable();
     renderInvestmentTable();
     renderAccountsTable();

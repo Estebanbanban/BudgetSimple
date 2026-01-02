@@ -39,15 +39,16 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    href: "/investing",
-    label: "Investing",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 19a1 1 0 0 1 1-1h2V9H5a1 1 0 0 1 0-2h3a1 1 0 0 1 1 1v10h2V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13h2v-7a1 1 0 0 1 2 0v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
-      </svg>
-    ),
-  },
+  // PAUSED: Investing - not in MVP golden path (keep page for manual entries but remove from nav)
+  // {
+  //   href: "/investing",
+  //   label: "Investing",
+  //   icon: (
+  //     <svg viewBox="0 0 24 24" aria-hidden="true">
+  //       <path d="M4 19a1 1 0 0 1 1-1h2V9H5a1 1 0 0 1 0-2h3a1 1 0 0 1 1 1v10h2V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13h2v-7a1 1 0 0 1 2 0v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" />
+  //     </svg>
+  //   ),
+  // },
   {
     href: "/connect",
     label: "Connect / Import",
