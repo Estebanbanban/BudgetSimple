@@ -2258,7 +2258,7 @@ function createRuntime() {
       .reduce((sum, i) => sum + i.amount, 0);
   }
 
-  function renderActionItems() {
+  async function renderActionItems() {
     const list = byId("actionItems");
     const emptyEl = byId("actionItemsEmpty");
     if (!list) return;
@@ -2298,6 +2298,8 @@ function createRuntime() {
         merchant: tx.description
       }))
 
+      // Dynamic import to avoid circular dependencies
+      const { generateInsights } = await import('./insightsEngine')
       const insights = generateInsights(txData, config.budgets || {}, month)
 
       // Add monthly delta insights
