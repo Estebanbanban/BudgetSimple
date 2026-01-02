@@ -8691,4 +8691,20 @@ function createStore() {
   return { getAll, put, remove, bulkPut, clearAll };
 }
 
-// Runtime functions are now exposed in initAppRuntime() after initialization
+// Initialize window.budgetsimpleRuntime with safe fallbacks immediately
+// This ensures React components can access it even if initAppRuntime hasn't run yet
+if (typeof window !== 'undefined') {
+  (window as any).budgetsimpleRuntime = (window as any).budgetsimpleRuntime || {
+    analyzeMerchants: () => {
+      // Try to get from runtime instance if available
+      if (runtimeInstance?.analyzeMerchants) {
+        return runtimeInstance.analyzeMerchants();
+      }
+      // Fallback: return empty result
+      return { merchants: [], subscriptions: [] };
+    },
+    transactions: () => [],
+    income: () => [],
+    config: () => ({ categories: [], rules: [], budgets: {}, settings: {} })
+  };
+}
