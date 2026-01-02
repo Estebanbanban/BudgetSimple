@@ -114,11 +114,25 @@ type OnboardingState = {
 
 let started = false;
 
+// Store runtime instance to expose functions to window
+let runtimeInstance: ReturnType<typeof createRuntime> | null = null;
+
 export function initAppRuntime() {
   if (started || typeof window === "undefined") return;
   started = true;
   const app = createRuntime();
+  runtimeInstance = app;
   app.init();
+  
+  // Expose runtime functions to window after initialization
+  if (typeof window !== 'undefined') {
+    (window as any).budgetsimpleRuntime = {
+      analyzeMerchants: () => runtimeInstance?.analyzeMerchants() || { merchants: [], subscriptions: [] },
+      transactions: () => transactions,
+      income: () => income,
+      config: () => config
+    };
+  }
 }
 
 function createRuntime() {
@@ -1825,7 +1839,7 @@ function createRuntime() {
     // renderEnvelopeOnboard();
     renderBudgetsTable();
     renderWhatChanged();
-    renderMilestones();
+    // renderMilestones(); // TODO: Implement milestones rendering if needed
     renderActionItems().catch(err => console.error('Error rendering action items:', err));
     renderDrilldownPage();
     updateDrilldownButtons();
@@ -8671,12 +8685,4 @@ function createStore() {
   return { getAll, put, remove, bulkPut, clearAll };
 }
 
-// Expose runtime functions to window for React components
-if (typeof window !== 'undefined') {
-  (window as any).budgetsimpleRuntime = {
-    analyzeMerchants: () => analyzeMerchants(),
-    transactions: () => transactions,
-    income: () => income,
-    config: () => config
-  };
-}
+// Runtime functions are now exposed in initAppRuntime() after initialization
