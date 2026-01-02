@@ -78,11 +78,105 @@ module.exports = async function subscriptionsRoute (fastify) {
 
       diagnostics.checks.expenseTransactions = expenseError ? `Error: ${expenseError.message}` : expenseCount
 
+      // Get sample user_ids to help debug userId mismatch
+      const { data: sampleUserIds, error: userIdError } = await fastify.supabase
+        .from('transactions')
+        .select('user_id')
+        .limit(10)
+
+      diagnostics.checks.sampleUserIds = userIdError 
+        ? `Error: ${userIdError.message}` 
+        : [...new Set((sampleUserIds || []).map(t => t.user_id))]
+
+      // Test the actual query that detection uses
+      const testStartDate = new Date()
+      testStartDate.setMonth(testStartDate.getMonth() - 6)
+      const testEndDate = new Date()
+      const testTransactions = await db.getTransactionsForRange(
+        fastify, 
+        userId, 
+        testStartDate.toISOString().split('T')[0],
+        testEndDate.toISOString().split('T')[0]
+      )
+      diagnostics.checks.testQueryResult = {
+        dateRange: {
+          start: testStartDate.toISOString().split('T')[0],
+          end: testEndDate.toISOString().split('T')[0]
+        },
+        transactionCount: testTransactions.length,
+        sampleTransaction: testTransactions.length > 0 ? testTransactions[0] : null
+      }
+
       return diagnostics
     } catch (error) {
       fastify.log.error(error, 'Error in debug endpoint')
       return {
         ...diagnostics,
+        error: error.message
+      }
+    }
+  })
+
+  // GET /api/subscriptions/test-detection - Test detection with sample data
+  fastify.get('/api/subscriptions/test-detection', {
+    schema: {
+      summary: 'Test subscription detection with sample data',
+      tags: ['subscriptions'],
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: {
+            type: 'string',
+            default: 'demo-user'
+          }
+        }
+      }
+    }
+  }, async function testDetectionHandler (request, reply) {
+    const { userId = 'demo-user' } = request.query
+    const { detectSubscriptions } = require('../lib/subscription-detection')
+
+    // Test with sample data
+    const testTransactions = [
+      {
+        id: 'test-1',
+        date: '2024-01-15',
+        merchant: 'Netflix',
+        amount: -15.99,
+        category: 'subscription'
+      },
+      {
+        id: 'test-2',
+        date: '2024-02-15',
+        merchant: 'Netflix',
+        amount: -15.99,
+        category: 'subscription'
+      },
+      {
+        id: 'test-3',
+        date: '2024-03-15',
+        merchant: 'Spotify',
+        amount: -9.99,
+        category: 'entertainment'
+      }
+    ]
+
+    try {
+      const candidates = detectSubscriptions(testTransactions, {
+        minOccurrences: 2,
+        amountVarianceTolerance: 0.05
+      })
+
+      return {
+        success: true,
+        testTransactions,
+        candidates,
+        message: `Test detection found ${candidates.length} candidates. If this works but real detection doesn't, check your transaction data format.`
+      }
+    } catch (error) {
+      fastify.log.error(error, 'Error in test detection')
+      return {
+        success: false,
         error: error.message
       }
     }
@@ -215,12 +309,27 @@ module.exports = async function subscriptionsRoute (fastify) {
       }
 
       // Run detection algorithm
+      fastify.log.info('Starting subscription detection algorithm...')
       const candidates = detectSubscriptions(transactions, {
         minOccurrences,
         amountVarianceTolerance
       })
 
       fastify.log.info(`Detected ${candidates.length} subscription candidates`)
+      
+      // Log detection methods for debugging
+      if (candidates.length > 0) {
+        const methods = candidates.map(c => c.detectionMethod)
+        const methodCounts = methods.reduce((acc, m) => {
+          acc[m] = (acc[m] || 0) + 1
+          return acc
+        }, {})
+        fastify.log.info(`Detection methods: ${JSON.stringify(methodCounts)}`)
+        fastify.log.info(`Candidates: ${candidates.map(c => `${c.merchant} (${c.detectionMethod}, ${(c.confidenceScore * 100).toFixed(0)}%)`).join(', ')}`)
+      } else {
+        fastify.log.warn('No candidates detected. Check backend console logs for detailed detection flow.')
+        fastify.log.warn('Common issues: 1) Category fields missing/incorrect, 2) Merchant names empty, 3) No recurring patterns, 4) Amounts not consistent')
+      }
 
       // Store candidates in database
       const storedCandidates = await db.storeSubscriptionCandidates(fastify, userId, candidates)
@@ -244,6 +353,8 @@ module.exports = async function subscriptionsRoute (fastify) {
           averageAmount: candidate.averageAmount,
           variancePercentage: candidate.variancePercentage,
           signals: candidate.signals,
+          detectionMethod: candidate.detectionMethod,
+          patternType: candidate.patternType,
           reason: candidate.reason,
           sampleTransactions: candidate.sampleTransactions,
           status: 'pending'

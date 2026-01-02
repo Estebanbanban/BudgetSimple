@@ -86,10 +86,12 @@ function findKnownSubscription (merchantName) {
   let normalized = merchantName.toLowerCase().trim()
   
   // Remove common domain suffixes and company suffixes for matching
-  normalized = normalized.replace(/\.(com|net|org|io|co|app|tv|plus|us)\b/gi, '')
-  normalized = normalized.replace(/\s+(inc|llc|ltd|corp|co|usa)\b/gi, '')
+  normalized = normalized.replace(/\.(com|net|org|io|co|app|tv|plus|us|ca|uk|fr|de)\b/gi, '')
+  normalized = normalized.replace(/\s+(inc|llc|ltd|corp|co|usa|ab|gmbh|pty|limited)\b/gi, '')
   normalized = normalized.replace(/\s*\+\s*/g, ' plus ')
-  normalized = normalized.replace(/\s+/g, ' ')
+  normalized = normalized.replace(/\s*-\s*/g, ' ')
+  normalized = normalized.replace(/[^\w\s]/g, ' ') // Remove punctuation
+  normalized = normalized.replace(/\s+/g, ' ').trim()
   
   // Try exact match first, then partial matches
   for (const service of KNOWN_SUBSCRIPTIONS) {
@@ -118,6 +120,25 @@ function findKnownSubscription (merchantName) {
           }
         }
       }
+      
+      // Also check word-by-word matching for multi-word services
+      const normalizedWords = normalized.split(/\s+/)
+      const aliasWords = aliasNormalized.split(/\s+/)
+      
+      // If most words match, consider it a match
+      if (normalizedWords.length > 1 && aliasWords.length > 1) {
+        const matchingWords = normalizedWords.filter(word => 
+          aliasWords.some(aliasWord => word.includes(aliasWord) || aliasWord.includes(word))
+        )
+        if (matchingWords.length >= Math.min(normalizedWords.length, aliasWords.length) * 0.7) {
+          return {
+            name: service.name,
+            category: service.category,
+            typicalFrequency: service.typicalFrequency,
+            confidence: 0.9
+          }
+        }
+      }
     }
   }
   
@@ -132,7 +153,22 @@ function findKnownSubscription (merchantName) {
 function isSubscriptionCategory (categoryName) {
   if (!categoryName) return false
   
-  const normalized = categoryName.toLowerCase()
+  const normalized = categoryName.toLowerCase().trim()
+  
+  // Exact matches (highest confidence)
+  const exactMatches = [
+    'subscription',
+    'subscriptions',
+    'recurring',
+    'recurring payment',
+    'recurring payments'
+  ]
+  
+  if (exactMatches.includes(normalized)) {
+    return true
+  }
+  
+  // Keyword matches
   const subscriptionKeywords = [
     'subscription',
     'subscriptions',
@@ -142,7 +178,10 @@ function isSubscriptionCategory (categoryName) {
     'service',
     'streaming',
     'software',
-    'saas'
+    'saas',
+    'software as a service',
+    'monthly service',
+    'annual service'
   ]
   
   return subscriptionKeywords.some(keyword => normalized.includes(keyword))

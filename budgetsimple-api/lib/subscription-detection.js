@@ -55,12 +55,17 @@ function normalizeTransaction (tx) {
   const normalizedAmount = Math.abs(amount)
 
   // Extract merchant/description - best effort
-  const merchant = (tx.merchant || tx.merchant_name || '').trim()
+  const merchant = (tx.merchant || tx.merchant_name || tx.merchantName || '').trim()
   const description = (tx.description || tx.memo || tx.note || '').trim()
   const merchantKey = extractMerchantKey(merchant || description)
+  
+  // Log if merchant key is unknown (for debugging)
+  if (merchantKey === 'unknown' && (merchant || description)) {
+    console.log(`[NORMALIZE] Merchant key became 'unknown' for: merchant="${merchant}", description="${description}"`)
+  }
 
-  // Extract category
-  const category = tx.category || tx.category_id || tx.category_name || null
+  // Extract category (check multiple field names)
+  const category = tx.category || tx.category_id || tx.categoryId || tx.category_name || tx.categoryName || null
   const categoryStr = category ? String(category).toLowerCase() : null
 
   return {
@@ -81,9 +86,12 @@ function normalizeTransaction (tx) {
  * Removes invoice IDs, punctuation, normalizes variations
  */
 function extractMerchantKey (text) {
-  if (!text) return 'unknown'
+  if (!text || !text.trim()) return 'unknown'
 
   let key = text.toLowerCase().trim()
+  
+  // If text is too short after trimming, return 'unknown'
+  if (key.length < 2) return 'unknown'
 
   // Remove invoice/transaction IDs (numbers at end, patterns like #12345, INV-123, etc.)
   key = key.replace(/\s*(#|inv|invoice|txn|trans|ref|ref#)[\s-]*[0-9]+/gi, '')
@@ -109,6 +117,11 @@ function extractMerchantKey (text) {
 
 /**
  * Detect subscription candidates from normalized transactions
+ * 
+ * Detection prioritizes:
+ * 1. Category-based detection (if category contains "subscription" keywords)
+ * 2. Known subscription database matching (merchant name/description)
+ * 3. Recurring pattern analysis (temporal patterns)
  */
 function detectSubscriptions (transactions, options = {}) {
   const {
@@ -122,90 +135,218 @@ function detectSubscriptions (transactions, options = {}) {
   }
 
   // Step 1: Normalize all transactions
+  console.log(`[DETECTION] Starting detection with ${transactions.length} raw transactions`)
+  
   const normalized = transactions
     .map(normalizeTransaction)
-    .filter(tx => tx.date && tx.merchantKey !== 'unknown' && tx.direction === 'expense')
+    .filter(tx => {
+      // More lenient filtering - only require date and direction
+      const isValid = tx.date && tx.direction === 'expense'
+      if (!isValid) {
+        console.log(`[DETECTION] Filtered out transaction: date=${tx.date}, merchantKey=${tx.merchantKey}, direction=${tx.direction}, merchant="${tx.merchant}"`)
+      }
+      return isValid
+    })
+  
+  // If merchantKey is 'unknown', try to use merchant field directly
+  for (const tx of normalized) {
+    if (tx.merchantKey === 'unknown' && tx.merchant && tx.merchant !== 'Unknown') {
+      // Create a merchant key from the merchant name
+      tx.merchantKey = extractMerchantKey(tx.merchant)
+      console.log(`[DETECTION] Fixed merchantKey for transaction: "${tx.merchant}" -> "${tx.merchantKey}"`)
+    }
+  }
+  
+  // Filter again to remove any that still have 'unknown' merchantKey (but keep if merchant field exists)
+  const finalNormalized = normalized.filter(tx => {
+    if (tx.merchantKey === 'unknown') {
+      // Still allow if merchant field has a value
+      return tx.merchant && tx.merchant !== 'Unknown'
+    }
+    return true
+  })
 
-  if (normalized.length === 0) {
+  console.log(`[DETECTION] After normalization: ${finalNormalized.length} valid transactions (from ${normalized.length} after initial filter)`)
+  
+  if (finalNormalized.length === 0) {
+    console.log(`[DETECTION] No valid transactions after normalization. Sample raw transaction:`, transactions[0])
     return []
   }
+  
+  // Log sample normalized transaction
+  console.log(`[DETECTION] Sample normalized transaction:`, {
+    merchant: finalNormalized[0].merchant,
+    merchantKey: finalNormalized[0].merchantKey,
+    category: finalNormalized[0].category,
+    amount: finalNormalized[0].amount,
+    date: finalNormalized[0].date
+  })
 
-  // Step 2: Group by merchant key
+  // Step 2: Group by merchant key (use merchant field as fallback)
   const merchantGroups = {}
-  for (const tx of normalized) {
-    if (!merchantGroups[tx.merchantKey]) {
-      merchantGroups[tx.merchantKey] = []
+  for (const tx of finalNormalized) {
+    // Use merchantKey if available, otherwise use merchant field
+    const key = tx.merchantKey !== 'unknown' ? tx.merchantKey : (tx.merchant || 'unknown')
+    if (!merchantGroups[key]) {
+      merchantGroups[key] = []
     }
-    merchantGroups[tx.merchantKey].push(tx)
+    merchantGroups[key].push(tx)
   }
+
+  console.log(`[DETECTION] Grouped into ${Object.keys(merchantGroups).length} merchant groups:`, Object.keys(merchantGroups).slice(0, 10))
 
   const candidates = []
 
   // Step 3: Analyze each merchant group
   for (const [merchantKey, txs] of Object.entries(merchantGroups)) {
-    // Need at least minOccurrences
-    if (txs.length < minOccurrences) {
-      continue
-    }
-
+    console.log(`[DETECTION] Analyzing merchant group: ${merchantKey} (${txs.length} transactions)`)
     // Sort by date
     txs.sort((a, b) => new Date(a.date) - new Date(b.date))
 
-    // Step 4: Detect recurrence pattern
-    const recurrence = detectRecurrence(txs)
-    if (!recurrence) {
-      continue
+    // PRIORITY 1: Check category signal (strongest indicator)
+    const categorySignal = txs.some(t => isSubscriptionCategory(t.category || ''))
+    const categoryMatch = categorySignal
+    
+    if (categoryMatch) {
+      console.log(`[DETECTION] Category match found for ${merchantKey}:`, txs.find(t => isSubscriptionCategory(t.category || ''))?.category)
     }
 
-    // Step 5: Check amount consistency
+    // PRIORITY 2: Check for known subscription merchant
+    const knownService = findKnownSubscription(merchantKey) || 
+                        findKnownSubscription(txs[0].merchant) ||
+                        findKnownSubscription(txs[0].description)
+    
+    if (knownService) {
+      console.log(`[DETECTION] Known service match found for ${merchantKey}:`, knownService.name)
+    }
+
+    // PRIORITY 3: Detect recurrence pattern (if we have enough occurrences)
+    const recurrence = txs.length >= 2 ? detectRecurrence(txs) : null
+
+    // PRIORITY 4: Check amount consistency
     const amounts = txs.map(t => t.amount)
     const amountConsistency = checkAmountConsistency(amounts, amountVarianceTolerance, amountVarianceFixed)
-    if (!amountConsistency.isConsistent) {
+
+    // DECISION LOGIC: Accept if ANY of these conditions are met:
+    // 1. Category matches (even single occurrence)
+    // 2. Known subscription matches (even single occurrence)
+    // 3. Recurring pattern + amount consistency (requires 2+ occurrences)
+
+    let shouldDetect = false
+    let detectionMethod = 'unknown'
+    let frequency = 'monthly' // default
+    let confidence = 0
+    let medianAmount = amountConsistency.medianAmount || (amounts.length > 0 ? amounts[0] : 0)
+
+    // Case 1: Category-based detection (HIGHEST PRIORITY)
+    if (categoryMatch) {
+      shouldDetect = true
+      detectionMethod = 'category'
+      confidence = 0.85 // High confidence for category match
+      
+      // Try to infer frequency from recurrence if available
+      if (recurrence) {
+        frequency = recurrence.frequency
+        confidence = Math.min(0.95, confidence + 0.1) // Boost if also has recurrence
+      } else if (knownService) {
+        frequency = knownService.typicalFrequency || 'monthly'
+        confidence = 0.9 // Very high if both category and known
+      }
+    }
+    // Case 2: Known subscription match (HIGH PRIORITY)
+    else if (knownService) {
+      shouldDetect = true
+      detectionMethod = 'known_subscription'
+      confidence = 0.85 // High confidence for known subscription
+      frequency = knownService.typicalFrequency || 'monthly'
+      
+      // Boost if also has recurrence
+      if (recurrence) {
+        confidence = Math.min(0.95, confidence + 0.1)
+        frequency = recurrence.frequency // Prefer detected frequency
+      }
+    }
+    // Case 3: Recurring pattern (requires 2+ occurrences)
+    else if (recurrence && txs.length >= minOccurrences) {
+      // More lenient: accept if recurrence exists, even if amounts vary
+      shouldDetect = true
+      detectionMethod = 'recurrence'
+      frequency = recurrence.frequency
+      // Base confidence on recurrence, boost if amounts are consistent
+      confidence = 0.4 + (recurrence.consistency * 0.3)
+      if (amountConsistency.isConsistent) {
+        confidence += (amountConsistency.score * 0.2)
+      } else {
+        // Still accept but lower confidence if amounts vary
+        confidence = Math.max(0.4, confidence - 0.1)
+      }
+    }
+    // Case 4: Fallback - any merchant with 2+ occurrences (very lenient)
+    else if (txs.length >= minOccurrences && txs.length >= 2) {
+      // Even without clear recurrence, if we have multiple transactions to same merchant, it might be a subscription
+      // Check if dates are somewhat spread out (not all on same day)
+      const dates = txs.map(t => new Date(t.date).getTime())
+      const minDate = Math.min(...dates)
+      const maxDate = Math.max(...dates)
+      const daysSpan = (maxDate - minDate) / (1000 * 60 * 60 * 24)
+      
+      // If transactions span at least 30 days, consider it
+      if (daysSpan >= 30) {
+        shouldDetect = true
+        detectionMethod = 'recurrence'
+        frequency = 'monthly' // Assume monthly
+        confidence = 0.4 // Low confidence but still detect
+        console.log(`[DETECTION] Fallback detection for ${merchantKey}: ${txs.length} transactions over ${daysSpan.toFixed(0)} days`)
+      }
+    }
+
+    // Skip if no detection method matched
+    if (!shouldDetect) {
+      console.log(`[DETECTION] Skipping ${merchantKey}: categoryMatch=${categoryMatch}, knownService=${!!knownService}, recurrence=${!!recurrence}, amountConsistent=${amountConsistency.isConsistent}`)
       continue
     }
+    
+    console.log(`[DETECTION] ✓ Detected subscription: ${merchantKey} via ${detectionMethod} (confidence: ${confidence.toFixed(2)})`)
 
-    // Step 6: Check for known subscription merchant
-    const knownService = findKnownSubscription(merchantKey) || findKnownSubscription(txs[0].merchant)
-
-    // Step 7: Check category signal
-    const categorySignal = txs.some(t => isSubscriptionCategory(t.category || ''))
-
-    // Step 8: Calculate confidence scores
-    const signals = {
-      recurrenceScore: recurrence.consistency,
-      amountConsistencyScore: amountConsistency.score,
-      keywordScore: knownService ? 0.9 : 0,
-      categoryScore: categorySignal ? 0.3 : 0
-    }
-
-    // Weighted confidence
-    const confidence = (
-      signals.recurrenceScore * 0.5 + // Strong signal
-      signals.amountConsistencyScore * 0.3 + // Strong signal
-      signals.keywordScore * 0.15 + // Medium signal
-      signals.categoryScore * 0.05 // Weak signal
-    )
-
-    // Minimum confidence threshold
-    if (confidence < 0.4) {
-      continue
-    }
-
-    // Step 9: Calculate next expected date
+    // Calculate next expected date
     const lastDate = new Date(txs[txs.length - 1].date)
     const nextExpectedDate = new Date(lastDate)
-    nextExpectedDate.setDate(nextExpectedDate.getDate() + recurrence.medianGap)
+    
+    if (recurrence) {
+      nextExpectedDate.setDate(nextExpectedDate.getDate() + recurrence.medianGap)
+    } else if (knownService) {
+      // Use typical frequency for known services
+      const daysPerPeriod = {
+        weekly: 7,
+        'bi-weekly': 14,
+        monthly: 30,
+        quarterly: 90,
+        annual: 365
+      }
+      nextExpectedDate.setDate(nextExpectedDate.getDate() + (daysPerPeriod[frequency] || 30))
+    } else {
+      // Default to monthly if no other info
+      nextExpectedDate.setDate(nextExpectedDate.getDate() + 30)
+    }
 
-    // Step 10: Build candidate
-    const medianAmount = amountConsistency.medianAmount
-    const estimatedMonthlyAmount = normalizeToMonthly(medianAmount, recurrence.frequency)
+    // Calculate estimated monthly amount
+    const estimatedMonthlyAmount = normalizeToMonthly(medianAmount, frequency)
 
+    // Build signals object
+    const signals = {
+      recurrenceScore: recurrence ? recurrence.consistency : 0,
+      amountConsistencyScore: amountConsistency.score || 0.5, // Default to 0.5 if single occurrence
+      keywordScore: knownService ? 0.9 : 0,
+      categoryScore: categoryMatch ? 0.9 : 0
+    }
+
+    // Build candidate
     candidates.push({
       merchantKey,
       merchant: txs[0].merchant,
       categoryId: getMostCommonCategory(txs),
       estimatedMonthlyAmount,
-      frequency: recurrence.frequency,
+      frequency,
       firstDetectedDate: txs[0].date,
       lastChargeDate: txs[txs.length - 1].date,
       nextExpectedDate: nextExpectedDate.toISOString().split('T')[0],
@@ -213,9 +354,13 @@ function detectSubscriptions (transactions, options = {}) {
       contributingTransactionIds: txs.map(t => t.id),
       occurrenceCount: txs.length,
       averageAmount: medianAmount,
-      variancePercentage: amountConsistency.variancePercentage,
+      variancePercentage: amountConsistency.variancePercentage || 0,
       signals,
-      reason: buildReason(signals, recurrence, knownService, categorySignal),
+      detectionMethod,
+      patternType: recurrence 
+        ? `${recurrence.frequency}${recurrence.consistency > 0.7 ? '' : '-approximate'}`
+        : frequency, // Use frequency if no recurrence detected
+      reason: buildReason(signals, recurrence, knownService, categoryMatch, detectionMethod),
       sampleTransactions: txs.slice(0, 3).map(t => ({
         id: t.id,
         date: t.date,
@@ -225,11 +370,14 @@ function detectSubscriptions (transactions, options = {}) {
   }
 
   // Sort by confidence (highest first)
-  return candidates.sort((a, b) => b.confidenceScore - a.confidenceScore)
+  const sorted = candidates.sort((a, b) => b.confidenceScore - a.confidenceScore)
+  console.log(`[DETECTION] Final result: ${sorted.length} candidates detected`)
+  return sorted
 }
 
 /**
  * Detect recurrence pattern using median gaps
+ * More lenient thresholds to catch more patterns
  */
 function detectRecurrence (txs) {
   if (txs.length < 2) {
@@ -260,28 +408,33 @@ function detectRecurrence (txs) {
   const avgDeviation = deviations.reduce((sum, d) => sum + d, 0) / deviations.length
   const consistency = Math.max(0, 1 - (avgDeviation / medianGap))
 
-  // Minimum consistency threshold (allow ±3-5 days drift)
-  if (consistency < 0.6) {
+  // More lenient consistency threshold (allow ±5-7 days drift for monthly)
+  // Lower threshold to catch more patterns
+  if (consistency < 0.4) {
     return null
   }
 
-  // Determine frequency
+  // Determine frequency with even wider ranges
   let frequency = 'monthly'
-  if (medianGap >= 6 && medianGap <= 8) {
+  if (medianGap >= 4 && medianGap <= 12) {
     frequency = 'weekly'
-  } else if (medianGap >= 13 && medianGap <= 15) {
+  } else if (medianGap >= 10 && medianGap <= 20) {
     frequency = 'bi-weekly'
-  } else if (medianGap >= 28 && medianGap <= 35) {
-    frequency = 'monthly'
-  } else if (medianGap >= 88 && medianGap <= 93) {
+  } else if (medianGap >= 20 && medianGap <= 45) {
+    frequency = 'monthly' // Very wide range for monthly (allows billing drift)
+  } else if (medianGap >= 80 && medianGap <= 100) {
     frequency = 'quarterly'
-  } else if (medianGap >= 350 && medianGap <= 380) {
+  } else if (medianGap >= 340 && medianGap <= 390) {
     frequency = 'annual'
-  } else if (medianGap >= 25 && medianGap <= 40) {
-    frequency = 'monthly' // Approximate monthly
   } else {
-    // Not a recognized pattern
-    return null
+    // For gaps that don't match exactly, still accept if somewhat consistent
+    // This catches approximate monthly patterns - be very lenient
+    if (medianGap >= 15 && medianGap <= 50) {
+      frequency = 'monthly'
+      console.log(`[RECURRENCE] Approximate monthly pattern detected: ${medianGap} days`)
+    } else {
+      return null
+    }
   }
 
   return {
@@ -294,10 +447,22 @@ function detectRecurrence (txs) {
 
 /**
  * Check if amounts are consistent (±5% or ±$2, whichever is larger)
+ * More lenient for single occurrences (assumes consistent)
  */
 function checkAmountConsistency (amounts, tolerancePercent, toleranceFixed) {
   if (amounts.length === 0) {
     return { isConsistent: false, score: 0, medianAmount: 0, variancePercentage: 0 }
+  }
+
+  // Single occurrence: assume consistent
+  if (amounts.length === 1) {
+    return {
+      isConsistent: true,
+      score: 0.7, // Good score for single occurrence
+      medianAmount: amounts[0],
+      variancePercentage: 0,
+      maxDeviation: 0
+    }
   }
 
   // Use median amount (more robust than average)
@@ -307,17 +472,25 @@ function checkAmountConsistency (amounts, tolerancePercent, toleranceFixed) {
   // Calculate variance
   const deviations = amounts.map(a => Math.abs(a - medianAmount))
   const maxDeviation = Math.max(...deviations)
-  const variancePercentage = maxDeviation / medianAmount
+  const variancePercentage = medianAmount > 0 ? maxDeviation / medianAmount : 0
 
   // Check consistency: ±5% OR ±$2, whichever is larger
-  const tolerance = Math.max(medianAmount * tolerancePercent, toleranceFixed)
+  // Make tolerance even more lenient
+  const tolerance = Math.max(medianAmount * tolerancePercent * 1.5, toleranceFixed * 1.5) // 1.5x more lenient
   const isConsistent = maxDeviation <= tolerance
 
   // Score: 1.0 if perfect, decreases with variance
-  const score = isConsistent ? Math.max(0, 1 - (variancePercentage / tolerancePercent)) : 0
+  // Very lenient scoring - accept even with significant variance
+  const score = isConsistent 
+    ? Math.max(0.4, 1 - (variancePercentage / (tolerancePercent * 3))) // More lenient
+    : (maxDeviation <= tolerance * 2 ? 0.3 : 0) // Allow even more variance
+
+  const finalIsConsistent = isConsistent || (maxDeviation <= tolerance * 2) // Very lenient
+  
+  console.log(`[AMOUNT] Checking consistency: median=${medianAmount.toFixed(2)}, maxDev=${maxDeviation.toFixed(2)}, tolerance=${tolerance.toFixed(2)}, consistent=${finalIsConsistent}`)
 
   return {
-    isConsistent,
+    isConsistent: finalIsConsistent,
     score: Math.min(1.0, score),
     medianAmount,
     variancePercentage,
@@ -369,30 +542,45 @@ function getMostCommonCategory (txs) {
 /**
  * Build human-readable reason for detection
  */
-function buildReason (signals, recurrence, knownService, categorySignal) {
+function buildReason (signals, recurrence, knownService, categorySignal, detectionMethod) {
   const parts = []
 
-  if (signals.recurrenceScore > 0.7) {
-    parts.push(`Strong recurring pattern (${recurrence.frequency}, ${recurrence.consistency.toFixed(2)} consistency)`)
-  } else if (signals.recurrenceScore > 0.5) {
-    parts.push(`Moderate recurring pattern (${recurrence.frequency})`)
+  // Lead with detection method
+  if (detectionMethod === 'category') {
+    parts.push('Detected via subscription category')
+  } else if (detectionMethod === 'known_subscription') {
+    parts.push(`Detected via known subscription database (${knownService?.name || 'matched service'})`)
+  } else if (detectionMethod === 'recurrence') {
+    parts.push('Detected via recurring pattern analysis')
+  }
+
+  if (categorySignal) {
+    parts.push('Category marked as subscription')
+  }
+
+  if (knownService) {
+    parts.push(`Known subscription service: ${knownService.name}`)
+  }
+
+  if (recurrence) {
+    if (signals.recurrenceScore > 0.7) {
+      parts.push(`Strong recurring pattern (${recurrence.frequency}, ${recurrence.consistency.toFixed(2)} consistency)`)
+    } else if (signals.recurrenceScore > 0.5) {
+      parts.push(`Moderate recurring pattern (${recurrence.frequency})`)
+    } else {
+      parts.push(`Recurring pattern detected (${recurrence.frequency})`)
+    }
   }
 
   if (signals.amountConsistencyScore > 0.8) {
     parts.push('Very consistent amounts')
   } else if (signals.amountConsistencyScore > 0.6) {
     parts.push('Mostly consistent amounts')
+  } else if (signals.amountConsistencyScore > 0) {
+    parts.push('Amounts vary but within tolerance')
   }
 
-  if (knownService) {
-    parts.push(`Known subscription service (${knownService.name})`)
-  }
-
-  if (categorySignal) {
-    parts.push('Category suggests subscription')
-  }
-
-  return parts.join('; ') || 'Recurring pattern detected'
+  return parts.join('; ') || 'Subscription pattern detected'
 }
 
 module.exports = {

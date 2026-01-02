@@ -7,10 +7,12 @@ Budgetsimple uses a **Fastify-based Node.js API** with **Supabase (PostgreSQL)**
 ## Technology Stack
 
 ### Backend Framework
+
 - **Fastify** (v4.x) - High-performance Node.js web framework
 - **Node.js** - Runtime environment
 
 ### Database Infrastructure
+
 - **Supabase** - PostgreSQL database with:
   - Row Level Security (RLS) for multi-tenant data isolation
   - RESTful API via PostgREST
@@ -18,6 +20,7 @@ Budgetsimple uses a **Fastify-based Node.js API** with **Supabase (PostgreSQL)**
   - Authentication (via Supabase Auth, referenced but not fully integrated)
 
 ### Key Libraries
+
 - `@supabase/supabase-js` - Supabase client library
 - `@fastify/cors` - CORS handling
 - `@fastify/swagger` - OpenAPI/Swagger documentation
@@ -67,17 +70,18 @@ Fastify uses a plugin system where functionality is organized into plugins:
 ```javascript
 // app.js - Auto-loads all plugins and routes
 fastify.register(AutoLoad, {
-  dir: path.join(__dirname, 'plugins'),
-  options: Object.assign({}, opts)
-})
+  dir: path.join(__dirname, "plugins"),
+  options: Object.assign({}, opts),
+});
 
 fastify.register(AutoLoad, {
-  dir: path.join(__dirname, 'routes'),
-  options: Object.assign({}, opts)
-})
+  dir: path.join(__dirname, "routes"),
+  options: Object.assign({}, opts),
+});
 ```
 
 **Benefits:**
+
 - Modular and testable
 - Easy to add new features
 - Clear separation of concerns
@@ -91,16 +95,17 @@ Database operations are abstracted into service layers:
 async function getSubscriptionCandidates(fastify, userId, status) {
   // Database logic isolated here
   const { data, error } = await fastify.supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', status)
-  
-  return data || []
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", status);
+
+  return data || [];
 }
 ```
 
 **Benefits:**
+
 - Routes stay clean and focused
 - Database logic is reusable
 - Easy to mock for testing
@@ -118,6 +123,7 @@ CREATE POLICY "Users can view their own subscriptions"
 ```
 
 **Benefits:**
+
 - Security at the database level
 - Prevents data leaks even if API logic has bugs
 - Multi-tenant by default
@@ -165,16 +171,19 @@ Response with candidates
 ### Current Tables
 
 #### `transactions`
+
 - Stores user transactions (expenses, income)
 - Fields: `id`, `user_id`, `date`, `merchant`, `description`, `amount`, `currency`, `type`, `category_id`
 - **Note**: This table is referenced but migration may not exist yet (see TODO below)
 
 #### `subscriptions`
+
 - Stores detected/confirmed subscriptions
 - Fields: `id`, `user_id`, `merchant`, `category_id`, `estimated_monthly_amount`, `frequency`, `status`, `confidence_score`, etc.
 - Created via: `migrations/001_create_subscriptions_tables.sql`
 
 #### `subscription_transactions`
+
 - Many-to-many mapping between subscriptions and transactions
 - Links detected subscriptions to their contributing transactions
 
@@ -183,36 +192,41 @@ Response with candidates
 ```javascript
 // All database access goes through Supabase client
 const { data, error } = await fastify.supabase
-  .from('table_name')
-  .select('columns')
-  .eq('user_id', userId)  // Always filter by user_id for RLS
-  .order('date', { ascending: false })
+  .from("table_name")
+  .select("columns")
+  .eq("user_id", userId) // Always filter by user_id for RLS
+  .order("date", { ascending: false });
 ```
 
 ## CSV Import & Transaction Storage
 
 ### Current State
 
-**CSV Import**: 
+**CSV Import**:
+
 - Frontend UI exists (`index.html` shows CSV import interface)
 - **Backend handling is NOT yet implemented**
 - The `routes/cashflow.js` has stub functions:
   ```javascript
   async function getTransactionsForRange(fastify, userId, startDate, endDate) {
     // Stub: return empty array for now
-    fastify.log.warn('Using stub transaction data - replace with database query')
-    return []
+    fastify.log.warn(
+      "Using stub transaction data - replace with database query"
+    );
+    return [];
   }
   ```
 
 ### Where CSV Data Should Be Stored
 
 **Recommended Approach:**
+
 1. **Frontend**: Parse CSV client-side (already implemented in UI)
 2. **Backend**: Receive parsed transaction data via API
 3. **Database**: Store in `transactions` table via Supabase
 
 **Proposed Flow:**
+
 ```
 1. User uploads CSV → Frontend parses
 2. Frontend sends POST /api/transactions/bulk
@@ -271,15 +285,18 @@ NODE_ENV=development  # or production
 ### Endpoints
 
 **Health & Docs:**
+
 - `GET /health` - Health check
 - `GET /docs` - Swagger UI
 - `GET /openapi.json` - OpenAPI spec
 
 **Cashflow:**
+
 - `POST /api/cashflow/compute` - Compute cashflow graph
 - `GET /api/cashflow/drilldown` - Get transactions for a node
 
 **Subscriptions:**
+
 - `POST /api/subscriptions/detect` - Detect subscription patterns
 - `GET /api/subscriptions/candidates` - List subscription candidates
 - `GET /api/subscriptions/candidates/:id` - Get candidate details
@@ -290,6 +307,7 @@ NODE_ENV=development  # or production
 ### API Response Format
 
 All endpoints return JSON:
+
 ```json
 {
   "data": { ... },
@@ -334,10 +352,12 @@ npm test
 ### Database Migrations
 
 Migrations are SQL files in `migrations/`:
+
 - Run manually via Supabase SQL editor
 - Or use a migration tool (not currently set up)
 
 **Current Migration:**
+
 - `001_create_subscriptions_tables.sql` - Creates subscriptions tables with RLS
 
 ## Current Limitations & TODOs
@@ -345,16 +365,19 @@ Migrations are SQL files in `migrations/`:
 ### Missing Infrastructure
 
 1. **Transaction Storage**
+
    - ❌ `transactions` table migration doesn't exist
    - ❌ CSV import backend endpoint not implemented
    - ❌ Transaction CRUD operations missing
 
 2. **Authentication**
+
    - ❌ Supabase Auth not integrated
    - ⚠️ Currently using `demo-user` placeholder
    - ✅ RLS policies ready for when auth is added
 
 3. **Net Worth Tracking**
+
    - ❌ `net_worth_snapshots` table doesn't exist (needed for Epic 5)
    - ❌ Net worth calculation not implemented
 
@@ -370,18 +393,20 @@ Migrations are SQL files in `migrations/`:
 ✅ API documentation (Swagger)  
 ✅ Health checks  
 ✅ CORS configuration  
-✅ Database service layer pattern  
+✅ Database service layer pattern
 
 ## Future Architecture Considerations
 
 ### For Epic 5 (Milestones & Projection)
 
 **New Tables Needed:**
+
 - `milestones` - User-defined financial milestones
 - `net_worth_snapshots` - Historical net worth tracking
 - `user_assumptions` - Projection settings (return rate, etc.)
 
 **New Services:**
+
 - `lib/projection-engine.js` - Net worth projection calculations
 - `lib/milestone-evaluator.js` - Milestone status evaluation
 - `lib/db-milestones.js` - Milestone database operations
@@ -390,6 +415,7 @@ Migrations are SQL files in `migrations/`:
 
 **Current**: Single Fastify instance, single Supabase project  
 **Future Considerations**:
+
 - Connection pooling (Supabase handles this)
 - Caching layer (Redis) for frequently accessed data
 - Background jobs (subscription detection, net worth snapshots)
@@ -398,6 +424,7 @@ Migrations are SQL files in `migrations/`:
 ## Summary
 
 **Backend Stack:**
+
 - Fastify (Node.js) API server
 - Supabase (PostgreSQL) database
 - Plugin-based modular architecture
@@ -405,6 +432,7 @@ Migrations are SQL files in `migrations/`:
 - Row Level Security for multi-tenant isolation
 
 **Current State:**
+
 - ✅ Core infrastructure in place
 - ✅ Subscription features working
 - ❌ Transaction storage not implemented
@@ -412,10 +440,9 @@ Migrations are SQL files in `migrations/`:
 - ⚠️ Authentication placeholder only
 
 **Next Steps:**
+
 1. Create `transactions` table migration
 2. Implement CSV import endpoint
 3. Implement transaction CRUD operations
 4. Integrate Supabase Auth
 5. Create net worth tracking tables (for Epic 5)
-
-
