@@ -1,5 +1,4 @@
-// PARKED: Subscription feature - removed from MVP to focus on core features
-// import SubscriptionWidget from "@/components/subscription-widget";
+import SubscriptionWidget from "@/components/subscription-widget";
 
 export default function DashboardPage() {
   return (
@@ -49,8 +48,7 @@ export default function DashboardPage() {
             Explain this number
           </button>
         </div>
-        {/* PARKED: Subscription widget - removed from MVP */}
-        {/* <SubscriptionWidget /> */}
+        <SubscriptionWidget />
         <div className="card">
           <div className="card-title">Total income</div>
           <div className="card-value" id="kpiTotalIncome">
@@ -300,7 +298,8 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="panel">
+        {/* PAUSED: Rent benchmark - not in MVP golden path */}
+        {/* <section className="panel">
           <div className="panel-head">
             <div>
               <div className="panel-title">Rent analysis</div>
@@ -319,10 +318,9 @@ export default function DashboardPage() {
             </div>
             <div className="panel-note">Benchmarks are normalized to your display currency with source metadata.</div>
           </div>
-        </section>
+        </section> */}
 
-        {/* PARKED: Subscriptions panel - removed from MVP to focus on core features */}
-        {/* <section className="panel">
+        <section className="panel">
           <div className="panel-head">
             <div>
               <div className="panel-title">Subscriptions</div>
@@ -340,7 +338,7 @@ export default function DashboardPage() {
             </div>
             <div className="panel-note">Confirmed subscriptions appear in your monthly summaries.</div>
           </div>
-        </section> */}
+        </section>
 
         <section className="panel">
           <div className="panel-head">

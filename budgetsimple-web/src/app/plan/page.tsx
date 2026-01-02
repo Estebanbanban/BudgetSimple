@@ -7,7 +7,8 @@ export default function PlanPage() {
         </div>
       </div>
 
-      <div id="envelopesHero" />
+      {/* PAUSED: Envelope savings goals - not in MVP golden path */}
+      {/* <div id="envelopesHero" />
 
       <section className="panel">
         <div className="panel-head">
@@ -55,16 +56,17 @@ export default function PlanPage() {
           </div>
           <div className="panel-note">To hit target by date, the app will suggest a monthly contribution.</div>
         </div>
-      </section>
+      </section> */}
 
       <div className="section-head">
         <div>
-          <h2>Budgets</h2>
-          <p className="muted">Set monthly budgets per category. Rent has a dedicated shortcut.</p>
+          <h2>Category Budgets</h2>
+          <p className="muted">Set monthly budget targets per category. Track spending vs targets on dashboard.</p>
         </div>
       </div>
 
-      <section className="panel">
+      {/* PAUSED: Rent shortcut - not in MVP golden path (use category budgets instead) */}
+      {/* <section className="panel">
         <div className="panel-head">
           <div>
             <div className="panel-title">Rent</div>
@@ -85,7 +87,7 @@ export default function PlanPage() {
             <div className="small muted" id="rentSavedNote" />
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="panel">
         <div className="panel-head">

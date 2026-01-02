@@ -1817,9 +1817,11 @@ function createRuntime() {
     renderInvestmentTable();
     renderAccountsTable();
     renderSubscriptionsTable();
-    renderRentBenchmark();
+    // PAUSED: Rent benchmark - not in MVP golden path
+    // renderRentBenchmark();
     renderDataHealth();
-    renderEnvelopeOnboard();
+    // PAUSED: Envelope onboarding - not in MVP golden path
+    // renderEnvelopeOnboard();
     renderBudgetsTable();
     renderActionItems();
     renderDrilldownPage();
@@ -2148,20 +2150,19 @@ function createRuntime() {
       }
     }
 
-    // PARKED: Subscription action items - removed from MVP
-    // const analysis = analyzeMerchants();
-    // const subTotal = analysis.subscriptions.reduce(
-    //   (sum, row) => sum + row.monthly,
-    //   0
-    // );
-    // if (subTotal > 0) {
-    //   items.push({
-    //     title: "Subscriptions total",
-    //     sub: `${formatCurrency(subTotal)} per month across recurring merchants`,
-    //     url: buildDrilldownUrl({ source: "subscriptions" }),
-    //     label: "View drilldown",
-    //   });
-    // }
+    const analysis = analyzeMerchants();
+    const subTotal = analysis.subscriptions.reduce(
+      (sum, row) => sum + row.monthly,
+      0
+    );
+    if (subTotal > 0) {
+      items.push({
+        title: "Subscriptions total",
+        sub: `${formatCurrency(subTotal)} per month across recurring merchants`,
+        url: buildDrilldownUrl({ source: "subscriptions" }),
+        label: "View drilldown",
+      });
+    }
 
     const envelopeBehind = findEnvelopeBehindPace(month);
     if (envelopeBehind) {
@@ -2629,9 +2630,8 @@ function createRuntime() {
       if (params.category) keys.push(normalizeFlowKey(params.category));
       else keys.push("expenses");
     }
-    // PARKED: Subscription drilldown - removed from MVP
-    // if (params.source === "subscriptions")
-    //   keys.push(normalizeFlowKey("Subscriptions"));
+    if (params.source === "subscriptions")
+      keys.push(normalizeFlowKey("Subscriptions"));
     if (params.source === "category-spike" && params.category)
       keys.push(normalizeFlowKey(params.category));
     if (params.source === "envelope") keys.push("envelopes");
@@ -3363,26 +3363,24 @@ function createRuntime() {
     }
   }
 
-  // PARKED: Subscription feature - removed from MVP
   function renderSubscriptionsTable() {
-    // Disabled - subscription feature is parked
-    // const analysis = analyzeMerchants();
-    // renderTable(
-    //   "subscriptionsTable",
-    //   analysis.subscriptions.map((row) => [
-    //     row.merchant,
-    //     formatCurrency(row.monthly),
-    //     `${row.count} months`,
-    //   ])
-    // );
-    // renderTable(
-    //   "merchantReviewTable",
-    //   analysis.merchants.map((row) => [
-    //     row.merchant,
-    //     formatCurrency(row.monthly),
-    //     row.tag,
-    //   ])
-    // );
+    const analysis = analyzeMerchants();
+    renderTable(
+      "subscriptionsTable",
+      analysis.subscriptions.map((row) => [
+        row.merchant,
+        formatCurrency(row.monthly),
+        `${row.count} months`,
+      ])
+    );
+    renderTable(
+      "merchantReviewTable",
+      analysis.merchants.map((row) => [
+        row.merchant,
+        formatCurrency(row.monthly),
+        row.tag,
+      ])
+    );
   }
 
   function analyzeMerchants() {
@@ -4684,8 +4682,7 @@ function createRuntime() {
       }
     }
 
-    // PARKED: Subscription drilldown - removed from MVP
-    if (false && source === "subscriptions") {
+    if (source === "subscriptions") {
       title = "Subscriptions drilldown";
       filters = "Recurring merchants detected";
       const subs = analyzeMerchants().subscriptions.map((s) =>

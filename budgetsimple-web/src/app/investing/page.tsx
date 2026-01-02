@@ -10,7 +10,8 @@ export default function InvestingPage() {
         </div>
       </div>
 
-      <section className="panel">
+      {/* PAUSED: Investment account connections - not in MVP golden path */}
+      {/* <section className="panel">
         <div className="panel-head">
           <div>
             <div className="panel-title">Connect accounts (coming soon)</div>
@@ -35,7 +36,7 @@ export default function InvestingPage() {
             Enable cloud mode to securely sync accounts and keep secrets off the browser.
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="panel">
         <div className="panel-head">
