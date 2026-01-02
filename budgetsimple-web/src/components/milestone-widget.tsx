@@ -45,20 +45,27 @@ export default function MilestoneWidget() {
       })
       
       if (!response.ok) {
-        // If 404 or other error, just show empty state (graceful degradation)
-        if (response.status === 404 || response.status >= 500) {
-          setMilestone(null)
-          setProgress(null)
-          setLoading(false)
-          return
-        }
-        throw new Error(`HTTP error! status: ${response.status}`)
+        // Graceful degradation: show empty state for any error
+        setMilestone(null)
+        setProgress(null)
+        setLoading(false)
+        return
       }
       const data = await response.json()
-      setMilestone(data.milestone || null)
-      setProgress(data.progress || null)
-    } catch (error) {
-      console.error('Error loading next milestone:', error)
+      // Backend may return { milestone: null, progress: null } if no data
+      if (data.milestone && data.progress) {
+        setMilestone(data.milestone)
+        setProgress(data.progress)
+      } else {
+        setMilestone(null)
+        setProgress(null)
+      }
+    } catch (error: any) {
+      // Silent error handling for MVP - backend is optional
+      // Only log if it's not a network error (which is expected when backend is off)
+      if (error?.message && !error.message.includes('Failed to fetch') && !error.message.includes('NetworkError')) {
+        console.warn('Error loading next milestone:', error)
+      }
       // Graceful degradation: show empty state instead of error
       setMilestone(null)
       setProgress(null)
