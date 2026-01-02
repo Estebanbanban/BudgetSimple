@@ -200,6 +200,21 @@ export default function DashboardPage() {
         <section className="panel">
           <div className="panel-head">
             <div>
+              <div className="panel-title">What Changed</div>
+              <div className="panel-sub">Month-over-month comparison and drivers</div>
+            </div>
+          </div>
+          <div className="panel-body">
+            <div id="whatChangedList" />
+            <div className="chart-empty" id="whatChangedEmpty" hidden>
+              Need at least 2 months of data to see changes.
+            </div>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head">
+            <div>
               <div className="panel-title">Budget progress</div>
               <div className="panel-sub">Spending vs monthly targets in range</div>
             </div>

@@ -1824,6 +1824,7 @@ function createRuntime() {
     // PAUSED: Envelope onboarding - not in MVP golden path
     // renderEnvelopeOnboard();
     renderBudgetsTable();
+    renderWhatChanged();
     renderActionItems();
     renderDrilldownPage();
     updateDrilldownButtons();
@@ -2101,6 +2102,159 @@ function createRuntime() {
   function renderTopTables() {
     renderTopCategoriesTable();
     renderTopMerchantsTable();
+  }
+
+  function renderWhatChanged() {
+    const list = byId("whatChangedList");
+    const emptyEl = byId("whatChangedEmpty");
+    if (!list) return;
+
+    const range = getRange();
+    const month = range.to
+      ? range.to.slice(0, 7)
+      : new Date().toISOString().slice(0, 7);
+    const prevMonth = (() => {
+      const [year, mon] = month.split("-").map(Number);
+      const date = new Date(year, mon - 2, 1);
+      return date.toISOString().slice(0, 7);
+    })();
+
+    // Get spending for both months
+    const currentSpend = categorySpendForMonth(month);
+    const prevSpend = categorySpendForMonth(prevMonth);
+    
+    // Get income for both months
+    const currentIncome = incomeForMonth(month);
+    const prevIncome = incomeForMonth(prevMonth);
+    
+    // Get total expenses
+    const currentTotal = Object.values(currentSpend).reduce((sum, val) => sum + val, 0);
+    const prevTotal = Object.values(prevSpend).reduce((sum, val) => sum + val, 0);
+
+    // Check if we have data for both months
+    const hasCurrentData = currentTotal > 0 || currentIncome > 0;
+    const hasPrevData = prevTotal > 0 || prevIncome > 0;
+
+    if (!hasCurrentData || !hasPrevData) {
+      list.innerHTML = "";
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+
+    if (emptyEl) emptyEl.hidden = true;
+
+    const changes: Array<{
+      category: string;
+      current: number;
+      previous: number;
+      change: number;
+      changePercent: number;
+      type: 'expense' | 'income';
+    }> = [];
+
+    // Calculate category changes
+    const allCategories = new Set([...Object.keys(currentSpend), ...Object.keys(prevSpend)]);
+    for (const category of allCategories) {
+      const current = currentSpend[category] || 0;
+      const previous = prevSpend[category] || 0;
+      if (current === 0 && previous === 0) continue;
+      
+      const change = current - previous;
+      const changePercent = previous > 0 ? (change / previous) * 100 : (current > 0 ? 100 : 0);
+      
+      // Only show significant changes (>10% or >$50)
+      if (Math.abs(change) > 50 || Math.abs(changePercent) > 10) {
+        changes.push({
+          category,
+          current,
+          previous,
+          change,
+          changePercent,
+          type: 'expense'
+        });
+      }
+    }
+
+    // Add income change
+    if (currentIncome > 0 || prevIncome > 0) {
+      const incomeChange = currentIncome - prevIncome;
+      const incomeChangePercent = prevIncome > 0 ? (incomeChange / prevIncome) * 100 : (currentIncome > 0 ? 100 : 0);
+      changes.push({
+        category: 'Income',
+        current: currentIncome,
+        previous: prevIncome,
+        change: incomeChange,
+        changePercent: incomeChangePercent,
+        type: 'income'
+      });
+    }
+
+    // Add total expenses change
+    const totalChange = currentTotal - prevTotal;
+    const totalChangePercent = prevTotal > 0 ? (totalChange / prevTotal) * 100 : (currentTotal > 0 ? 100 : 0);
+    changes.push({
+      category: 'Total Expenses',
+      current: currentTotal,
+      previous: prevTotal,
+      change: totalChange,
+      changePercent: totalChangePercent,
+      type: 'expense'
+    });
+
+    // Sort by absolute change (largest first)
+    changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+
+    // Take top 5 changes
+    const topChanges = changes.slice(0, 5);
+
+    if (topChanges.length === 0) {
+      list.innerHTML = "";
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+
+    list.innerHTML = topChanges
+      .map((change) => {
+        const isIncrease = change.change > 0;
+        const isIncome = change.type === 'income';
+        const arrow = isIncrease ? '↑' : '↓';
+        const colorClass = isIncome 
+          ? (isIncrease ? 'text-success' : 'text-danger')
+          : (isIncrease ? 'text-danger' : 'text-success');
+        const sign = isIncrease ? '+' : '';
+        
+        return `
+          <div class="action-item">
+            <div>
+              <div class="action-title">
+                ${escapeHtml(change.category)} 
+                <span class="${colorClass}">
+                  ${arrow} ${sign}${formatCurrency(Math.abs(change.change))} 
+                  (${sign}${change.changePercent.toFixed(1)}%)
+                </span>
+              </div>
+              <div class="action-sub">
+                ${formatCurrency(change.current)} this month vs ${formatCurrency(change.previous)} last month
+              </div>
+            </div>
+            <button class="btn btn-quiet" type="button" data-drilldown-url="${escapeHtml(
+              buildDrilldownUrl({
+                source: change.type === 'income' ? 'income' : 'category-spike',
+                category: change.category
+              })
+            )}">
+              View details
+            </button>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function incomeForMonth(month: string): number {
+    return income
+      .filter((i) => i.dateISO.startsWith(month))
+      .reduce((sum, i) => sum + i.amount, 0);
   }
 
   function renderActionItems() {
