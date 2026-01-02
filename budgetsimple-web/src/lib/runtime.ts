@@ -2285,9 +2285,6 @@ function createRuntime() {
         ? range.to.slice(0, 7)
         : new Date().toISOString().slice(0, 7);
       
-      // Dynamically import insights engine
-      const { generateInsights } = await import('./insightsEngine')
-      
       // Prepare transaction data for insights engine
       const txData = transactions.map(tx => ({
         id: tx.id,
@@ -2299,8 +2296,8 @@ function createRuntime() {
       }))
 
       // Dynamic import to avoid circular dependencies
-      const { generateInsights } = await import('./insightsEngine')
-      const insights = generateInsights(txData, config.budgets || {}, month)
+      const insightsModule = await import('./insightsEngine')
+      const insights = insightsModule.generateInsights(txData, config.budgets || {}, month)
 
       // Add monthly delta insights
       for (const delta of insights.monthlyDelta.slice(0, 2)) {
