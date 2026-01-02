@@ -8491,7 +8491,10 @@ function createRuntime() {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
   }
 
-  return { init };
+  return { 
+    init,
+    analyzeMerchants // Expose analyzeMerchants from runtime
+  };
 }
 
 type Mapping = Record<string, { column?: string | null; fixed?: string }>;
