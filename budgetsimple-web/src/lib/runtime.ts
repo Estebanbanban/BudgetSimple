@@ -127,7 +127,13 @@ export function initAppRuntime() {
   // Expose runtime functions to window after initialization
   if (typeof window !== 'undefined') {
     (window as any).budgetsimpleRuntime = {
-      analyzeMerchants: () => runtimeInstance?.analyzeMerchants() || { merchants: [], subscriptions: [] },
+      analyzeMerchants: () => {
+        if (runtimeInstance?.analyzeMerchants) {
+          return runtimeInstance.analyzeMerchants();
+        }
+        // Fallback if runtime not initialized yet
+        return { merchants: [], subscriptions: [] };
+      },
       transactions: () => transactions,
       income: () => income,
       config: () => config
