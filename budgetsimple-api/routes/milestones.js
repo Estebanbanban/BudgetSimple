@@ -77,9 +77,15 @@ module.exports = async function milestonesRoute (fastify) {
     const { userId = 'demo-user' } = request.query
 
     try {
+      // Check if Supabase is available
+      if (!fastify.supabase) {
+        fastify.log.warn('Supabase not available, returning empty milestone')
+        return { milestone: null, progress: null }
+      }
+
       const milestone = await db.getNextMilestone(fastify, userId)
       if (!milestone) {
-        return { milestone: null }
+        return { milestone: null, progress: null }
       }
 
       // Calculate progress
@@ -87,7 +93,8 @@ module.exports = async function milestonesRoute (fastify) {
       return { milestone, progress }
     } catch (error) {
       fastify.log.error(error, 'Error getting next milestone')
-      return reply.code(500).send({ error: 'Failed to fetch next milestone' })
+      // Return empty instead of error for graceful degradation
+      return { milestone: null, progress: null }
     }
   })
 
@@ -117,6 +124,10 @@ module.exports = async function milestonesRoute (fastify) {
     const { userId = 'demo-user' } = request.query
 
     try {
+      if (!fastify.supabase) {
+        return reply.code(404).send({ error: 'Milestone not found' })
+      }
+
       const milestone = await db.getMilestone(fastify, userId, id)
       if (!milestone) {
         return reply.code(404).send({ error: 'Milestone not found' })
@@ -340,23 +351,44 @@ module.exports = async function milestonesRoute (fastify) {
     const { userId = 'demo-user', months = 360 } = request.query
 
     try {
+      if (!fastify.supabase) {
+        return {
+          projection: [],
+          milestones: [],
+          assumptions: {
+            currentNetWorth: 0,
+            annualReturn: 7.0,
+            monthlyContribution: 0,
+            monthlyReturn: 0.565
+          }
+        }
+      }
+
       // Get current net worth
-      const { data: latestSnapshot } = await fastify.supabase
+      const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
         .from('net_worth_snapshots')
         .select('net_worth, snapshot_date')
         .eq('user_id', userId)
         .order('snapshot_date', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
+
+      if (snapshotError && snapshotError.code !== 'PGRST116') {
+        fastify.log.warn(snapshotError, 'Error fetching net worth snapshot')
+      }
 
       const currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
 
       // Get user assumptions
-      const { data: assumptions } = await fastify.supabase
+      const { data: assumptions, error: assumptionsError } = await fastify.supabase
         .from('user_assumptions')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
+
+      if (assumptionsError && assumptionsError.code !== 'PGRST116') {
+        fastify.log.warn(assumptionsError, 'Error fetching user assumptions')
+      }
 
       const annualReturn = parseFloat(assumptions?.expected_annual_return || 7.0) / 100
       const monthlyReturn = Math.pow(1 + annualReturn, 1 / 12) - 1

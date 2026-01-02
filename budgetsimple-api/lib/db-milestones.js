@@ -9,8 +9,9 @@
  * Get all milestones for a user
  */
 async function getMilestones (fastify, userId) {
+  // For MVP, return empty array if Supabase not available (graceful degradation)
   if (!fastify.supabase) {
-    fastify.log.warn('Supabase not available, returning empty array')
+    fastify.log.warn('Supabase not available, returning empty array for milestones')
     return []
   }
 
@@ -261,6 +262,7 @@ async function getNextMilestone (fastify, userId) {
  */
 async function calculateMilestoneProgress (fastify, userId, milestoneId) {
   if (!fastify.supabase) {
+    fastify.log.warn('Supabase not available, returning null for milestone progress')
     return null
   }
 
@@ -269,13 +271,17 @@ async function calculateMilestoneProgress (fastify, userId, milestoneId) {
     if (!milestone) return null
 
     // Get current net worth
-    const { data: latestSnapshot } = await fastify.supabase
+    const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
       .from('net_worth_snapshots')
       .select('net_worth, snapshot_date')
       .eq('user_id', userId)
       .order('snapshot_date', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
+
+    if (snapshotError && snapshotError.code !== 'PGRST116') {
+      fastify.log.warn(snapshotError, 'Error fetching net worth snapshot, using 0')
+    }
 
     const currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
     const targetValue = parseFloat(milestone.target_value || 0)

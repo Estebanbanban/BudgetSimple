@@ -45,13 +45,21 @@ export default function MilestoneWidget() {
       })
       
       if (!response.ok) {
+        // If 404 or other error, just show empty state (graceful degradation)
+        if (response.status === 404 || response.status >= 500) {
+          setMilestone(null)
+          setProgress(null)
+          setLoading(false)
+          return
+        }
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      setMilestone(data.milestone)
-      setProgress(data.progress)
+      setMilestone(data.milestone || null)
+      setProgress(data.progress || null)
     } catch (error) {
       console.error('Error loading next milestone:', error)
+      // Graceful degradation: show empty state instead of error
       setMilestone(null)
       setProgress(null)
     } finally {
