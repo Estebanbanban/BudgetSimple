@@ -1,4 +1,5 @@
 import SubscriptionWidget from "@/components/subscription-widget";
+import MilestoneWidget from "@/components/milestone-widget";
 
 export default function DashboardPage() {
   return (
@@ -49,6 +50,7 @@ export default function DashboardPage() {
           </button>
         </div>
         <SubscriptionWidget />
+        <MilestoneWidget />
         <div className="card">
           <div className="card-title">Total income</div>
           <div className="card-value" id="kpiTotalIncome">

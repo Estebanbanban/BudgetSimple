@@ -1825,6 +1825,7 @@ function createRuntime() {
     // renderEnvelopeOnboard();
     renderBudgetsTable();
     renderWhatChanged();
+    renderMilestones();
     renderActionItems();
     renderDrilldownPage();
     updateDrilldownButtons();
