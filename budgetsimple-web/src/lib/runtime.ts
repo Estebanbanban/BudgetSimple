@@ -1826,7 +1826,7 @@ function createRuntime() {
     renderBudgetsTable();
     renderWhatChanged();
     renderMilestones();
-    renderActionItems();
+    renderActionItems().catch(err => console.error('Error rendering action items:', err));
     renderDrilldownPage();
     updateDrilldownButtons();
     updateOnboardingUI();
