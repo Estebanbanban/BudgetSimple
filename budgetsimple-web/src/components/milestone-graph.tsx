@@ -15,7 +15,7 @@ interface MilestoneGraphProps {
   currentNetWorth: number
   monthlyContribution: number
   annualReturn: number
-  onReturnChange?: (return: number) => void
+  onReturnChange?: (returnRate: number) => void
 }
 
 export default function MilestoneGraph({
