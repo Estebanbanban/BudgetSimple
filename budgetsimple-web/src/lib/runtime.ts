@@ -2971,60 +2971,62 @@ function createRuntime() {
     const benchmarkDiff = Math.abs(savingsRate - avgSavingsRate);
 
     let html =
-      '<div style="display: flex; flex-direction: column; gap: 24px;">';
+      '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%;">';
 
-    // Podium for top 3 expenses
+    // Top 3 expenses with improved podium visualization
     if (topExpenses.length > 0) {
       html += `
-        <div style="background: var(--card-bg, #fff); border-radius: 12px; padding: 20px;">
-          <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Top Expenses</h3>
-          <div style="display: flex; align-items: flex-end; justify-content: center; gap: 12px; height: 180px;">
+        <div style="background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e5e5); border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: var(--text, #1f2933);">Top Expenses</h3>
+          <div style="display: flex; align-items: flex-end; justify-content: space-around; gap: 16px; height: 200px; padding: 0 8px;">
             ${topExpenses
               .map((exp: any, idx: number) => {
                 const height =
                   topExpenses[0].amount > 0
-                    ? (exp.amount / topExpenses[0].amount) * 100
-                    : 0;
+                    ? Math.max(30, (exp.amount / topExpenses[0].amount) * 100)
+                    : 30;
                 const positions = [1, 0, 2]; // 2nd, 1st, 3rd for visual podium
                 const pos = positions[idx];
-                const colors = ["#c0c0c0", "#ffd700", "#cd7f32"]; // Silver, Gold, Bronze
+                const colors = ["#94a3b8", "#fbbf24", "#f59e0b"]; // Silver, Gold, Bronze - more modern
                 const labels = ["2nd", "1st", "3rd"];
+                const medalEmojis = ["🥈", "🥇", "🥉"];
                 return `
-                <div style="display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 120px;">
+                <div style="display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 140px; min-width: 100px;">
                   <div style="
-                    background: ${colors[pos]};
+                    background: linear-gradient(135deg, ${colors[pos]} 0%, ${colors[pos]}dd 100%);
                     width: 100%;
                     height: ${height}%;
-                    min-height: 40px;
-                    border-radius: 8px 8px 0 0;
+                    min-height: 50px;
+                    border-radius: 12px 12px 0 0;
                     display: flex;
+                    flex-direction: column;
                     align-items: center;
                     justify-content: center;
                     color: white;
                     font-weight: 700;
-                    font-size: 14px;
+                    font-size: 16px;
                     position: relative;
-                  ">
-                    <div style="position: absolute; top: -24px; font-size: 12px; color: var(--text, #1f2933);">${
-                      labels[pos]
-                    }</div>
-                    ${formatCurrency(exp.amount)}
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    transition: transform 0.2s;
+                  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="position: absolute; top: -32px; font-size: 24px;">${medalEmojis[pos]}</div>
+                    <div style="font-size: 18px; margin-top: 8px;">${formatCurrency(exp.amount)}</div>
                   </div>
-                  <div style="margin-top: 8px; text-align: center;">
-                    <div style="font-weight: 600; font-size: 13px;">${
+                  <div style="margin-top: 12px; text-align: center; width: 100%;">
+                    <div style="font-weight: 600; font-size: 14px; color: var(--text, #1f2933); margin-bottom: 4px;">${
                       exp.label
                     }</div>
-                    <div style="font-size: 11px; color: var(--muted, #6a717a); margin-top: 2px;">
+                    <div style="font-size: 12px; color: var(--muted, #6a717a); margin-bottom: 8px;">
                       ${((exp.amount / metadata.totalIncome) * 100).toFixed(
                         1
                       )}% of income
                     </div>
+                    <button class="btn btn-sm btn-quiet" data-narrative-node="${
+                      exp.id
+                    }" type="button" style="font-size: 11px; padding: 4px 12px;">
+                      View details
+                    </button>
                   </div>
-                  <button class="btn btn-quiet" data-narrative-node="${
-                    exp.id
-                  }" type="button" style="margin-top: 8px; font-size: 11px;">
-                    View details
-                  </button>
                 </div>
               `;
               })
@@ -3034,28 +3036,28 @@ function createRuntime() {
       `;
     }
 
-    // Savings insights
+    // Savings insights with improved design
     html += `
-      <div style="background: var(--card-bg, #fff); border-radius: 12px; padding: 20px;">
-        <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Savings Insights</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <div style="font-size: 12px; color: var(--muted, #6a717a); margin-bottom: 4px;">Savings Rate</div>
-            <div style="font-size: 24px; font-weight: 700; color: ${
-              savingsRate >= avgSavingsRate ? "#2fbf8a" : "#ef6b6f"
-            };">
+      <div style="background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e5e5); border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: var(--text, #1f2933);">Savings Insights</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="padding: 16px; background: linear-gradient(135deg, ${savingsRate >= avgSavingsRate ? '#ecfdf5' : '#fef2f2'} 0%, ${savingsRate >= avgSavingsRate ? '#d1fae5' : '#fee2e2'} 100%); border-radius: 8px; border: 1px solid ${savingsRate >= avgSavingsRate ? '#a7f3d0' : '#fecaca'};">
+            <div style="font-size: 13px; color: var(--muted, #6a717a); margin-bottom: 8px; font-weight: 500;">Savings Rate</div>
+            <div style="font-size: 32px; font-weight: 700; color: ${
+              savingsRate >= avgSavingsRate ? "#059669" : "#dc2626"
+            }; margin-bottom: 8px; line-height: 1;">
               ${savingsRate.toFixed(1)}%
             </div>
-            <div style="font-size: 11px; color: var(--muted, #6a717a); margin-top: 4px;">
+            <div style="font-size: 12px; color: var(--muted, #6a717a);">
               ${formatCurrency(savingsAggregate?.amount || 0)} saved
             </div>
           </div>
-          <div>
-            <div style="font-size: 12px; color: var(--muted, #6a717a); margin-bottom: 4px;">Expense Rate</div>
-            <div style="font-size: 24px; font-weight: 700;">
+          <div style="padding: 16px; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 8px; border: 1px solid #d1d5db;">
+            <div style="font-size: 13px; color: var(--muted, #6a717a); margin-bottom: 8px; font-weight: 500;">Expense Rate</div>
+            <div style="font-size: 32px; font-weight: 700; color: var(--text, #1f2933); margin-bottom: 8px; line-height: 1;">
               ${expenseRate.toFixed(1)}%
             </div>
-            <div style="font-size: 11px; color: var(--muted, #6a717a); margin-top: 4px;">
+            <div style="font-size: 12px; color: var(--muted, #6a717a);">
               ${formatCurrency(metadata.totalExpenses)} spent
             </div>
           </div>
@@ -3063,41 +3065,46 @@ function createRuntime() {
       </div>
     `;
 
-    // Benchmark comparison
+    // Benchmark comparison with improved visualization
+    const savingsBarWidth = Math.min(100, (savingsRate / Math.max(avgSavingsRate, savingsRate)) * 100);
+    const avgBarWidth = Math.min(100, (avgSavingsRate / Math.max(avgSavingsRate, savingsRate)) * 100);
+    
     html += `
-      <div style="background: var(--card-bg, #fff); border-radius: 12px; padding: 20px;">
-        <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Benchmark vs Local Average</h3>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e5e5); border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); grid-column: 1 / -1;">
+        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: var(--text, #1f2933);">Benchmark vs Local Average</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
           <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 13px;">Your Savings Rate</span>
-              <span style="font-weight: 600; font-size: 13px;">${savingsRate.toFixed(
-                1
-              )}%</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 14px; font-weight: 500; color: var(--text, #1f2933);">Your Savings Rate</span>
+              <span style="font-weight: 700; font-size: 16px; color: ${
+                savingsRate >= avgSavingsRate ? "#059669" : "#dc2626"
+              };">${savingsRate.toFixed(1)}%</span>
             </div>
-            <div style="height: 8px; background: var(--bg-secondary, #f5f5f5); border-radius: 4px; overflow: hidden;">
-              <div style="height: 100%; width: ${Math.min(
-                100,
-                (savingsRate / avgSavingsRate) * 100
-              )}%; background: ${
-      savingsRate >= avgSavingsRate ? "#2fbf8a" : "#ef6b6f"
-    };"></div>
+            <div style="height: 12px; background: var(--bg-secondary, #f3f4f6); border-radius: 6px; overflow: hidden; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="height: 100%; width: ${savingsBarWidth}%; background: linear-gradient(90deg, ${
+      savingsRate >= avgSavingsRate ? "#10b981" : "#ef4444"
+    } 0%, ${savingsRate >= avgSavingsRate ? "#059669" : "#dc2626"} 100%); border-radius: 6px; transition: width 0.3s ease;"></div>
             </div>
           </div>
           <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 13px;">Local Average</span>
-              <span style="font-weight: 600; font-size: 13px;">${avgSavingsRate}%</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 14px; font-weight: 500; color: var(--text, #1f2933);">Local Average</span>
+              <span style="font-weight: 700; font-size: 16px; color: #6b7280;">${avgSavingsRate}%</span>
             </div>
-            <div style="height: 8px; background: var(--bg-secondary, #f5f5f5); border-radius: 4px; overflow: hidden;">
-              <div style="height: 100%; width: 100%; background: #6a717a;"></div>
+            <div style="height: 12px; background: var(--bg-secondary, #f3f4f6); border-radius: 6px; overflow: hidden; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="height: 100%; width: ${avgBarWidth}%; background: linear-gradient(90deg, #9ca3af 0%, #6b7280 100%); border-radius: 6px;"></div>
             </div>
           </div>
-          <div style="padding-top: 8px; border-top: 1px solid var(--border, #e5e5e5);">
-            <div style="font-size: 12px; color: var(--muted, #6a717a);">
-              You're <strong>${benchmarkComparison}</strong> the local average by ${benchmarkDiff.toFixed(
-      1
-    )} percentage points
+          <div style="padding-top: 16px; border-top: 2px solid var(--border, #e5e7eb); margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${
+                savingsRate >= avgSavingsRate ? "#10b981" : "#ef4444"
+              };"></div>
+              <div style="font-size: 14px; color: var(--text, #1f2933); font-weight: 500;">
+                You're <strong style="color: ${
+                  savingsRate >= avgSavingsRate ? "#059669" : "#dc2626"
+                };">${benchmarkComparison}</strong> the local average by <strong>${benchmarkDiff.toFixed(1)}</strong> percentage points
+              </div>
             </div>
           </div>
         </div>
@@ -8732,3 +8739,4 @@ if (typeof window !== 'undefined') {
     getStore: () => null
   };
 }
+
