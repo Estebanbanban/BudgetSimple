@@ -29,38 +29,28 @@ export default function MilestoneWidget() {
 
   if (loading) {
     return (
-      <div className="panel">
-        <div className="panel-head">
-          <div>
-            <div className="panel-title">Next Milestone</div>
-            <div className="panel-sub">Your progress toward financial goals</div>
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="small muted">Loading...</div>
-        </div>
+      <div className="card card-highlight">
+        <div className="card-title">Next Milestone</div>
+        <div className="card-sub">Your progress toward financial goals</div>
+        <div className="small muted">Loading...</div>
       </div>
     )
   }
 
   if (!progress) {
     return (
-      <div className="panel">
-        <div className="panel-head">
+      <div className="card card-highlight">
+        <div className="card-header">
           <div>
-            <div className="panel-title">Next Milestone</div>
-            <div className="panel-sub">Your progress toward financial goals</div>
+            <div className="card-title">Next Milestone</div>
+            <div className="card-sub">Your progress toward financial goals</div>
           </div>
-          <div className="panel-actions">
-            <Link href="/plan" className="btn btn-quiet">
-              Add Milestone
-            </Link>
-          </div>
+          <Link href="/plan" className="btn btn-quiet card-inline">
+            Add milestone
+          </Link>
         </div>
-        <div className="panel-body">
-          <div className="chart-empty">
-            No milestones yet. Add your first milestone to track progress.
-          </div>
+        <div className="small muted">
+          No milestones yet. Add your first milestone to track progress.
         </div>
       </div>
     )
@@ -69,86 +59,67 @@ export default function MilestoneWidget() {
   const statusLabels = {
     ahead: 'Ahead of schedule',
     on_track: 'On track',
-    behind: 'Behind schedule'
+    behind: 'Behind schedule',
+    no_data: 'Tracking soon'
   }
 
-  const statusColors = {
-    ahead: 'text-success',
-    on_track: 'text-info',
-    behind: 'text-warning'
+  const statusStyles = {
+    ahead: 'badge is-success',
+    on_track: 'badge is-info',
+    behind: 'badge is-warning',
+    no_data: 'badge'
   }
+
+  const percent = Math.max(0, Math.min(100, progress.progressPercent))
 
   return (
-    <div className="panel">
-      <div className="panel-head">
+    <div className="card card-highlight">
+      <div className="card-header">
         <div>
-          <div className="panel-title">Next Milestone</div>
-          <div className="panel-sub">{progress.milestone.label}</div>
+          <div className="card-title">Next Milestone</div>
+          <div className="card-sub">{progress.milestone.label}</div>
         </div>
-        <div className="panel-actions">
-          <Link href="/plan" className="btn btn-quiet">
-            Manage
-          </Link>
+        <Link href="/plan" className="btn btn-quiet card-inline">
+          Manage
+        </Link>
+      </div>
+
+      <div className="card-value">{percent.toFixed(1)}%</div>
+      <div className="card-sub">toward {formatCurrency(progress.targetValue)}</div>
+
+      <div className="card-progress">
+        <div className="card-progress-track">
+          <div className="card-progress-fill" style={{ width: `${percent}%` }} />
+        </div>
+        <div className="card-meta">
+          <span>{formatCurrency(progress.currentValue)}</span>
+          <span>{formatCurrency(progress.remaining)} left</span>
         </div>
       </div>
-      <div className="panel-body">
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span className="small muted">Progress</span>
-            <span className="small">{progress.progressPercent.toFixed(1)}%</span>
-          </div>
-          <div style={{ 
-            width: '100%', 
-            height: '8px', 
-            backgroundColor: '#e0e0e0', 
-            borderRadius: '4px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${Math.min(100, progress.progressPercent)}%`,
-              height: '100%',
-              backgroundColor: progress.progressPercent >= 100 ? '#4caf50' : '#2196f3',
-              transition: 'width 0.3s ease'
-            }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-            <span className="small muted">{formatCurrency(progress.currentValue)}</span>
-            <span className="small muted">{formatCurrency(progress.targetValue)}</span>
-          </div>
-        </div>
 
-        {progress.etaDate && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div className="small muted">Estimated completion</div>
-            <div className="small">
-              {formatDate(progress.etaDate)}
-              {progress.etaMonths && (
-                <span className="muted"> ({progress.etaMonths} months)</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {progress.milestone.target_date && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div className="small muted">Target date</div>
-            <div className="small">{formatDate(progress.milestone.target_date)}</div>
-          </div>
-        )}
-
-        <div>
-          <span className={`badge ${statusColors[progress.status]}`}>
-            <span className="badge-dot" />
-            {statusLabels[progress.status]}
-          </span>
-        </div>
-
-        {progress.remaining > 0 && (
-          <div className="panel-note" style={{ marginTop: '0.5rem' }}>
-            {formatCurrency(progress.remaining)} remaining to reach this milestone
-          </div>
-        )}
+      <div className="card-meta">
+        <span>
+          {progress.etaDate ? (
+            <>
+              Est. {formatDate(progress.etaDate)}
+              {progress.etaMonths && <span className="muted"> ({progress.etaMonths} months)</span>}
+            </>
+          ) : (
+            'Estimated date coming soon'
+          )}
+        </span>
+        <span className={statusStyles[progress.status]}>
+          <span className="badge-dot" />
+          {statusLabels[progress.status]}
+        </span>
       </div>
+
+      {progress.remaining > 0 && (
+        <div className="card-meta" style={{ marginTop: 4 }}>
+          <span>{formatCurrency(progress.milestone.target_value || progress.targetValue)} goal</span>
+          {progress.milestone.target_date && <span>{formatDate(progress.milestone.target_date)}</span>}
+        </div>
+      )}
     </div>
   )
 }
