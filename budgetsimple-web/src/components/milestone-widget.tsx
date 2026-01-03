@@ -38,11 +38,6 @@ export default function MilestoneWidget() {
   }
 
   if (!progress) {
-    // Load net worth if not already loaded
-    if (netWorth === null && !loading) {
-      loadNetWorth()
-    }
-    
     return (
       <div className="card" style={{ 
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
