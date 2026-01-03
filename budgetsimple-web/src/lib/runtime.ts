@@ -8532,8 +8532,9 @@ function createRuntime() {
     init,
     analyzeMerchants, // Expose analyzeMerchants from runtime
     getStore: () => store, // Expose store for milestones
-    transactions: () => transactions,
-    income: () => income
+    transactions: () => transactions, // Expose transactions getter
+    income: () => income, // Expose income getter
+    config: () => config // Expose config getter
   };
 }
 
