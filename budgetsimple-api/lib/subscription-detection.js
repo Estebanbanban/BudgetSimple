@@ -127,7 +127,8 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    maxVarianceThreshold = 0.25 // Guardrail to drop very noisy merchants
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -234,6 +235,7 @@ function detectSubscriptions (transactions, options = {}) {
     // PRIORITY 4: Check amount consistency
     const amounts = txs.map(t => t.amount)
     const amountConsistency = checkAmountConsistency(amounts, amountVarianceTolerance, amountVarianceFixed)
+    const varianceTooHigh = amountConsistency.variancePercentage > maxVarianceThreshold
 
     // DECISION LOGIC: Accept if ANY of these conditions are met:
     // 1. Category matches (even single occurrence)
@@ -276,7 +278,7 @@ function detectSubscriptions (transactions, options = {}) {
     }
     // Case 3: Recurring pattern (requires 2+ occurrences)
     // EXCLUDE rent/housing from recurrence-based detection unless category says subscription
-    else if (recurrence && txs.length >= minOccurrences && !isRentOrHousing) {
+    else if (recurrence && txs.length >= minOccurrences && !isRentOrHousing && !varianceTooHigh) {
       // More lenient: accept if recurrence exists, even if amounts vary
       shouldDetect = true
       detectionMethod = 'recurrence'
@@ -292,6 +294,10 @@ function detectSubscriptions (transactions, options = {}) {
     }
     // Case 4: Fallback - any merchant with 2+ occurrences (very lenient)
     // EXCLUDE rent/housing from fallback detection
+    else if (varianceTooHigh && !categoryMatch && !knownService) {
+      console.log(`[DETECTION] Skipping ${merchantKey} due to high variance (${(amountConsistency.variancePercentage * 100).toFixed(1)}%)`)
+      shouldDetect = false
+    }
     else if (txs.length >= minOccurrences && txs.length >= 2 && !isRentOrHousing) {
       // Even without clear recurrence, if we have multiple transactions to same merchant, it might be a subscription
       // Check if dates are somewhat spread out (not all on same day)
