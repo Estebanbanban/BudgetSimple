@@ -1,23 +1,25 @@
 'use client'
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
-import { 
-  getMilestones, 
-  createMilestone, 
-  updateMilestone, 
+import {
+  getMilestones,
+  createMilestone,
+  updateMilestone,
   deleteMilestone,
   calculateMilestoneProgress,
   formatCurrency,
   formatDate,
+  reorderMilestones,
   type Milestone,
   type MilestoneProgress
-} from '@/lib/milestones-local'
+} from '@/lib/milestones'
 
 export interface MilestonesManagerRef {
   showAddForm: () => void
 }
 
 const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
+  const userId = 'demo-user'
   const [showAddForm, setShowAddForm] = useState(false)
   
   useImperativeHandle(ref, () => ({
@@ -33,6 +35,19 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
     targetDate: '',
     type: 'net_worth' as 'net_worth' | 'invested_assets' | 'savings'
   })
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const statusLabels: Record<MilestoneProgress['status'], string> = {
+    ahead: 'Ahead of schedule',
+    on_track: 'On track',
+    behind: 'Behind schedule',
+    no_data: 'Not enough data yet'
+  }
+  const statusClasses: Record<MilestoneProgress['status'], string> = {
+    ahead: 'text-success',
+    on_track: 'text-info',
+    behind: 'text-warning',
+    no_data: 'text-muted'
+  }
 
   useEffect(() => {
     loadMilestones()
@@ -41,13 +56,13 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
   const loadMilestones = async () => {
     setLoading(true)
     try {
-      const ms = await getMilestones()
+      const ms = await getMilestones(userId)
       setMilestones(ms)
-      
+
       // Calculate progress for each milestone
       const progressMap = new Map<string, MilestoneProgress>()
       for (const milestone of ms) {
-        const progress = await calculateMilestoneProgress(milestone)
+        const progress = await calculateMilestoneProgress(milestone, userId)
         if (progress) {
           progressMap.set(milestone.id, progress)
         }
@@ -68,7 +83,7 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
       targetDate: formData.targetDate || undefined,
       type: formData.type,
       displayOrder: milestones.length
-    })
+    }, userId)
     
     if (milestone) {
       await loadMilestones()
@@ -84,7 +99,7 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
       targetDate: updates.target_date,
       type: updates.type,
       displayOrder: updates.display_order
-    })
+    }, userId)
     
     if (updated) {
       await loadMilestones()
@@ -94,10 +109,43 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this milestone?')) {
-      await deleteMilestone(id)
+      await deleteMilestone(id, userId)
       await loadMilestones()
     }
   }
+
+  const handleDragStart = (id: string) => {
+    setDraggingId(id)
+  }
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>, targetId: string) => {
+    event.preventDefault()
+    if (!draggingId || draggingId === targetId) return
+
+    setMilestones(prev => {
+      const updated = [...prev]
+      const fromIndex = updated.findIndex(m => m.id === draggingId)
+      const toIndex = updated.findIndex(m => m.id === targetId)
+
+      if (fromIndex === -1 || toIndex === -1) return prev
+
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved)
+
+      return updated.map((milestone, index) => ({ ...milestone, display_order: index }))
+    })
+  }
+
+  const handleDrop = async () => {
+    setDraggingId(null)
+    if (milestones.length === 0) return
+
+    const ids = milestones.map(m => m.id)
+    await reorderMilestones(ids, userId)
+    await loadMilestones()
+  }
+
+  const handleDragEnd = () => setDraggingId(null)
 
   const startEdit = (milestone: Milestone) => {
     setEditingId(milestone.id)
@@ -131,7 +179,20 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
             const isEditing = editingId === milestone.id
             
             return (
-              <div key={milestone.id} className="card" style={{ padding: '1rem' }}>
+              <div
+                key={milestone.id}
+                className="card"
+                style={{
+                  padding: '1rem',
+                  cursor: 'grab',
+                  opacity: draggingId === milestone.id ? 0.9 : 1
+                }}
+                draggable
+                onDragStart={() => handleDragStart(milestone.id)}
+                onDragOver={(event) => handleDragOver(event, milestone.id)}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+              >
                 {isEditing ? (
                   <form onSubmit={(e) => {
                     e.preventDefault()
@@ -186,11 +247,16 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                 ) : (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-                      <div>
-                        <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{milestone.label}</div>
-                        <div className="small muted">
-                          Target: {formatCurrency(milestone.target_value)} • {milestone.type.replace('_', ' ')}
-                          {milestone.target_date && ` • Target date: ${formatDate(milestone.target_date)}`}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span className="small muted" style={{ cursor: 'grab', userSelect: 'none' }} aria-hidden>
+                          ↕
+                        </span>
+                        <div>
+                          <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{milestone.label}</div>
+                          <div className="small muted">
+                            Target: {formatCurrency(milestone.target_value)} • {milestone.type.replace('_', ' ')}
+                            {milestone.target_date && ` • Target date: ${formatDate(milestone.target_date)}`}
+                          </div>
                         </div>
                       </div>
                       <div className="row" style={{ gap: '0.25rem' }}>
@@ -227,11 +293,12 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                           <div className="small muted">
                             {formatCurrency(progress.remaining)} remaining
                             {progress.etaDate && ` • ETA: ${formatDate(progress.etaDate)}`}
-                            {progress.status !== 'no_data' && (
-                              <span className={`badge ${progress.status === 'ahead' ? 'text-success' : progress.status === 'on_track' ? 'text-info' : 'text-warning'}`} style={{ marginLeft: '0.5rem' }}>
-                                {progress.status.replace('_', ' ')}
-                              </span>
-                            )}
+                            <span
+                              className={`badge ${statusClasses[progress.status]}`}
+                              style={{ marginLeft: '0.5rem' }}
+                            >
+                              {statusLabels[progress.status]}
+                            </span>
                           </div>
                         )}
                         {progress.progressPercent >= 100 && (

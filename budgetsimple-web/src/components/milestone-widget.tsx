@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } from '@/lib/milestones-local'
+import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } from '@/lib/milestones'
 
 export default function MilestoneWidget() {
   const [progress, setProgress] = useState<MilestoneProgress | null>(null)
   const [loading, setLoading] = useState(true)
+  const [netWorth, setNetWorth] = useState<number | null>(null)
 
   useEffect(() => {
     loadNextMilestone()
@@ -19,9 +20,11 @@ export default function MilestoneWidget() {
     try {
       const next = await getNextMilestone()
       setProgress(next)
+      setNetWorth(next?.currentValue ?? null)
     } catch (error) {
       console.error('Error loading next milestone:', error)
       setProgress(null)
+      setNetWorth(null)
     } finally {
       setLoading(false)
     }
@@ -67,24 +70,28 @@ export default function MilestoneWidget() {
   const statusLabels = {
     ahead: 'Ahead of schedule',
     on_track: 'On track',
-    behind: 'Behind schedule'
+    behind: 'Behind schedule',
+    no_data: 'Not enough data yet'
   }
 
   const statusColors = {
     ahead: 'text-success',
     on_track: 'text-info',
-    behind: 'text-warning'
+    behind: 'text-warning',
+    no_data: 'text-muted'
   }
 
   const progressPercent = Math.round(progress.progressPercent)
   const isComplete = progress.progressPercent >= 100
-  const gradientColor = isComplete 
+  const gradientColor = isComplete
     ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
     : progress.status === 'ahead'
     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     : progress.status === 'on_track'
     ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+    : progress.status === 'behind'
+    ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+    : 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
 
   return (
     <div className="card" style={{ 
@@ -107,8 +114,8 @@ export default function MilestoneWidget() {
         <div className="card-title" style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '6px', fontSize: '11px' }}>
           Current Net Worth
         </div>
-        <div className="card-value" style={{ 
-          color: 'white', 
+        <div className="card-value" style={{
+          color: 'white',
           fontSize: '28px',
           marginBottom: '4px',
           fontWeight: '800'
@@ -173,7 +180,10 @@ export default function MilestoneWidget() {
             backgroundColor: 'rgba(255,255,255,0.9)',
             boxShadow: '0 0 8px rgba(255,255,255,0.5)'
           }} />
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>
+          <span
+            className={statusColors[progress.status]}
+            style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}
+          >
             {statusLabels[progress.status]}
           </span>
         </div>
