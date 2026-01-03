@@ -87,18 +87,6 @@ export default function DashboardPage() {
             Explain this number
           </button>
         </div>
-        <div className="card">
-          <div className="card-title">Net worth</div>
-          <div className="card-value" id="kpiNetWorth">
-            --
-          </div>
-          <div className="card-sub" id="kpiNetWorthSub">
-            Assets minus liabilities
-          </div>
-          <button className="btn btn-quiet" data-drilldown="kpi" data-drilldown-metric="net-worth" type="button">
-            Explain this number
-          </button>
-        </div>
       </div>
 
       <div className="grid">

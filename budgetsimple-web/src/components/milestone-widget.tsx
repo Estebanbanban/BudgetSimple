@@ -29,39 +29,37 @@ export default function MilestoneWidget() {
 
   if (loading) {
     return (
-      <div className="panel">
-        <div className="panel-head">
-          <div>
-            <div className="panel-title">Next Milestone</div>
-            <div className="panel-sub">Your progress toward financial goals</div>
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="small muted">Loading...</div>
-        </div>
+      <div className="card" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none' }}>
+        <div className="card-title" style={{ color: 'rgba(255,255,255,0.9)' }}>Net Worth & Milestones</div>
+        <div className="card-value" style={{ color: 'white' }}>Loading...</div>
+        <div className="card-sub" style={{ color: 'rgba(255,255,255,0.8)' }}>Calculating your progress</div>
       </div>
     )
   }
 
   if (!progress) {
     return (
-      <div className="panel">
-        <div className="panel-head">
-          <div>
-            <div className="panel-title">Next Milestone</div>
-            <div className="panel-sub">Your progress toward financial goals</div>
-          </div>
-          <div className="panel-actions">
-            <Link href="/plan" className="btn btn-quiet">
-              Add Milestone
-            </Link>
-          </div>
+      <div className="card" style={{ 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+        color: 'white', 
+        border: 'none',
+        boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+      }}>
+        <div className="card-title" style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '8px' }}>Net Worth</div>
+        <div className="card-value" style={{ color: 'white', fontSize: '32px', marginBottom: '4px' }}>
+          {netWorth !== null ? formatCurrency(netWorth) : '--'}
         </div>
-        <div className="panel-body">
-          <div className="chart-empty">
-            No milestones yet. Add your first milestone to track progress.
-          </div>
+        <div className="card-sub" style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '12px' }}>
+          Current total assets
         </div>
+        <Link href="/plan" className="btn" style={{ 
+          background: 'rgba(255,255,255,0.2)', 
+          color: 'white', 
+          border: '1px solid rgba(255,255,255,0.3)',
+          marginTop: 'auto'
+        }}>
+          Add Milestone
+        </Link>
       </div>
     )
   }
@@ -78,76 +76,137 @@ export default function MilestoneWidget() {
     behind: 'text-warning'
   }
 
+  const progressPercent = Math.round(progress.progressPercent)
+  const isComplete = progress.progressPercent >= 100
+  const gradientColor = isComplete 
+    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+    : progress.status === 'ahead'
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    : progress.status === 'on_track'
+    ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+    : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+
   return (
-    <div className="panel">
-      <div className="panel-head">
-        <div>
-          <div className="panel-title">Next Milestone</div>
-          <div className="panel-sub">{progress.milestone.label}</div>
+    <div className="card" style={{ 
+      background: gradientColor,
+      color: 'white',
+      border: 'none',
+      boxShadow: isComplete 
+        ? '0 4px 20px rgba(16, 185, 129, 0.3)'
+        : '0 4px 20px rgba(102, 126, 234, 0.25)',
+      minHeight: '180px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Net Worth Display */}
+      <div style={{ 
+        marginBottom: '16px',
+        paddingBottom: '16px',
+        borderBottom: '1px solid rgba(255,255,255,0.2)'
+      }}>
+        <div className="card-title" style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '6px', fontSize: '11px' }}>
+          Current Net Worth
         </div>
-        <div className="panel-actions">
-          <Link href="/plan" className="btn btn-quiet">
-            Manage
-          </Link>
+        <div className="card-value" style={{ 
+          color: 'white', 
+          fontSize: '28px',
+          marginBottom: '4px',
+          fontWeight: '800'
+        }}>
+          {netWorth !== null ? formatCurrency(netWorth) : '--'}
         </div>
       </div>
-      <div className="panel-body">
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span className="small muted">Progress</span>
-            <span className="small">{progress.progressPercent.toFixed(1)}%</span>
+
+      {/* Milestone Progress */}
+      <div style={{ flex: 1 }}>
+        <div className="card-title" style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '8px', fontSize: '11px' }}>
+          Next Milestone: {progress.milestone.label}
+        </div>
+        
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>
+              {progressPercent}% Complete
+            </span>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', fontWeight: '600' }}>
+              {formatCurrency(progress.currentValue)} / {formatCurrency(progress.targetValue)}
+            </span>
           </div>
           <div style={{ 
             width: '100%', 
-            height: '8px', 
-            backgroundColor: '#e0e0e0', 
-            borderRadius: '4px',
-            overflow: 'hidden'
+            height: '10px', 
+            backgroundColor: 'rgba(255,255,255,0.2)', 
+            borderRadius: '6px',
+            overflow: 'hidden',
+            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
           }}>
             <div style={{
               width: `${Math.min(100, progress.progressPercent)}%`,
               height: '100%',
-              backgroundColor: progress.progressPercent >= 100 ? '#4caf50' : '#2196f3',
-              transition: 'width 0.3s ease'
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              borderRadius: '6px',
+              transition: 'width 0.5s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
             }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-            <span className="small muted">{formatCurrency(progress.currentValue)}</span>
-            <span className="small muted">{formatCurrency(progress.targetValue)}</span>
           </div>
         </div>
 
         {progress.etaDate && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div className="small muted">Estimated completion</div>
-            <div className="small">
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '2px' }}>
+              Estimated completion
+            </div>
+            <div style={{ fontSize: '13px', color: 'white', fontWeight: '600' }}>
               {formatDate(progress.etaDate)}
               {progress.etaMonths && (
-                <span className="muted"> ({progress.etaMonths} months)</span>
+                <span style={{ opacity: 0.8 }}> ({progress.etaMonths} months)</span>
               )}
             </div>
           </div>
         )}
 
-        {progress.milestone.target_date && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div className="small muted">Target date</div>
-            <div className="small">{formatDate(progress.milestone.target_date)}</div>
-          </div>
-        )}
-
-        <div>
-          <span className={`badge ${statusColors[progress.status]}`}>
-            <span className="badge-dot" />
+        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 0 8px rgba(255,255,255,0.5)'
+          }} />
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>
             {statusLabels[progress.status]}
           </span>
         </div>
 
         {progress.remaining > 0 && (
-          <div className="panel-note" style={{ marginTop: '0.5rem' }}>
-            {formatCurrency(progress.remaining)} remaining to reach this milestone
+          <div style={{ 
+            marginTop: '12px',
+            padding: '8px 12px',
+            background: 'rgba(255,255,255,0.15)',
+            borderRadius: '6px',
+            fontSize: '12px',
+            color: 'rgba(255,255,255,0.95)'
+          }}>
+            {formatCurrency(progress.remaining)} remaining
           </div>
         )}
+
+        <Link 
+          href="/plan" 
+          className="btn" 
+          style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            color: 'white', 
+            border: '1px solid rgba(255,255,255,0.3)',
+            marginTop: '16px',
+            fontSize: '12px',
+            padding: '6px 12px',
+            width: '100%',
+            textAlign: 'center'
+          }}
+        >
+          Manage Milestones
+        </Link>
       </div>
     </div>
   )
