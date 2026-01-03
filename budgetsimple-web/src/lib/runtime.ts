@@ -3,6 +3,7 @@ const DB_NAME = "budgetsimple";
 const DB_VERSION = 3; // Incremented to add milestones store
 const FALLBACK_PREFIX = "budgetsimple:fallback:";
 const ONBOARD_KEY = "budgetsimple:onboarding";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 type TxType = "expense" | "income" | "investment" | "transfer";
 
@@ -1861,7 +1862,7 @@ function createRuntime() {
     // PAUSED: Envelope onboarding - not in MVP golden path
     // renderEnvelopeOnboard();
     renderBudgetsTable();
-    renderWhatChanged();
+    renderWhatChanged().catch((err) => console.error("Error rendering what changed", err));
     // renderMilestones(); // TODO: Implement milestones rendering if needed
     renderActionItems().catch(err => console.error('Error rendering action items:', err));
     renderDrilldownPage();
@@ -2142,7 +2143,7 @@ function createRuntime() {
     renderTopMerchantsTable();
   }
 
-  function renderWhatChanged() {
+  async function renderWhatChanged() {
     const list = byId("whatChangedList");
     const emptyEl = byId("whatChangedEmpty");
     if (!list) return;
@@ -2157,23 +2158,10 @@ function createRuntime() {
       return date.toISOString().slice(0, 7);
     })();
 
-    // Get spending for both months
-    const currentSpend = categorySpendForMonth(month);
-    const prevSpend = categorySpendForMonth(prevMonth);
-    
-    // Get income for both months
-    const currentIncome = incomeForMonth(month);
-    const prevIncome = incomeForMonth(prevMonth);
-    
-    // Get total expenses
-    const currentTotal = Object.values(currentSpend).reduce((sum, val) => sum + val, 0);
-    const prevTotal = Object.values(prevSpend).reduce((sum, val) => sum + val, 0);
+    const apiResult = await fetchChangeDrivers(month, prevMonth);
+    const drivers = apiResult || computeLocalChangeDrivers(month, prevMonth);
 
-    // Check if we have data for both months
-    const hasCurrentData = currentTotal > 0 || currentIncome > 0;
-    const hasPrevData = prevTotal > 0 || prevIncome > 0;
-
-    if (!hasCurrentData || !hasPrevData) {
+    if (!drivers.hasCurrentData || !drivers.hasPreviousData || !drivers.topChanges.length) {
       list.innerHTML = "";
       if (emptyEl) emptyEl.hidden = false;
       return;
@@ -2181,94 +2169,26 @@ function createRuntime() {
 
     if (emptyEl) emptyEl.hidden = true;
 
-    const changes: Array<{
-      category: string;
-      current: number;
-      previous: number;
-      change: number;
-      changePercent: number;
-      type: 'expense' | 'income';
-    }> = [];
-
-    // Calculate category changes
-    const allCategories = new Set([...Object.keys(currentSpend), ...Object.keys(prevSpend)]);
-    for (const category of allCategories) {
-      const current = currentSpend[category] || 0;
-      const previous = prevSpend[category] || 0;
-      if (current === 0 && previous === 0) continue;
-      
-      const change = current - previous;
-      const changePercent = previous > 0 ? (change / previous) * 100 : (current > 0 ? 100 : 0);
-      
-      // Only show significant changes (>10% or >$50)
-      if (Math.abs(change) > 50 || Math.abs(changePercent) > 10) {
-        changes.push({
-          category,
-          current,
-          previous,
-          change,
-          changePercent,
-          type: 'expense'
-        });
-      }
-    }
-
-    // Add income change
-    if (currentIncome > 0 || prevIncome > 0) {
-      const incomeChange = currentIncome - prevIncome;
-      const incomeChangePercent = prevIncome > 0 ? (incomeChange / prevIncome) * 100 : (currentIncome > 0 ? 100 : 0);
-      changes.push({
-        category: 'Income',
-        current: currentIncome,
-        previous: prevIncome,
-        change: incomeChange,
-        changePercent: incomeChangePercent,
-        type: 'income'
-      });
-    }
-
-    // Add total expenses change
-    const totalChange = currentTotal - prevTotal;
-    const totalChangePercent = prevTotal > 0 ? (totalChange / prevTotal) * 100 : (currentTotal > 0 ? 100 : 0);
-    changes.push({
-      category: 'Total Expenses',
-      current: currentTotal,
-      previous: prevTotal,
-      change: totalChange,
-      changePercent: totalChangePercent,
-      type: 'expense'
-    });
-
-    // Sort by absolute change (largest first)
-    changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-
-    // Take top 5 changes
-    const topChanges = changes.slice(0, 5);
-
-    if (topChanges.length === 0) {
-      list.innerHTML = "";
-      if (emptyEl) emptyEl.hidden = false;
-      return;
-    }
-
-    list.innerHTML = topChanges
+    list.innerHTML = drivers.topChanges
       .map((change) => {
-        const isIncrease = change.change > 0;
+        const isIncrease = change.delta > 0;
         const isIncome = change.type === 'income';
         const arrow = isIncrease ? '↑' : '↓';
-        const colorClass = isIncome 
+        const colorClass = isIncome
           ? (isIncrease ? 'text-success' : 'text-danger')
           : (isIncrease ? 'text-danger' : 'text-success');
         const sign = isIncrease ? '+' : '';
-        
+        const pct = change.changePercent;
+        const pctLabel = pct === null || pct === undefined ? 'n/a' : `${sign}${pct.toFixed(1)}%`;
+
         return `
           <div class="action-item">
             <div>
               <div class="action-title">
-                ${escapeHtml(change.category)} 
+                ${escapeHtml(change.category)}
                 <span class="${colorClass}">
-                  ${arrow} ${sign}${formatCurrency(Math.abs(change.change))} 
-                  (${sign}${change.changePercent.toFixed(1)}%)
+                  ${arrow} ${sign}${formatCurrency(Math.abs(change.delta))}
+                  (${pctLabel})
                 </span>
               </div>
               <div class="action-sub">
@@ -2287,6 +2207,116 @@ function createRuntime() {
         `;
       })
       .join("");
+  }
+
+  function computeLocalChangeDrivers(month: string, prevMonth: string) {
+    const currentSpend = categorySpendForMonth(month);
+    const prevSpend = categorySpendForMonth(prevMonth);
+    const currentIncome = incomeForMonth(month);
+    const prevIncome = incomeForMonth(prevMonth);
+
+    const currentTotal = Object.values(currentSpend).reduce((sum, val) => sum + val, 0);
+    const prevTotal = Object.values(prevSpend).reduce((sum, val) => sum + val, 0);
+
+    const hasCurrentData = currentTotal > 0 || currentIncome > 0;
+    const hasPreviousData = prevTotal > 0 || prevIncome > 0;
+
+    const changes: Array<{
+      category: string;
+      current: number;
+      previous: number;
+      delta: number;
+      changePercent: number | null;
+      type: 'expense' | 'income' | 'summary';
+    }> = [];
+
+    const computeChange = (current: number, previous: number) => ({
+      current,
+      previous,
+      delta: current - previous,
+      changePercent: previous > 0 ? ((current - previous) / previous) * 100 : null
+    });
+
+    if (currentTotal || prevTotal) {
+      changes.push({
+        category: 'Total Expenses',
+        type: 'summary',
+        ...computeChange(currentTotal, prevTotal)
+      });
+    }
+
+    if (currentIncome || prevIncome) {
+      changes.push({
+        category: 'Income',
+        type: 'income',
+        ...computeChange(currentIncome, prevIncome)
+      });
+    }
+
+    const allCategories = new Set([...Object.keys(currentSpend), ...Object.keys(prevSpend)]);
+    for (const category of allCategories) {
+      const current = currentSpend[category] || 0;
+      const previous = prevSpend[category] || 0;
+      if (current === 0 && previous === 0) continue;
+      changes.push({
+        category,
+        type: 'expense',
+        ...computeChange(current, previous)
+      });
+    }
+
+    changes.sort((a, b) => {
+      const diff = Math.abs(b.delta) - Math.abs(a.delta);
+      if (diff !== 0) return diff;
+      if (a.type !== b.type) return a.type.localeCompare(b.type);
+      return a.category.localeCompare(b.category);
+    });
+
+    return {
+      hasCurrentData,
+      hasPreviousData,
+      topChanges: changes.slice(0, 5)
+    };
+  }
+
+  async function fetchChangeDrivers(month: string, prevMonth: string) {
+    if (!API_BASE) return null;
+    const months = new Set([month, prevMonth]);
+
+    const txPayload = transactions
+      .filter((t) => months.has(t.dateISO.slice(0, 7)))
+      .map((t) => ({
+        id: t.id,
+        dateISO: t.dateISO,
+        amount: t.amount,
+        category: config.categories.find((c) => c.id === t.categoryId)?.name || 'Uncategorized',
+        type: t.type,
+      }));
+
+    const incomePayload = income
+      .filter((i) => months.has(i.dateISO.slice(0, 7)))
+      .map((i) => ({
+        id: i.id,
+        dateISO: i.dateISO,
+        amount: i.amount,
+        source: i.source || 'Income',
+      }));
+
+    try {
+      const response = await fetch(`${API_BASE}/api/cashflow/what-changed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, previousMonth: prevMonth, transactions: txPayload, income: incomePayload })
+      });
+
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (!data.topChanges) return null;
+      return data;
+    } catch (err) {
+      console.warn('Failed to fetch change drivers', err);
+      return null;
+    }
   }
 
   function incomeForMonth(month: string): number {
