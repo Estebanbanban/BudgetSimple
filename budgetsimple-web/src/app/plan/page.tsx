@@ -72,16 +72,16 @@ export default function PlanPage() {
             <div className="panel-sub">Financial goals with progress tracking</div>
           </div>
           <div className="panel-actions">
-            <button className="btn btn-quiet" id="btnCreateMilestone" type="button">
+            <button 
+              className="btn btn-quiet" 
+              onClick={() => milestonesManagerRef.current?.showAddForm()}
+            >
               Add Milestone
             </button>
           </div>
         </div>
         <div className="panel-body">
-          <div id="milestonesList" />
-          <div className="chart-empty" id="milestonesEmpty" hidden>
-            No milestones yet. Add your first milestone to track progress toward your financial goals.
-          </div>
+          <MilestonesManager ref={milestonesManagerRef} />
         </div>
       </section>
 

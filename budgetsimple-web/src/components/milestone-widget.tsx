@@ -2,93 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
-interface Milestone {
-  id: string
-  label: string
-  target_value: number
-  target_date?: string
-  type: string
-}
-
-interface Progress {
-  currentValue: number
-  targetValue: number
-  progressPercent: number
-  remaining: number
-  etaMonths?: number
-  etaDate?: string
-  status: 'ahead' | 'on_track' | 'behind'
-}
+import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } from '@/lib/milestones-local'
 
 export default function MilestoneWidget() {
-  const [milestone, setMilestone] = useState<Milestone | null>(null)
-  const [progress, setProgress] = useState<Progress | null>(null)
+  const [progress, setProgress] = useState<MilestoneProgress | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadNextMilestone()
+    // Refresh every 30 seconds to update progress
+    const interval = setInterval(loadNextMilestone, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadNextMilestone = async () => {
     try {
-      const url = `${API_BASE}/api/milestones/next?userId=demo-user`
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors',
-        credentials: 'include'
-      })
-      
-      if (!response.ok) {
-        // Graceful degradation: show empty state for any error
-        setMilestone(null)
-        setProgress(null)
-        setLoading(false)
-        return
-      }
-      const data = await response.json()
-      // Backend may return { milestone: null, progress: null } if no data
-      if (data.milestone && data.progress) {
-        setMilestone(data.milestone)
-        setProgress(data.progress)
-      } else {
-        setMilestone(null)
-        setProgress(null)
-      }
-    } catch (error: any) {
-      // Silent error handling for MVP - backend is optional
-      // Only log if it's not a network error (which is expected when backend is off)
-      if (error?.message && !error.message.includes('Failed to fetch') && !error.message.includes('NetworkError')) {
-        console.warn('Error loading next milestone:', error)
-      }
-      // Graceful degradation: show empty state instead of error
-      setMilestone(null)
+      const next = await getNextMilestone()
+      setProgress(next)
+    } catch (error) {
+      console.error('Error loading next milestone:', error)
       setProgress(null)
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount)
-  }
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      year: 'numeric'
-    })
   }
 
   if (loading) {
@@ -107,7 +43,7 @@ export default function MilestoneWidget() {
     )
   }
 
-  if (!milestone || !progress) {
+  if (!progress) {
     return (
       <div className="panel">
         <div className="panel-head">
@@ -147,7 +83,7 @@ export default function MilestoneWidget() {
       <div className="panel-head">
         <div>
           <div className="panel-title">Next Milestone</div>
-          <div className="panel-sub">{milestone.label}</div>
+          <div className="panel-sub">{progress.milestone.label}</div>
         </div>
         <div className="panel-actions">
           <Link href="/plan" className="btn btn-quiet">
@@ -193,10 +129,10 @@ export default function MilestoneWidget() {
           </div>
         )}
 
-        {milestone.target_date && (
+        {progress.milestone.target_date && (
           <div style={{ marginBottom: '0.5rem' }}>
             <div className="small muted">Target date</div>
-            <div className="small">{formatDate(milestone.target_date)}</div>
+            <div className="small">{formatDate(progress.milestone.target_date)}</div>
           </div>
         )}
 

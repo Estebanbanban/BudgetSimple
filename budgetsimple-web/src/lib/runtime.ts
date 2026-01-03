@@ -1,6 +1,6 @@
 const CONFIG_KEY = "budgetsimple:v1";
 const DB_NAME = "budgetsimple";
-const DB_VERSION = 2;
+const DB_VERSION = 3; // Incremented to add milestones store
 const FALLBACK_PREFIX = "budgetsimple:fallback:";
 const ONBOARD_KEY = "budgetsimple:onboarding";
 
@@ -104,7 +104,8 @@ type StoreName =
   | "income"
   | "envelopes"
   | "envelopeContribs"
-  | "meta";
+  | "meta"
+  | "milestones";
 
 type OnboardingState = {
   currentStep: string;
@@ -136,7 +137,8 @@ export function initAppRuntime() {
       },
       transactions: () => transactions,
       income: () => income,
-      config: () => config
+      config: () => config,
+      getStore: () => runtimeInstance?.getStore() || null
     };
   }
 }
@@ -8513,7 +8515,10 @@ function createRuntime() {
 
   return { 
     init,
-    analyzeMerchants // Expose analyzeMerchants from runtime
+    analyzeMerchants, // Expose analyzeMerchants from runtime
+    getStore: () => store, // Expose store for milestones
+    transactions: () => transactions,
+    income: () => income
   };
 }
 
@@ -8564,6 +8569,8 @@ function createStore() {
         }
         if (!db.objectStoreNames.contains("meta"))
           db.createObjectStore("meta", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("milestones"))
+          db.createObjectStore("milestones", { keyPath: "id" });
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => {
@@ -8681,7 +8688,7 @@ function createStore() {
   }
 
   function fallbackClear() {
-    ["transactions", "income", "envelopes", "envelopeContribs", "meta"].forEach(
+    ["transactions", "income", "envelopes", "envelopeContribs", "meta", "milestones"].forEach(
       (key) => {
         localStorage.removeItem(`${FALLBACK_PREFIX}${key}`);
       }
