@@ -1,4 +1,11 @@
+'use client'
+
+import { useRef } from 'react'
+import MilestonesManager, { type MilestonesManagerRef } from '@/components/milestones-manager'
+
 export default function PlanPage() {
+  const milestonesManagerRef = useRef<MilestonesManagerRef>(null)
+  
   return (
     <section className="view" data-view="plan">
       <div className="page-head">
