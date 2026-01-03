@@ -266,13 +266,17 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <section className="view" data-view="subscriptions">
-      <div className="page-head">
-        <div>
+    <section className="view" data-view="subscriptions" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+      <div className="page-head" style={{ width: '100%', maxWidth: '100%', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1>Subscriptions</h1>
           <p className="muted">Review and manage your recurring subscriptions</p>
         </div>
-        <button className="btn btn-accent" onClick={() => setShowAddForm(true)}>
+        <button 
+          className="btn btn-accent" 
+          onClick={() => setShowAddForm(true)}
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+        >
           Add Subscription
         </button>
       </div>
@@ -343,10 +347,10 @@ export default function SubscriptionsPage() {
           </div>
         </section>
       ) : (
-        <div className="grid">
-          <section className="panel">
-            <div className="panel-head">
-              <div>
+        <div className="grid" style={{ width: '100%', maxWidth: '100%' }}>
+          <section className="panel" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+            <div className="panel-head" style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="panel-title">Pending Candidates</div>
                 <div className="panel-sub">{candidates.length} subscription{candidates.length !== 1 ? 's' : ''} detected</div>
               </div>
@@ -355,6 +359,7 @@ export default function SubscriptionsPage() {
                 onClick={handleDetect}
                 disabled={detecting}
                 title="Run detection again to find more subscriptions"
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
               >
                 {detecting ? 'Detecting...' : 'Detect Again'}
               </button>
@@ -440,13 +445,17 @@ export default function SubscriptionsPage() {
           </section>
 
           {selectedCandidate && (
-            <section className="panel">
-              <div className="panel-head">
-                <div>
+            <section className="panel" style={{ width: '100%', maxWidth: '100%' }}>
+              <div className="panel-head" style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="panel-title">Subscription Details</div>
                   <div className="panel-sub">{selectedCandidate.merchant}</div>
                 </div>
-                <button className="btn btn-quiet" onClick={() => setSelectedCandidate(null)}>
+                <button 
+                  className="btn btn-quiet" 
+                  onClick={() => setSelectedCandidate(null)}
+                  style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                >
                   Close
                 </button>
               </div>
