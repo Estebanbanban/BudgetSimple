@@ -300,14 +300,22 @@ export default function AppShell({ children }: AppShellProps) {
               <div className="onboard-step">
                 <div className="onboard-kicker">Step 2</div>
                 <div className="onboard-title">Import expenses</div>
-                <div className="onboard-text muted">Upload your bank CSV and map columns once.</div>
+                <div className="onboard-text muted">Upload one or more bank CSVs and map columns once.</div>
                 <div className="dropzone" id="onboardTxDropzone" role="button" tabIndex={0} aria-label="Upload transactions CSV in setup">
-                  <div className="dropzone-title">Drop your transactions CSV here</div>
+                  <div className="dropzone-title">Drop CSV files or folders here</div>
                   <div className="dropzone-sub muted">or</div>
                   <div className="row">
-                    <input id="onboardTxCsvFile" className="input" type="file" accept=".csv,text/csv" hidden />
+                    <input
+                      id="onboardTxCsvFile"
+                      className="input"
+                      type="file"
+                      accept=".csv,text/csv"
+                      hidden
+                      multiple
+                      webkitdirectory="true"
+                    />
                     <button className="btn" id="btnOnboardChooseTxCsv" type="button">
-                      Choose CSV
+                      Choose CSV files
                     </button>
                     <button className="btn" id="btnOnboardLoadTxCsv" type="button" disabled>
                       Use file
