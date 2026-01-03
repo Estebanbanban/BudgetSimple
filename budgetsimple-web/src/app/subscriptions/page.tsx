@@ -389,28 +389,40 @@ export default function SubscriptionsPage() {
                   <tbody>
                     {candidates.map((candidate) => (
                       <tr key={candidate.id}>
-                        <td>{candidate.merchant}</td>
+                        <td>
+                          <div style={{ fontWeight: '500' }}>{candidate.merchant}</div>
+                          {candidate.detectionMethod && (
+                            <div className="small muted" style={{ marginTop: '2px' }}>
+                              {candidate.detectionMethod === 'category' && '✓ Category match'}
+                              {candidate.detectionMethod === 'known_subscription' && '✓ Known service'}
+                              {candidate.detectionMethod === 'recurrence' && '✓ Recurring pattern'}
+                            </div>
+                          )}
+                        </td>
                         <td>{formatCurrency(candidate.estimatedMonthlyAmount)}</td>
                         <td>{candidate.frequency}</td>
                         <td>{formatConfidence(candidate.confidenceScore)}</td>
                         <td>{candidate.occurrenceCount}</td>
                         <td>
-                          <div className="row" style={{ gap: '8px' }}>
+                          <div className="row" style={{ gap: '4px', flexWrap: 'wrap' }}>
                             <button
-                              className="btn btn-quiet"
-                              onClick={() => setSelectedCandidate(candidate)}
-                            >
-                              Review
-                            </button>
-                            <button
-                              className="btn btn-accent"
+                              className="btn btn-sm"
                               onClick={() => handleConfirm(candidate.id)}
+                              title="Confirm this subscription"
                             >
                               Confirm
                             </button>
                             <button
-                              className="btn btn-quiet"
+                              className="btn btn-sm btn-quiet"
+                              onClick={() => setSelectedCandidate(candidate)}
+                              title="Review details"
+                            >
+                              Review
+                            </button>
+                            <button
+                              className="btn btn-sm btn-quiet"
                               onClick={() => handleReject(candidate.id)}
+                              title="Reject this candidate"
                             >
                               Reject
                             </button>

@@ -64,9 +64,9 @@ function normalizeTransaction (tx) {
     console.log(`[NORMALIZE] Merchant key became 'unknown' for: merchant="${merchant}", description="${description}"`)
   }
 
-  // Extract category (check multiple field names)
-  const category = tx.category || tx.category_id || tx.categoryId || tx.category_name || tx.categoryName || null
-  const categoryStr = category ? String(category).toLowerCase() : null
+  // Extract category (check multiple field names, prioritize category_name from DB)
+  const category = tx.category_name || tx.category || tx.category_id || tx.categoryId || tx.categoryName || null
+  const categoryStr = category ? String(category).toLowerCase().trim() : null
 
   return {
     id: tx.id || tx.transaction_id || `tx-${Date.now()}-${Math.random()}`,
@@ -203,9 +203,17 @@ function detectSubscriptions (transactions, options = {}) {
     // Sort by date
     txs.sort((a, b) => new Date(a.date) - new Date(b.date))
 
+    // EXCLUDE rent/housing unless explicitly marked as subscription
+    const isRentOrHousing = merchantKey.includes('rent') || 
+                            merchantKey.includes('housing') ||
+                            txs.some(t => {
+                              const cat = (t.category || '').toLowerCase()
+                              return cat.includes('rent') || cat.includes('housing') || cat.includes('mortgage')
+                            })
+    
     // PRIORITY 1: Check category signal (strongest indicator)
     const categorySignal = txs.some(t => isSubscriptionCategory(t.category || ''))
-    const categoryMatch = categorySignal
+    const categoryMatch = categorySignal && !isRentOrHousing // Only match if not rent/housing
     
     if (categoryMatch) {
       console.log(`[DETECTION] Category match found for ${merchantKey}:`, txs.find(t => isSubscriptionCategory(t.category || ''))?.category)
@@ -267,7 +275,8 @@ function detectSubscriptions (transactions, options = {}) {
       }
     }
     // Case 3: Recurring pattern (requires 2+ occurrences)
-    else if (recurrence && txs.length >= minOccurrences) {
+    // EXCLUDE rent/housing from recurrence-based detection unless category says subscription
+    else if (recurrence && txs.length >= minOccurrences && !isRentOrHousing) {
       // More lenient: accept if recurrence exists, even if amounts vary
       shouldDetect = true
       detectionMethod = 'recurrence'
@@ -282,7 +291,8 @@ function detectSubscriptions (transactions, options = {}) {
       }
     }
     // Case 4: Fallback - any merchant with 2+ occurrences (very lenient)
-    else if (txs.length >= minOccurrences && txs.length >= 2) {
+    // EXCLUDE rent/housing from fallback detection
+    else if (txs.length >= minOccurrences && txs.length >= 2 && !isRentOrHousing) {
       // Even without clear recurrence, if we have multiple transactions to same merchant, it might be a subscription
       // Check if dates are somewhat spread out (not all on same day)
       const dates = txs.map(t => new Date(t.date).getTime())
