@@ -208,26 +208,29 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
             </div>
           )}
 
-          {/* Detailed card view (for editing) */}
+          {/* Edit form modal */}
           {editingId && (
-            <div style={{ marginTop: '1rem' }}>
-              {milestones.filter(m => m.id === editingId).map((milestone) => {
-            const progress = progresses.get(milestone.id)
-            const isEditing = editingId === milestone.id
-            
-            return (
-              <div key={milestone.id} className="card" style={{ padding: '1rem' }}>
-                {isEditing ? (
-                  <form onSubmit={(e) => {
-                    e.preventDefault()
+            <div className="panel" style={{ marginTop: '1rem' }}>
+              <div className="panel-head">
+                <div className="panel-title">Edit Milestone</div>
+                <button className="btn btn-quiet" onClick={cancelEdit}>Close</button>
+              </div>
+              <div className="panel-body">
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  const milestone = milestones.find(m => m.id === editingId)
+                  if (milestone) {
                     handleUpdate(milestone.id, {
                       label: formData.label,
                       target_value: parseFloat(formData.targetValue) || 0,
                       target_date: formData.targetDate || undefined,
                       type: formData.type
                     })
-                  }}>
-                    <div className="row" style={{ marginBottom: '0.5rem' }}>
+                  }
+                }}>
+                  <div className="form">
+                    <div className="row">
+                      <label className="label">Label</label>
                       <input
                         className="input"
                         value={formData.label}
@@ -236,7 +239,8 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                         required
                       />
                     </div>
-                    <div className="row" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <div className="row">
+                      <label className="label">Target Value</label>
                       <input
                         className="input"
                         type="number"
@@ -246,6 +250,9 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                         placeholder="Target value"
                         required
                       />
+                    </div>
+                    <div className="row">
+                      <label className="label">Type</label>
                       <select
                         className="select"
                         value={formData.type}
@@ -255,84 +262,25 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                         <option value="invested_assets">Invested Assets</option>
                         <option value="savings">Savings</option>
                       </select>
+                    </div>
+                    <div className="row">
+                      <label className="label">Target Date (Optional)</label>
                       <input
                         className="input"
                         type="date"
                         value={formData.targetDate}
                         onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
-                        placeholder="Target date (optional)"
                       />
                     </div>
-                    <div className="row" style={{ gap: '0.5rem' }}>
-                      <button className="btn btn-sm" type="submit">Save</button>
-                      <button className="btn btn-sm btn-quiet" type="button" onClick={cancelEdit}>Cancel</button>
+                    <div className="row">
+                      <button className="btn btn-accent" type="submit">Save Changes</button>
+                      <button className="btn btn-quiet" type="button" onClick={cancelEdit}>Cancel</button>
                     </div>
-                  </form>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-                      <div>
-                        <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{milestone.label}</div>
-                        <div className="small muted">
-                          Target: {formatCurrency(milestone.target_value)} • {milestone.type.replace('_', ' ')}
-                          {milestone.target_date && ` • Target date: ${formatDate(milestone.target_date)}`}
-                        </div>
-                      </div>
-                      <div className="row" style={{ gap: '0.25rem' }}>
-                        <button className="btn btn-sm btn-quiet" onClick={() => startEdit(milestone)}>Edit</button>
-                        <button className="btn btn-sm btn-quiet" onClick={() => handleDelete(milestone.id)}>Delete</button>
-                      </div>
-                    </div>
-                    
-                    {progress && (
-                      <div style={{ marginTop: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                          <span className="small muted">Progress</span>
-                          <span className="small">{progress.progressPercent.toFixed(1)}%</span>
-                        </div>
-                        <div style={{ 
-                          width: '100%', 
-                          height: '8px', 
-                          backgroundColor: '#e0e0e0', 
-                          borderRadius: '4px',
-                          marginBottom: '0.25rem'
-                        }}>
-                          <div style={{
-                            width: `${Math.min(100, progress.progressPercent)}%`,
-                            height: '100%',
-                            backgroundColor: progress.progressPercent >= 100 ? '#4caf50' : '#2196f3',
-                            transition: 'width 0.3s ease'
-                          }} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                          <span className="small muted">{formatCurrency(progress.currentValue)}</span>
-                          <span className="small muted">{formatCurrency(progress.targetValue)}</span>
-                        </div>
-                        {progress.remaining > 0 && (
-                          <div className="small muted">
-                            {formatCurrency(progress.remaining)} remaining
-                            {progress.etaDate && ` • ETA: ${formatDate(progress.etaDate)}`}
-                            {progress.status !== 'no_data' && (
-                              <span className={`badge ${progress.status === 'ahead' ? 'text-success' : progress.status === 'on_track' ? 'text-info' : 'text-warning'}`} style={{ marginLeft: '0.5rem' }}>
-                                {progress.status.replace('_', ' ')}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {progress.progressPercent >= 100 && (
-                          <div className="small text-success" style={{ marginTop: '0.25rem' }}>
-                            ✓ Milestone achieved!
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                  </div>
+                </form>
               </div>
-            )
-          })}
-        </div>
-      )}
+            </div>
+          )}
 
       {showAddForm && (
         <div className="card" style={{ padding: '1rem', marginTop: '1rem' }}>

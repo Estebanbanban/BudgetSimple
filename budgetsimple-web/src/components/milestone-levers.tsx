@@ -102,7 +102,7 @@ export default function MilestoneLevers({
           <div>
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                Required contribution to hit {milestone.targetDate}
+                Required contribution to hit {milestone.target_date ? new Date(milestone.target_date).toLocaleDateString() : 'target date'}
               </div>
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2933', marginBottom: '8px' }}>
                 {requiredContribution ? formatCurrency(requiredContribution) : '--'}/mo
@@ -143,7 +143,7 @@ export default function MilestoneLevers({
               <button
                 className="btn btn-quiet"
                 onClick={() => {
-                  const date = prompt('Enter new target date (YYYY-MM-DD):', milestone.targetDate || '')
+                  const date = prompt('Enter new target date (YYYY-MM-DD):', milestone.target_date || '')
                   if (date && onDateChange) {
                     onDateChange(date)
                   }
