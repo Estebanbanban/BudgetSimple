@@ -1096,6 +1096,11 @@ body.nav-collapsed .nav-label {
   background: rgba(255, 255, 255, 0.7);
 }
 
+.action-item.is-anomaly {
+  border-color: rgba(255, 98, 98, 0.35);
+  box-shadow: 0 10px 30px rgba(255, 98, 98, 0.08);
+}
+
 .action-title {
   font-weight: 650;
   letter-spacing: -0.01em;
