@@ -35,10 +35,21 @@ export default function MilestoneGraph({
   }, [])
 
   useEffect(() => {
-    if (currentNetWorth !== null && monthlyContribution !== null) {
+    if (currentNetWorth !== null && monthlyContribution !== null && milestones.length > 0) {
       calculateCurves()
     }
-  }, [currentNetWorth, monthlyContribution, annualReturn])
+  }, [currentNetWorth, monthlyContribution, annualReturn, milestones]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // Redraw graph when window resizes
+    const handleResize = () => {
+      if (curves.length > 0) {
+        drawGraph(curves)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [curves])
 
   const loadMilestones = async () => {
     try {
