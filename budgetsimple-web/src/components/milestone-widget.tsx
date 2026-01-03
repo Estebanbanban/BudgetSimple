@@ -7,13 +7,29 @@ import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } 
 export default function MilestoneWidget() {
   const [progress, setProgress] = useState<MilestoneProgress | null>(null)
   const [loading, setLoading] = useState(true)
+  const [netWorth, setNetWorth] = useState<number | null>(null)
 
-  useEffect(() => {
-    loadNextMilestone()
-    // Refresh every 30 seconds to update progress
-    const interval = setInterval(loadNextMilestone, 30000)
-    return () => clearInterval(interval)
-  }, [])
+  const loadNetWorth = () => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).budgetsimpleRuntime) {
+        const runtime = (window as any).budgetsimpleRuntime
+        const transactions = runtime.transactions() || []
+        const income = runtime.income() || []
+        
+        // Calculate net worth: total income - total expenses
+        const totalIncome = income.reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+        const totalExpenses = transactions
+          .filter((t: any) => t.type === 'expense' || (t.amount && t.amount < 0))
+          .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+        
+        const calculatedNetWorth = totalIncome - totalExpenses
+        setNetWorth(Math.max(0, calculatedNetWorth))
+      }
+    } catch (error) {
+      console.error('Error loading net worth:', error)
+      setNetWorth(null)
+    }
+  }
 
   const loadNextMilestone = async () => {
     try {
@@ -26,6 +42,17 @@ export default function MilestoneWidget() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadNextMilestone()
+    loadNetWorth()
+    // Refresh every 30 seconds to update progress
+    const interval = setInterval(() => {
+      loadNextMilestone()
+      loadNetWorth()
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (loading) {
     return (
