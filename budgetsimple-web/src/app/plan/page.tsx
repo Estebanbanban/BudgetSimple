@@ -165,9 +165,15 @@ export default function PlanPage() {
               setContributionMode('manual')
               setMonthlyContribution(amount)
             }}
-            onDateChange={(date) => {
+            onDateChange={async (date) => {
               // Update milestone target date
-              console.log('Update milestone date:', date)
+              if (nextMilestone) {
+                const { updateMilestone } = await import('@/lib/milestones-local')
+                await updateMilestone(nextMilestone.milestone.id, {
+                  targetDate: date
+                })
+                await loadNextMilestone()
+              }
             }}
           />
         )}

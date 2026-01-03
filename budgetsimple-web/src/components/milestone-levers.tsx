@@ -37,7 +37,7 @@ export default function MilestoneLevers({
     ? calculateRequiredContribution(
         currentNetWorth,
         milestone.targetValue,
-        milestone.targetDate!,
+        milestone.target_date,
         annualReturn
       )
     : null
@@ -102,7 +102,7 @@ export default function MilestoneLevers({
           <div>
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                Required contribution to hit {milestone.target_date ? new Date(milestone.target_date).toLocaleDateString() : 'target date'}
+                Required contribution to hit {new Date(milestone.target_date).toLocaleDateString()}
               </div>
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2933', marginBottom: '8px' }}>
                 {requiredContribution ? formatCurrency(requiredContribution) : '--'}/mo
@@ -164,7 +164,7 @@ export default function MilestoneLevers({
                 Sensitivity Analysis
               </div>
               
-              {sensitivityPlus100.monthsEarlier > 0 && (
+              {sensitivityPlus100 && sensitivityPlus100.monthsEarlier > 0 ? (
                 <div style={{ 
                   padding: '10px',
                   background: '#f0fdf4',
@@ -178,9 +178,20 @@ export default function MilestoneLevers({
                     → Milestone comes {sensitivityPlus100.monthsEarlier} months earlier
                   </div>
                 </div>
+              ) : (
+                <div style={{ 
+                  padding: '10px',
+                  background: '#f9fafb',
+                  borderRadius: '6px',
+                  marginBottom: '8px',
+                  fontSize: '11px',
+                  color: '#6b7280'
+                }}>
+                  +$100/mo contribution → No significant change
+                </div>
               )}
 
-              {sensitivityMinus100.monthsEarlier < 0 && (
+              {sensitivityMinus100 && sensitivityMinus100.monthsEarlier < 0 ? (
                 <div style={{ 
                   padding: '10px',
                   background: '#fef2f2',
@@ -194,9 +205,20 @@ export default function MilestoneLevers({
                     → Milestone comes {Math.abs(sensitivityMinus100.monthsEarlier)} months later
                   </div>
                 </div>
+              ) : (
+                <div style={{ 
+                  padding: '10px',
+                  background: '#f9fafb',
+                  borderRadius: '6px',
+                  marginBottom: '8px',
+                  fontSize: '11px',
+                  color: '#6b7280'
+                }}>
+                  -$100/mo contribution → No significant change
+                </div>
               )}
 
-              {sensitivityReturnPlus1.monthsEarlier !== 0 && (
+              {sensitivityReturnPlus1 && sensitivityReturnPlus1.monthsEarlier !== 0 ? (
                 <div style={{ 
                   padding: '10px',
                   background: '#eff6ff',
@@ -209,6 +231,17 @@ export default function MilestoneLevers({
                   <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
                     → ETA shifts by {Math.abs(sensitivityReturnPlus1.monthsEarlier)} months
                   </div>
+                </div>
+              ) : (
+                <div style={{ 
+                  padding: '10px',
+                  background: '#f9fafb',
+                  borderRadius: '6px',
+                  marginBottom: '8px',
+                  fontSize: '11px',
+                  color: '#6b7280'
+                }}>
+                  +1% annual return → No significant change
                 </div>
               )}
 

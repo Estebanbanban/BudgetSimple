@@ -77,18 +77,21 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
     }
   }
 
-  const handleUpdate = async (id: string, updates: Partial<Milestone>) => {
-    const updated = await updateMilestone(id, {
-      label: updates.label,
-      targetValue: updates.target_value,
-      targetDate: updates.target_date,
-      type: updates.type,
-      displayOrder: updates.display_order
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingId) return
+
+    const updated = await updateMilestone(editingId, {
+      label: formData.label,
+      targetValue: parseFloat(formData.targetValue) || 0,
+      targetDate: formData.targetDate || undefined,
+      type: formData.type
     })
     
     if (updated) {
       await loadMilestones()
       setEditingId(null)
+      setFormData({ label: '', targetValue: '', targetDate: '', type: 'net_worth' })
     }
   }
 
@@ -216,18 +219,7 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                 <button className="btn btn-quiet" onClick={cancelEdit}>Close</button>
               </div>
               <div className="panel-body">
-                <form onSubmit={(e) => {
-                  e.preventDefault()
-                  const milestone = milestones.find(m => m.id === editingId)
-                  if (milestone) {
-                    handleUpdate(milestone.id, {
-                      label: formData.label,
-                      target_value: parseFloat(formData.targetValue) || 0,
-                      target_date: formData.targetDate || undefined,
-                      type: formData.type
-                    })
-                  }
-                }}>
+                <form onSubmit={handleUpdate}>
                   <div className="form">
                     <div className="row">
                       <label className="label">Label</label>

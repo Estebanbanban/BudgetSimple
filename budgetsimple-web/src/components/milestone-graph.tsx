@@ -66,7 +66,8 @@ export default function MilestoneGraph({
     if (!svgRef.current || projectionCurves.length === 0) return
 
     const svg = svgRef.current
-    const width = svg.clientWidth || 800
+    const container = svg.parentElement
+    const width = container?.clientWidth || svg.clientWidth || 800
     const height = 400
     const padding = { top: 20, right: 40, bottom: 40, left: 60 }
 
@@ -270,10 +271,10 @@ export default function MilestoneGraph({
         </div>
       </div>
       <div className="panel-body">
-        <div style={{ position: 'relative', width: '100%', overflow: 'auto' }}>
+        <div style={{ position: 'relative', width: '100%', overflow: 'auto', minHeight: '400px' }}>
           <svg 
             ref={svgRef}
-            style={{ width: '100%', minHeight: '400px', display: 'block' }}
+            style={{ width: '100%', height: '400px', display: 'block' }}
             viewBox="0 0 800 400"
             preserveAspectRatio="xMidYMid meet"
           />
