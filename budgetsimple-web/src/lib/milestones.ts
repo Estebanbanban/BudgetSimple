@@ -153,6 +153,26 @@ export async function reorderMilestones(ids: string[], userId: string = 'demo-us
   }
 }
 
+export async function getNextMilestone(
+  userId: string = 'demo-user'
+): Promise<{ milestone: Milestone | null, progress: MilestoneProgress | null }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/milestones/next?userId=${userId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      credentials: 'include'
+    })
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = await response.json()
+    return { milestone: data.milestone || null, progress: data.progress || null }
+  } catch (error) {
+    console.error('Error fetching next milestone:', error)
+    return { milestone: null, progress: null }
+  }
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

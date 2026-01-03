@@ -127,7 +127,8 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    maxVarianceThreshold = null
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -234,6 +235,12 @@ function detectSubscriptions (transactions, options = {}) {
     // PRIORITY 4: Check amount consistency
     const amounts = txs.map(t => t.amount)
     const amountConsistency = checkAmountConsistency(amounts, amountVarianceTolerance, amountVarianceFixed)
+    const varianceTooHigh = maxVarianceThreshold !== null && amountConsistency.variancePercentage > maxVarianceThreshold
+
+    if (varianceTooHigh && !categoryMatch && !knownService) {
+      console.log(`[DETECTION] Skipping ${merchantKey}: variance ${amountConsistency.variancePercentage.toFixed(2)} > threshold ${maxVarianceThreshold}`)
+      continue
+    }
 
     // DECISION LOGIC: Accept if ANY of these conditions are met:
     // 1. Category matches (even single occurrence)

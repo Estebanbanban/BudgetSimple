@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } from '@/lib/milestones-local'
+import { getNextMilestone, formatCurrency, formatDate, type MilestoneProgress } from '@/lib/milestones'
 
 export default function MilestoneWidget() {
   const [progress, setProgress] = useState<MilestoneProgress | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadNextMilestone()
@@ -17,11 +18,13 @@ export default function MilestoneWidget() {
 
   const loadNextMilestone = async () => {
     try {
-      const next = await getNextMilestone()
+      const { progress: next } = await getNextMilestone()
       setProgress(next)
+      setError(null)
     } catch (error) {
       console.error('Error loading next milestone:', error)
       setProgress(null)
+      setError('Unable to load milestone progress right now.')
     } finally {
       setLoading(false)
     }
@@ -58,9 +61,15 @@ export default function MilestoneWidget() {
           </div>
         </div>
         <div className="panel-body">
-          <div className="chart-empty">
-            No milestones yet. Add your first milestone to track progress.
-          </div>
+          {error ? (
+            <div className="chart-empty">
+              {error}
+            </div>
+          ) : (
+            <div className="chart-empty">
+              No milestones yet. Add your first milestone to track progress.
+            </div>
+          )}
         </div>
       </div>
     )

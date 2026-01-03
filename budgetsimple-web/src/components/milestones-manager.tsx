@@ -1,17 +1,14 @@
 'use client'
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
-import { 
-  getMilestones, 
-  createMilestone, 
-  updateMilestone, 
-  deleteMilestone,
+import {
   calculateMilestoneProgress,
   formatCurrency,
   formatDate,
   type Milestone,
   type MilestoneProgress
 } from '@/lib/milestones-local'
+import useMilestones from '@/lib/use-milestones'
 
 export interface MilestonesManagerRef {
   showAddForm: () => void
@@ -19,13 +16,23 @@ export interface MilestonesManagerRef {
 
 const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
   const [showAddForm, setShowAddForm] = useState(false)
-  
+
   useImperativeHandle(ref, () => ({
     showAddForm: () => setShowAddForm(true)
   }))
-  const [milestones, setMilestones] = useState<Milestone[]>([])
+
+  const {
+    milestones,
+    loading,
+    error,
+    validationError,
+    optimisticIds,
+    addMilestone,
+    updateMilestone,
+    deleteMilestone
+  } = useMilestones()
+
   const [progresses, setProgresses] = useState<Map<string, MilestoneProgress>>(new Map())
-  const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     label: '',
@@ -35,43 +42,33 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
   })
 
   useEffect(() => {
-    loadMilestones()
-  }, [])
-
-  const loadMilestones = async () => {
-    setLoading(true)
-    try {
-      const ms = await getMilestones()
-      setMilestones(ms)
-      
-      // Calculate progress for each milestone
+    const calculate = async () => {
       const progressMap = new Map<string, MilestoneProgress>()
-      for (const milestone of ms) {
+      for (const milestone of milestones) {
         const progress = await calculateMilestoneProgress(milestone)
-        if (progress) {
-          progressMap.set(milestone.id, progress)
-        }
+        if (progress) progressMap.set(milestone.id, progress)
       }
       setProgresses(progressMap)
-    } catch (error) {
-      console.error('Error loading milestones:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    if (milestones.length) {
+      calculate()
+    } else {
+      setProgresses(new Map())
+    }
+  }, [milestones])
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    const milestone = await createMilestone({
+    const milestone = await addMilestone({
       label: formData.label,
-      targetValue: parseFloat(formData.targetValue) || 0,
-      targetDate: formData.targetDate || undefined,
+      targetValue: parseFloat(formData.targetValue),
+      targetDate: formData.targetDate || null,
       type: formData.type,
       displayOrder: milestones.length
     })
-    
+
     if (milestone) {
-      await loadMilestones()
       setShowAddForm(false)
       setFormData({ label: '', targetValue: '', targetDate: '', type: 'net_worth' })
     }
@@ -85,9 +82,8 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
       type: updates.type,
       displayOrder: updates.display_order
     })
-    
+
     if (updated) {
-      await loadMilestones()
       setEditingId(null)
     }
   }
@@ -95,7 +91,6 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this milestone?')) {
       await deleteMilestone(id)
-      await loadMilestones()
     }
   }
 
@@ -120,6 +115,12 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
 
   return (
     <div>
+      {(error || validationError) && (
+        <div className="card" style={{ padding: '0.75rem', marginBottom: '1rem', background: '#fff5f5' }}>
+          <div className="small" style={{ color: '#b42318' }}>{error || validationError}</div>
+        </div>
+      )}
+
       {milestones.length === 0 && !showAddForm ? (
         <div className="chart-empty">
           No milestones yet. Click "Add Milestone" to create your first financial goal.
@@ -129,7 +130,7 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
           {milestones.map((milestone) => {
             const progress = progresses.get(milestone.id)
             const isEditing = editingId === milestone.id
-            
+
             return (
               <div key={milestone.id} className="card" style={{ padding: '1rem' }}>
                 {isEditing ? (
@@ -181,6 +182,9 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                     <div className="row" style={{ gap: '0.5rem' }}>
                       <button className="btn btn-sm" type="submit">Save</button>
                       <button className="btn btn-sm btn-quiet" type="button" onClick={cancelEdit}>Cancel</button>
+                      {optimisticIds.has(milestone.id) && (
+                        <span className="small muted">Saving...</span>
+                      )}
                     </div>
                   </form>
                 ) : (
@@ -196,19 +200,20 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                       <div className="row" style={{ gap: '0.25rem' }}>
                         <button className="btn btn-sm btn-quiet" onClick={() => startEdit(milestone)}>Edit</button>
                         <button className="btn btn-sm btn-quiet" onClick={() => handleDelete(milestone.id)}>Delete</button>
+                        {optimisticIds.has(milestone.id) && <span className="small muted">Saving...</span>}
                       </div>
                     </div>
-                    
+
                     {progress && (
                       <div style={{ marginTop: '0.75rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                           <span className="small muted">Progress</span>
                           <span className="small">{progress.progressPercent.toFixed(1)}%</span>
                         </div>
-                        <div style={{ 
-                          width: '100%', 
-                          height: '8px', 
-                          backgroundColor: '#e0e0e0', 
+                        <div style={{
+                          width: '100%',
+                          height: '8px',
+                          backgroundColor: '#e0e0e0',
                           borderRadius: '4px',
                           marginBottom: '0.25rem'
                         }}>
@@ -302,4 +307,3 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
 MilestonesManager.displayName = 'MilestonesManager'
 
 export default MilestonesManager
-
