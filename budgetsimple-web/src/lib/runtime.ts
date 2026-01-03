@@ -8712,6 +8712,7 @@ if (typeof window !== 'undefined') {
     },
     transactions: () => [],
     income: () => [],
-    config: () => ({ categories: [], rules: [], budgets: {}, settings: {} })
+    config: () => ({ categories: [], rules: [], budgets: {}, settings: {} }),
+    getStore: () => null
   };
 }
