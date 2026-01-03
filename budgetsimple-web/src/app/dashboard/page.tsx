@@ -1,5 +1,6 @@
 import SubscriptionWidget from "@/components/subscription-widget";
 import MilestoneWidget from "@/components/milestone-widget";
+import CategoryChangesPanel from "@/components/category-changes-panel";
 
 export default function DashboardPage() {
   return (
@@ -187,20 +188,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-head">
-            <div>
-              <div className="panel-title">What Changed</div>
-              <div className="panel-sub">Month-over-month comparison and drivers</div>
-            </div>
-          </div>
-          <div className="panel-body">
-            <div id="whatChangedList" />
-            <div className="chart-empty" id="whatChangedEmpty" hidden>
-              Need at least 2 months of data to see changes.
-            </div>
-          </div>
-        </section>
+        <CategoryChangesPanel />
 
         <section className="panel">
           <div className="panel-head">
