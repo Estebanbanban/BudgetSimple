@@ -327,6 +327,8 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
             </div>
           </form>
         </div>
+          )}
+        </div>
       )}
     </div>
   )
