@@ -849,6 +849,24 @@ body.nav-collapsed .nav-label {
   white-space: nowrap;
 }
 
+.badge.is-success {
+  border-color: rgba(18, 185, 129, 0.38);
+  background: rgba(18, 185, 129, 0.10);
+  color: rgba(18, 185, 129, 0.92);
+}
+
+.badge.is-info {
+  border-color: rgba(31, 111, 235, 0.32);
+  background: rgba(31, 111, 235, 0.08);
+  color: rgba(31, 111, 235, 0.92);
+}
+
+.badge.is-warning {
+  border-color: rgba(244, 183, 64, 0.36);
+  background: rgba(244, 183, 64, 0.12);
+  color: rgba(244, 183, 64, 0.98);
+}
+
 .badge-eta {
   border-color: rgba(246, 196, 69, 0.32);
   box-shadow: 0 10px 26px rgba(246, 196, 69, 0.12);
@@ -859,6 +877,18 @@ body.nav-collapsed .nav-label {
   height: 8px;
   border-radius: 999px;
   background: rgba(17, 18, 22, 0.30);
+}
+
+.badge.is-success .badge-dot {
+  background: rgba(18, 185, 129, 0.92);
+}
+
+.badge.is-info .badge-dot {
+  background: rgba(31, 111, 235, 0.92);
+}
+
+.badge.is-warning .badge-dot {
+  background: rgba(244, 183, 64, 0.98);
 }
 
 .panel-body {
@@ -891,7 +921,7 @@ body.nav-collapsed .nav-label {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -905,6 +935,22 @@ body.nav-collapsed .nav-label {
   display: grid;
   gap: 6px;
   min-height: 132px;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-header .card-sub {
+  margin-top: 2px;
+}
+
+.card-highlight {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(17, 18, 22, 0.12);
 }
 
 .card-row {
@@ -1054,7 +1100,7 @@ body.nav-collapsed .nav-label {
 
 .card-value {
   margin-top: 8px;
-  font-size: clamp(18px, 1.6vw, 22px);
+  font-size: clamp(18px, 1.25rem, 22px);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -1072,6 +1118,46 @@ body.nav-collapsed .nav-label {
   width: 100%;
   text-align: center;
   margin-top: 6px;
+}
+
+.card .btn.card-inline {
+  width: auto;
+  justify-self: flex-end;
+  padding-inline: 12px;
+}
+
+.card-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-progress-track {
+  height: 8px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(17, 18, 22, 0.08);
+  overflow: hidden;
+}
+
+.card-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(31, 111, 235, 0.9), rgba(18, 185, 129, 0.9));
+  transition: width 0.25s ease;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-meta .badge {
+  margin-left: auto;
 }
 
 .grid {
