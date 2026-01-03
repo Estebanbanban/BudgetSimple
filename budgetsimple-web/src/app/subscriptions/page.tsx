@@ -374,23 +374,23 @@ export default function SubscriptionsPage() {
                   {detectionMessage}
                 </div>
               )}
-              <div className="table-wrap">
-                <table className="table">
+              <div className="table-wrap" style={{ overflowX: 'auto', width: '100%' }}>
+                <table className="table" style={{ minWidth: '600px', width: '100%' }}>
                   <thead>
                     <tr>
-                      <th>Merchant</th>
-                      <th>Amount</th>
-                      <th>Frequency</th>
-                      <th>Confidence</th>
-                      <th>Occurrences</th>
-                      <th>Actions</th>
+                      <th style={{ minWidth: '150px' }}>Merchant</th>
+                      <th style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>Amount</th>
+                      <th style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>Frequency</th>
+                      <th style={{ minWidth: '90px', whiteSpace: 'nowrap' }}>Confidence</th>
+                      <th style={{ minWidth: '80px', whiteSpace: 'nowrap' }}>Occurrences</th>
+                      <th style={{ minWidth: '200px', whiteSpace: 'nowrap' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {candidates.map((candidate) => (
                       <tr key={candidate.id}>
                         <td>
-                          <div style={{ fontWeight: '500' }}>{candidate.merchant}</div>
+                          <div style={{ fontWeight: '500', wordBreak: 'break-word' }}>{candidate.merchant}</div>
                           {candidate.detectionMethod && (
                             <div className="small muted" style={{ marginTop: '2px' }}>
                               {candidate.detectionMethod === 'category' && '✓ Category match'}
@@ -399,16 +399,17 @@ export default function SubscriptionsPage() {
                             </div>
                           )}
                         </td>
-                        <td>{formatCurrency(candidate.estimatedMonthlyAmount)}</td>
-                        <td>{candidate.frequency}</td>
-                        <td>{formatConfidence(candidate.confidenceScore)}</td>
-                        <td>{candidate.occurrenceCount}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{formatCurrency(candidate.estimatedMonthlyAmount)}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{candidate.frequency}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{formatConfidence(candidate.confidenceScore)}</td>
+                        <td style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{candidate.occurrenceCount}</td>
                         <td>
-                          <div className="row" style={{ gap: '4px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
                             <button
                               className="btn btn-sm"
                               onClick={() => handleConfirm(candidate.id)}
                               title="Confirm this subscription"
+                              style={{ fontSize: '12px', padding: '4px 8px' }}
                             >
                               Confirm
                             </button>
@@ -416,6 +417,7 @@ export default function SubscriptionsPage() {
                               className="btn btn-sm btn-quiet"
                               onClick={() => setSelectedCandidate(candidate)}
                               title="Review details"
+                              style={{ fontSize: '12px', padding: '4px 8px' }}
                             >
                               Review
                             </button>
@@ -423,6 +425,7 @@ export default function SubscriptionsPage() {
                               className="btn btn-sm btn-quiet"
                               onClick={() => handleReject(candidate.id)}
                               title="Reject this candidate"
+                              style={{ fontSize: '12px', padding: '4px 8px' }}
                             >
                               Reject
                             </button>
