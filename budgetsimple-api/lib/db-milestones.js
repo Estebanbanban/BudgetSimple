@@ -5,14 +5,22 @@
  * Supports Epic 5: Milestones & Progress Tracking
  */
 
+function getFallbackStore (fastify) {
+  if (!fastify._milestoneStore) {
+    fastify._milestoneStore = []
+  }
+  return fastify._milestoneStore
+}
+
 /**
  * Get all milestones for a user
  */
 async function getMilestones (fastify, userId) {
   // For MVP, return empty array if Supabase not available (graceful degradation)
   if (!fastify.supabase) {
-    fastify.log.warn('Supabase not available, returning empty array for milestones')
-    return []
+    const store = getFallbackStore(fastify)
+    const filtered = store.filter(m => m.user_id === userId)
+    return filtered.sort((a, b) => a.display_order - b.display_order || (a.target_date || '').localeCompare(b.target_date || ''))
   }
 
   try {
@@ -41,8 +49,8 @@ async function getMilestones (fastify, userId) {
  */
 async function getMilestone (fastify, userId, milestoneId) {
   if (!fastify.supabase) {
-    fastify.log.warn('Supabase not available, returning null')
-    return null
+    const store = getFallbackStore(fastify)
+    return store.find(m => m.id === milestoneId && m.user_id === userId) || null
   }
 
   try {
@@ -71,23 +79,30 @@ async function getMilestone (fastify, userId, milestoneId) {
 async function createMilestone (fastify, userId, milestoneData) {
   if (!fastify.supabase) {
     fastify.log.warn('Supabase not available, returning stub')
-    return {
+    const now = new Date().toISOString()
+    const record = {
       id: `milestone-${Date.now()}`,
-      ...milestoneData,
+      label: milestoneData.label,
+      target_value: milestoneData.targetValue ?? milestoneData.target_value,
+      target_date: milestoneData.targetDate ?? milestoneData.target_date ?? null,
+      type: milestoneData.type || 'net_worth',
+      display_order: milestoneData.displayOrder ?? milestoneData.display_order ?? 0,
       user_id: userId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: now,
+      updated_at: now
     }
+    getFallbackStore(fastify).push(record)
+    return record
   }
 
   try {
     const insertData = {
       user_id: userId,
       label: milestoneData.label,
-      target_value: milestoneData.targetValue || milestoneData.target_value,
-      target_date: milestoneData.targetDate || milestoneData.target_date || null,
+      target_value: milestoneData.targetValue ?? milestoneData.target_value,
+      target_date: milestoneData.targetDate ?? milestoneData.target_date ?? null,
       type: milestoneData.type || 'net_worth',
-      display_order: milestoneData.displayOrder || milestoneData.display_order || 0
+      display_order: milestoneData.displayOrder ?? milestoneData.display_order ?? 0
     }
 
     const { data, error } = await fastify.supabase
@@ -114,10 +129,23 @@ async function createMilestone (fastify, userId, milestoneData) {
 async function updateMilestone (fastify, userId, milestoneId, updates) {
   if (!fastify.supabase) {
     fastify.log.warn('Supabase not available, returning stub')
-    return {
-      id: milestoneId,
-      ...updates,
+    const store = getFallbackStore(fastify)
+    const existing = store.find(m => m.id === milestoneId && m.user_id === userId)
+    if (!existing) return null
+
+    const merged = {
+      ...existing,
+      label: updates.label ?? existing.label,
+      target_value: updates.targetValue ?? updates.target_value ?? existing.target_value,
+      target_date: updates.targetDate ?? updates.target_date ?? existing.target_date ?? null,
+      type: updates.type || existing.type,
+      display_order: updates.displayOrder ?? updates.display_order ?? existing.display_order,
       updated_at: new Date().toISOString()
+    }
+    const index = store.indexOf(existing)
+    store[index] = merged
+    return {
+      ...merged
     }
   }
 
@@ -125,14 +153,14 @@ async function updateMilestone (fastify, userId, milestoneId, updates) {
     const updateData = {}
     if (updates.label !== undefined) updateData.label = updates.label
     if (updates.targetValue !== undefined || updates.target_value !== undefined) {
-      updateData.target_value = updates.targetValue || updates.target_value
+      updateData.target_value = updates.targetValue ?? updates.target_value
     }
     if (updates.targetDate !== undefined || updates.target_date !== undefined) {
-      updateData.target_date = updates.targetDate || updates.target_date || null
+      updateData.target_date = updates.targetDate ?? updates.target_date ?? null
     }
     if (updates.type !== undefined) updateData.type = updates.type
     if (updates.displayOrder !== undefined || updates.display_order !== undefined) {
-      updateData.display_order = updates.displayOrder || updates.display_order
+      updateData.display_order = updates.displayOrder ?? updates.display_order
     }
     updateData.updated_at = new Date().toISOString()
 
@@ -161,8 +189,10 @@ async function updateMilestone (fastify, userId, milestoneId, updates) {
  */
 async function deleteMilestone (fastify, userId, milestoneId) {
   if (!fastify.supabase) {
-    fastify.log.warn('Supabase not available, returning false')
-    return false
+    const store = getFallbackStore(fastify)
+    const initialLength = store.length
+    fastify._milestoneStore = store.filter(m => !(m.id === milestoneId && m.user_id === userId))
+    return fastify._milestoneStore.length !== initialLength
   }
 
   try {
@@ -189,8 +219,19 @@ async function deleteMilestone (fastify, userId, milestoneId) {
  */
 async function reorderMilestones (fastify, userId, milestoneIds) {
   if (!fastify.supabase) {
-    fastify.log.warn('Supabase not available, returning false')
-    return false
+    const store = getFallbackStore(fastify)
+    const userMilestones = store.filter(m => m.user_id === userId)
+    if (userMilestones.length === 0) return false
+
+    milestoneIds.forEach((id, index) => {
+      const record = store.find(m => m.id === id && m.user_id === userId)
+      if (record) {
+        record.display_order = index
+        record.updated_at = new Date().toISOString()
+      }
+    })
+
+    return true
   }
 
   try {

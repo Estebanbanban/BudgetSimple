@@ -7,6 +7,58 @@
 
 const db = require('../lib/db-milestones')
 
+const milestoneProperties = {
+  id: { type: 'string' },
+  label: { type: 'string', minLength: 1 },
+  target_value: { type: 'number', exclusiveMinimum: 0 },
+  target_date: { type: 'string', format: 'date', nullable: true },
+  type: { type: 'string', enum: ['net_worth', 'invested_assets', 'savings'] },
+  display_order: { type: 'number', minimum: 0 },
+  created_at: { type: 'string' },
+  updated_at: { type: 'string' }
+}
+
+const milestoneSchema = {
+  type: 'object',
+  properties: milestoneProperties,
+  required: ['id', 'label', 'target_value', 'type', 'display_order']
+}
+
+function validatePayload (payload, { partial = false } = {}) {
+  const { label, targetValue, targetDate, type, displayOrder } = payload
+
+  if (!partial || label !== undefined) {
+    if (!label || typeof label !== 'string' || !label.trim()) {
+      return 'Label is required'
+    }
+  }
+
+  if (!partial || targetValue !== undefined) {
+    if (typeof targetValue !== 'number' || Number.isNaN(targetValue) || targetValue <= 0) {
+      return 'targetValue must be a positive number'
+    }
+  }
+
+  if (!partial || displayOrder !== undefined) {
+    if (displayOrder !== undefined && (typeof displayOrder !== 'number' || displayOrder < 0)) {
+      return 'displayOrder must be zero or greater'
+    }
+  }
+
+  if (targetDate !== undefined && targetDate !== null && targetDate !== '') {
+    const parsed = new Date(targetDate)
+    if (Number.isNaN(parsed.getTime())) {
+      return 'targetDate must be a valid date'
+    }
+  }
+
+  if (type !== undefined && !['net_worth', 'invested_assets', 'savings'].includes(type)) {
+    return 'type must be one of net_worth, invested_assets, or savings'
+  }
+
+  return null
+}
+
 module.exports = async function milestonesRoute (fastify) {
   // GET /api/milestones - List all milestones for user
   fastify.get('/api/milestones', {
@@ -28,19 +80,7 @@ module.exports = async function milestonesRoute (fastify) {
           properties: {
             milestones: {
               type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  label: { type: 'string' },
-                  target_value: { type: 'number' },
-                  target_date: { type: 'string', format: 'date' },
-                  type: { type: 'string' },
-                  display_order: { type: 'number' },
-                  created_at: { type: 'string' },
-                  updated_at: { type: 'string' }
-                }
-              }
+              items: milestoneSchema
             }
           }
         }
@@ -117,6 +157,15 @@ module.exports = async function milestonesRoute (fastify) {
             default: 'demo-user'
           }
         }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            milestone: milestoneSchema,
+            progress: { type: 'object' }
+          }
+        }
       }
     }
   }, async function getHandler (request, reply) {
@@ -150,11 +199,11 @@ module.exports = async function milestonesRoute (fastify) {
         type: 'object',
         required: ['label', 'targetValue'],
         properties: {
-          label: { type: 'string' },
-          targetValue: { type: 'number' },
+          label: { type: 'string', minLength: 1 },
+          targetValue: { type: 'number', exclusiveMinimum: 0 },
           targetDate: { type: 'string', format: 'date' },
           type: { type: 'string', enum: ['net_worth', 'invested_assets', 'savings'], default: 'net_worth' },
-          displayOrder: { type: 'number', default: 0 }
+          displayOrder: { type: 'number', default: 0, minimum: 0 }
         }
       },
       querystring: {
@@ -165,21 +214,30 @@ module.exports = async function milestonesRoute (fastify) {
             default: 'demo-user'
           }
         }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            milestone: milestoneSchema
+          }
+        }
       }
     }
   }, async function createHandler (request, reply) {
     const { userId = 'demo-user' } = request.query
     const { label, targetValue, targetDate, type, displayOrder } = request.body
 
-    if (!label || !targetValue || targetValue <= 0) {
-      return reply.code(400).send({ error: 'Label and targetValue (positive) are required' })
+    const validationError = validatePayload({ label, targetValue, targetDate, type, displayOrder })
+    if (validationError) {
+      return reply.code(400).send({ error: validationError })
     }
 
     try {
       const milestone = await db.createMilestone(fastify, userId, {
-        label,
+        label: label.trim(),
         targetValue,
-        targetDate,
+        targetDate: targetDate || null,
         type: type || 'net_worth',
         displayOrder: displayOrder || 0
       })
@@ -209,11 +267,11 @@ module.exports = async function milestonesRoute (fastify) {
       body: {
         type: 'object',
         properties: {
-          label: { type: 'string' },
-          targetValue: { type: 'number' },
+          label: { type: 'string', minLength: 1 },
+          targetValue: { type: 'number', exclusiveMinimum: 0 },
           targetDate: { type: 'string', format: 'date' },
           type: { type: 'string', enum: ['net_worth', 'invested_assets', 'savings'] },
-          displayOrder: { type: 'number' }
+          displayOrder: { type: 'number', minimum: 0 }
         }
       },
       querystring: {
@@ -224,12 +282,23 @@ module.exports = async function milestonesRoute (fastify) {
             default: 'demo-user'
           }
         }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { milestone: milestoneSchema }
+        }
       }
     }
   }, async function updateHandler (request, reply) {
     const { id } = request.params
     const { userId = 'demo-user' } = request.query
     const updates = request.body
+
+    const validationError = validatePayload(updates, { partial: true })
+    if (validationError) {
+      return reply.code(400).send({ error: validationError })
+    }
 
     try {
       const milestone = await db.updateMilestone(fastify, userId, id, updates)
