@@ -65,12 +65,20 @@ export default function ConnectPage() {
             </div>
             <div className="panel-body onboard-panel-body">
               <div className="dropzone" id="txDropzone" role="button" tabIndex={0} aria-label="Upload transactions CSV">
-                <div className="dropzone-title">Drop your transactions CSV here</div>
+                <div className="dropzone-title">Drop CSV files or folders here</div>
                 <div className="dropzone-sub muted">or</div>
                 <div className="row">
-                  <input id="txCsvFile" className="input" type="file" accept=".csv,text/csv" hidden />
+                  <input
+                    id="txCsvFile"
+                    className="input"
+                    type="file"
+                    accept=".csv,text/csv"
+                    hidden
+                    multiple
+                    webkitdirectory="true"
+                  />
                   <button className="btn" id="btnChooseTxCsv" type="button">
-                    Choose CSV
+                    Choose CSV files
                   </button>
                   <span className="small muted" id="txAnalyzing" hidden>
                     Analyzing...
