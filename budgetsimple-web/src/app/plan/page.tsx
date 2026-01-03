@@ -1,86 +1,188 @@
 'use client'
 
-import { useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import MilestonesManager, { type MilestonesManagerRef } from '@/components/milestones-manager'
+import MilestoneHero from '@/components/milestone-hero'
+import MilestoneGraph from '@/components/milestone-graph'
+import MilestoneLevers from '@/components/milestone-levers'
+import { getNextMilestone, type MilestoneProgress } from '@/lib/milestones-local'
 
 export default function PlanPage() {
   const milestonesManagerRef = useRef<MilestonesManagerRef>(null)
-  
+  const [netWorth, setNetWorth] = useState<number>(0)
+  const [monthlyContribution, setMonthlyContribution] = useState<number>(0)
+  const [annualReturn, setAnnualReturn] = useState<number>(0.07)
+  const [contributionMode, setContributionMode] = useState<'auto' | 'manual'>('auto')
+  const [manualContribution, setManualContribution] = useState<number>(0)
+  const [nextMilestone, setNextMilestone] = useState<MilestoneProgress | null>(null)
+
+  useEffect(() => {
+    loadFinancialData()
+    loadNextMilestone()
+    const interval = setInterval(() => {
+      loadFinancialData()
+      loadNextMilestone()
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadFinancialData = () => {
+    if (typeof window !== 'undefined' && (window as any).budgetsimpleRuntime) {
+      const runtime = (window as any).budgetsimpleRuntime
+      const transactions = runtime.transactions() || []
+      const income = runtime.income() || []
+      
+      // Calculate net worth
+      const totalIncome = income.reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+      const totalExpenses = transactions
+        .filter((t: any) => t.type === 'expense' || (t.amount && t.amount < 0))
+        .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+      
+      setNetWorth(Math.max(0, totalIncome - totalExpenses))
+      
+      // Calculate monthly contribution from cashflow
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      
+      const recentIncome = income
+        .filter((i: any) => {
+          const date = new Date(i.dateISO || i.date)
+          return date >= thirtyDaysAgo
+        })
+        .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+      
+      const recentExpenses = transactions
+        .filter((t: any) => {
+          const date = new Date(t.dateISO || t.date)
+          return date >= thirtyDaysAgo && (t.type === 'expense' || (t.amount && t.amount < 0))
+        })
+        .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+      
+      const cashflow = recentIncome - recentExpenses
+      const autoContrib = Math.max(0, (cashflow / 30) * 30)
+      setMonthlyContribution(contributionMode === 'auto' ? autoContrib : manualContribution)
+    }
+  }
+
+  const loadNextMilestone = async () => {
+    try {
+      const next = await getNextMilestone()
+      setNextMilestone(next)
+    } catch (error) {
+      console.error('Error loading next milestone:', error)
+    }
+  }
+
+  const effectiveContribution = contributionMode === 'auto' ? monthlyContribution : manualContribution
+
   return (
     <section className="view" data-view="plan">
-      <div className="page-head">
+      {/* Header + Controls (sticky) */}
+      <div className="page-head" style={{ 
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        background: 'rgba(250, 250, 250, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid var(--border)',
+        paddingBottom: '16px'
+      }}>
         <div>
           <h1>Plan</h1>
+          <p className="muted">Milestones & projections — track your net worth trajectory</p>
         </div>
-      </div>
-
-      {/* PAUSED: Envelope savings goals - not in MVP golden path */}
-      {/* <div id="envelopesHero" />
-
-      <section className="panel">
-        <div className="panel-head">
-          <div>
-            <div className="panel-title">Your envelopes</div>
-            <div className="panel-sub">Click a card to open it (contributions + projection).</div>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label className="label" style={{ fontSize: '12px', margin: 0 }}>Annual return:</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+              value={(annualReturn * 100).toFixed(1)}
+              onChange={(e) => setAnnualReturn(parseFloat(e.target.value) / 100)}
+              className="input"
+              style={{ width: '60px', fontSize: '12px', padding: '4px 8px' }}
+            />
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>%</span>
           </div>
-          <div className="panel-actions">
-            <button className="btn btn-quiet" id="btnCreateEnvelope" type="button">
-              Create envelope
-            </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label className="label" style={{ fontSize: '12px', margin: 0 }}>Contribution:</label>
+            <select
+              value={contributionMode}
+              onChange={(e) => {
+                setContributionMode(e.target.value as 'auto' | 'manual')
+                if (e.target.value === 'auto') {
+                  loadFinancialData()
+                }
+              }}
+              className="select"
+              style={{ fontSize: '12px', padding: '4px 8px' }}
+            >
+              <option value="auto">Auto from cashflow</option>
+              <option value="manual">Manual</option>
+            </select>
           </div>
-        </div>
-        <div className="panel-body">
-          <div id="envelopesGrid" />
-          <div className="table-wrap" hidden>
-            <table className="table" id="envelopesTable" />
-          </div>
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-head">
-          <div>
-            <div className="panel-title">Envelope projections</div>
-            <div className="panel-sub">Plan vs historical pace, with ETA dates</div>
-          </div>
-          <div className="panel-actions">
-            <span className="badge">
-              <span className="badge-dot" />
-              Plan curve
-            </span>
-            <span className="badge badge-eta">
-              <span className="badge-dot" />
-              Historical pace
-            </span>
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="chart-wrap" style={{ minHeight: 220 }}>
-            <div id="envelopeProjectionChart" className="chart" role="img" aria-label="Envelope projection chart" />
-            <div className="chart-empty" id="envelopeProjectionEmpty" hidden>
-              Create an envelope to see projections
+          {contributionMode === 'manual' && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <label className="label" style={{ fontSize: '12px', margin: 0 }}>Amount:</label>
+              <input
+                type="number"
+                step="0.01"
+                value={manualContribution}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0
+                  setManualContribution(val)
+                  setMonthlyContribution(val)
+                }}
+                className="input"
+                style={{ width: '100px', fontSize: '12px', padding: '4px 8px' }}
+              />
             </div>
-          </div>
-          <div className="panel-note">To hit target by date, the app will suggest a monthly contribution.</div>
-        </div>
-      </section> */}
-
-      <div className="section-head">
-        <div>
-          <h2>Milestones</h2>
-          <p className="muted">Track your progress toward long-term financial goals. Set targets and see when you'll reach them.</p>
+          )}
         </div>
       </div>
 
+      {/* Next Milestone Hero Card */}
+      <MilestoneHero />
+
+      {/* Projection Graph + Levers */}
+      <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+        <MilestoneGraph
+          currentNetWorth={netWorth}
+          monthlyContribution={effectiveContribution}
+          annualReturn={annualReturn}
+          onReturnChange={setAnnualReturn}
+        />
+        {nextMilestone && (
+          <MilestoneLevers
+            currentNetWorth={netWorth}
+            monthlyContribution={effectiveContribution}
+            annualReturn={annualReturn}
+            milestone={nextMilestone.milestone}
+            onContributionChange={(amount) => {
+              setManualContribution(amount)
+              setContributionMode('manual')
+              setMonthlyContribution(amount)
+            }}
+            onDateChange={(date) => {
+              // Update milestone target date
+              console.log('Update milestone date:', date)
+            }}
+          />
+        )}
+      </div>
+
+      {/* Milestones List */}
       <section className="panel">
         <div className="panel-head">
           <div>
-            <div className="panel-title">Your Milestones</div>
-            <div className="panel-sub">Financial goals with progress tracking</div>
+            <div className="panel-title">All Milestones</div>
+            <div className="panel-sub">Complete list of your financial goals</div>
           </div>
           <div className="panel-actions">
             <button 
-              className="btn btn-quiet" 
+              className="btn btn-accent" 
               onClick={() => milestonesManagerRef.current?.showAddForm()}
             >
               Add Milestone

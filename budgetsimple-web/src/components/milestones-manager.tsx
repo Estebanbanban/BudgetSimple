@@ -125,8 +125,93 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
           No milestones yet. Click "Add Milestone" to create your first financial goal.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {milestones.map((milestone) => {
+        <div>
+          {/* Compact list view for all milestones */}
+          {milestones.length > 0 && (
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Milestone</th>
+                    <th>Target</th>
+                    <th>Target Date</th>
+                    <th>Progress</th>
+                    <th>ETA</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {milestones.map((milestone) => {
+                    const progress = progresses.get(milestone.id)
+                    return (
+                      <tr key={milestone.id}>
+                        <td style={{ fontWeight: '500' }}>{milestone.label}</td>
+                        <td>{formatCurrency(milestone.target_value)}</td>
+                        <td>{milestone.target_date ? formatDate(milestone.target_date) : '—'}</td>
+                        <td>
+                          {progress ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ 
+                                width: '60px', 
+                                height: '6px', 
+                                background: '#e5e7eb', 
+                                borderRadius: '3px',
+                                overflow: 'hidden'
+                              }}>
+                                <div style={{
+                                  width: `${Math.min(100, progress.progressPercent)}%`,
+                                  height: '100%',
+                                  background: progress.progressPercent >= 100 ? '#10b981' : '#3b82f6',
+                                  transition: 'width 0.3s ease'
+                                }} />
+                              </div>
+                              <span style={{ fontSize: '12px', minWidth: '40px' }}>
+                                {progress.progressPercent.toFixed(1)}%
+                              </span>
+                            </div>
+                          ) : '—'}
+                        </td>
+                        <td>{progress?.etaDate ? formatDate(progress.etaDate) : '—'}</td>
+                        <td>
+                          {progress && progress.status !== 'no_data' && (
+                            <span className={`badge ${
+                              progress.status === 'ahead' ? 'text-success' :
+                              progress.status === 'on_track' ? 'text-info' :
+                              'text-warning'
+                            }`}>
+                              {progress.status.replace('_', ' ')}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button 
+                              className="btn btn-sm btn-quiet"
+                              onClick={() => startEdit(milestone)}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-quiet"
+                              onClick={() => handleDelete(milestone.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Detailed card view (for editing) */}
+          {editingId && (
+            <div style={{ marginTop: '1rem' }}>
+              {milestones.filter(m => m.id === editingId).map((milestone) => {
             const progress = progresses.get(milestone.id)
             const isEditing = editingId === milestone.id
             
