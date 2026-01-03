@@ -76,6 +76,7 @@ type Income = {
   dateISO: string;
   amount: number;
   source: string;
+  currency?: string;
   createdAt: number;
 };
 
@@ -3435,44 +3436,43 @@ function createRuntime() {
                     (row) => row.id === id && row.type === "income"
                   );
             if (!current) return;
-            const currentAmount =
-              kind === "income"
-                ? (current as Income).amount
-                : Math.abs((current as Transaction).amount);
-            const dateISO = prompt("Date (YYYY-MM-DD):", current.dateISO);
-            if (!dateISO) return;
-            const source = prompt(
-              "Source:",
-              kind === "income"
-                ? (current as Income).source
-                : (current as Transaction).description
-            );
-            if (!source) return;
-            const amountStr = prompt("Amount:", String(currentAmount));
-            if (!amountStr) return;
-            const amountValue = Number(amountStr);
-            if (Number.isNaN(amountValue) || amountValue <= 0) return;
-            if (kind === "income") {
-              const row = current as Income;
-              row.dateISO = dateISO;
-              row.source = source;
-              row.amount = amountValue;
-              await store.put("income", row);
-            } else {
-              const row = current as Transaction;
-              row.dateISO = dateISO;
-              row.description = source;
-              row.amount = Math.abs(amountValue);
-              row.hash = hashRow([
-                row.dateISO,
-                row.amount,
-                row.description,
-                row.account,
-              ]);
-              await store.put("transactions", row);
-            }
-            await loadAll();
-            renderAll();
+            
+            // Use modal instead of prompt
+            const { showIncomeEditModal } = await import('./income-edit-modal');
+            const currentIncome = kind === "income" 
+              ? (current as Income)
+              : {
+                  id: (current as Transaction).id,
+                  dateISO: (current as Transaction).dateISO,
+                  source: (current as Transaction).description,
+                  amount: Math.abs((current as Transaction).amount),
+                  currency: undefined
+                };
+            
+            showIncomeEditModal(currentIncome, async (updatedData) => {
+              if (kind === "income") {
+                const row = current as Income;
+                row.dateISO = updatedData.dateISO;
+                row.source = updatedData.source;
+                row.amount = updatedData.amount;
+                row.currency = updatedData.currency;
+                await store.put("income", row);
+              } else {
+                const row = current as Transaction;
+                row.dateISO = updatedData.dateISO;
+                row.description = updatedData.source;
+                row.amount = Math.abs(updatedData.amount);
+                row.hash = hashRow([
+                  row.dateISO,
+                  row.amount,
+                  row.description,
+                  row.account,
+                ]);
+                await store.put("transactions", row);
+              }
+              await loadAll();
+              renderAll();
+            });
           }
         });
       });
