@@ -1,5 +1,6 @@
 import SubscriptionWidget from "@/components/subscription-widget";
 import MilestoneWidget from "@/components/milestone-widget";
+import MilestoneTimeline from "@/components/milestone-timeline";
 
 export default function DashboardPage() {
   return (
@@ -132,6 +133,18 @@ export default function DashboardPage() {
                 No expenses in range
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <div className="panel-title">Milestone timeline</div>
+              <div className="panel-sub">Projection curve with upcoming goal markers</div>
+            </div>
+          </div>
+          <div className="panel-body">
+            <MilestoneTimeline />
           </div>
         </section>
 
