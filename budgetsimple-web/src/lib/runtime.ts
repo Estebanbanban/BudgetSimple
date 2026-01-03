@@ -135,9 +135,24 @@ export function initAppRuntime() {
         // Fallback if runtime not initialized yet
         return { merchants: [], subscriptions: [] };
       },
-      transactions: () => transactions,
-      income: () => income,
-      config: () => config,
+      transactions: () => {
+        if (runtimeInstance?.transactions) {
+          return runtimeInstance.transactions();
+        }
+        return [];
+      },
+      income: () => {
+        if (runtimeInstance?.income) {
+          return runtimeInstance.income();
+        }
+        return [];
+      },
+      config: () => {
+        if (runtimeInstance?.config) {
+          return runtimeInstance.config();
+        }
+        return { categories: [], rules: [], budgets: {}, settings: {} };
+      },
       getStore: () => runtimeInstance?.getStore() || null
     };
   }
