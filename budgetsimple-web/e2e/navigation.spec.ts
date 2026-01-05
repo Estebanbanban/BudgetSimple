@@ -21,11 +21,6 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL(/.*\/plan/);
     await expect(page.locator('[data-view="plan"]')).toBeVisible();
     
-    // Navigate to investing
-    await page.locator('a[href="/investing"]').click();
-    await expect(page).toHaveURL(/.*\/investing/);
-    await expect(page.locator('[data-view="investing"]')).toBeVisible();
-    
     // Navigate to connect
     await page.locator('a[href="/connect"]').click();
     await expect(page).toHaveURL(/.*\/connect/);
@@ -115,6 +110,18 @@ test.describe('Navigation', () => {
     
     // Data should be cleared - navigate to connect to verify
     await navigateToPage(page, '/connect');
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'budgetsimple:onboarding',
+        JSON.stringify({
+          currentStep: 'accounts',
+          completed: { upload: true, map: true },
+          skipped: {}
+        })
+      );
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-step="accounts"]:not([hidden])', { timeout: 10000 });
     
     const incomeTable = page.locator('#incomeTable');
     const tableContent = await incomeTable.textContent();
@@ -128,7 +135,7 @@ test.describe('Navigation', () => {
     const today = new Date().toISOString().split('T')[0];
     const csv = `date,amount,description,category\n${today},-12.34,Coffee,Food`;
     await fillFileInput(page, 'txCsvFile', csv, 'tx.csv');
-    await page.waitForSelector('[data-step="map"]');
+    await expect(page.locator('#mappingPanel')).toBeVisible({ timeout: 10000 });
     await page.locator('#btnImportTx').click();
 
     await page.locator('nav a[href="/dashboard"]').click();

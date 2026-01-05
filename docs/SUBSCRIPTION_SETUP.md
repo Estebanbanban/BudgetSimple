@@ -2,7 +2,17 @@
 
 ## Quick Start
 
-### 1. Start the Backend API Server
+### 1. Local-first (default)
+
+By default, **Subscriptions works locally** (no backend required):
+
+- Import transactions in `Connect / Import`
+- Go to `/subscriptions`
+- Click **Detect from local data**
+- Confirm/reject (stored locally in IndexedDB)
+- View `/subscriptions/summary` (local summary + drilldowns)
+
+### 2. (Optional) Start the Backend API Server
 
 **In a terminal window, run:**
 ```bash
@@ -17,7 +27,7 @@ Server listening at http://127.0.0.1:3001
 
 **Keep this terminal open** - the server must stay running.
 
-### 2. Verify Backend is Running
+### 3. Verify Backend is Running (optional)
 
 Test the API:
 ```bash
@@ -25,7 +35,7 @@ curl http://localhost:3001/health
 # Should return: {"ok":true}
 ```
 
-### 3. Access Subscription Features
+### 4. Access Subscription Features
 
 **In your browser:**
 - Navigate to: `http://localhost:3000/subscriptions`
@@ -35,7 +45,7 @@ curl http://localhost:3001/health
 
 ### Problem: "Failed to fetch" in browser console
 
-**Solution:** The backend API server is not running or not accessible.
+**Solution:** If you enabled backend subscriptions, the backend API server is not running or not accessible.
 
 1. **Check if backend is running:**
    ```bash

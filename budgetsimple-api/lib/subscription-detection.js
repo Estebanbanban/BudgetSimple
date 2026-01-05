@@ -127,7 +127,10 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    // Optional: hard cap for variance percentage (e.g. 0.15 = 15%).
+    // When provided, recurrence-only detections above this variance are excluded.
+    maxVarianceThreshold = null
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -313,6 +316,21 @@ function detectSubscriptions (transactions, options = {}) {
     // Skip if no detection method matched
     if (!shouldDetect) {
       console.log(`[DETECTION] Skipping ${merchantKey}: categoryMatch=${categoryMatch}, knownService=${!!knownService}, recurrence=${!!recurrence}, amountConsistent=${amountConsistency.isConsistent}`)
+      continue
+    }
+
+    // If caller provided a strict variance cap, exclude high-variance recurrence detections
+    // unless we have a strong signal (category match or known subscription).
+    if (
+      maxVarianceThreshold !== null &&
+      maxVarianceThreshold !== undefined &&
+      !categoryMatch &&
+      !knownService &&
+      (amountConsistency.variancePercentage || 0) > maxVarianceThreshold
+    ) {
+      console.log(
+        `[DETECTION] Excluding ${merchantKey} due to high variance: ${(amountConsistency.variancePercentage || 0).toFixed(2)} > ${maxVarianceThreshold}`
+      )
       continue
     }
     

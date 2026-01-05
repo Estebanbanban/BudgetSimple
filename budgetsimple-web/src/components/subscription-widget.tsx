@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getLocalSubscriptionSummary } from '@/lib/subscriptions-local'
 
 // MVP: Local-first - compute from IndexedDB, no backend dependency
 const USE_BACKEND_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_USE_BACKEND_SUBSCRIPTIONS === 'true'
@@ -26,17 +27,10 @@ export default function SubscriptionWidget() {
     try {
       // MVP: Use local IndexedDB data first
       if (!USE_BACKEND_SUBSCRIPTIONS && typeof window !== 'undefined') {
-        const runtime = (window as any).budgetsimpleRuntime
-        if (runtime && typeof runtime.analyzeMerchants === 'function') {
-          const analysis = runtime.analyzeMerchants()
-          const subTotal = analysis.subscriptions.reduce(
-            (sum: number, row: any) => sum + (row.monthly || 0),
-            0
-          )
-          setTotalMonthly(subTotal)
+        const summary = await getLocalSubscriptionSummary()
+        setTotalMonthly(summary.totalMonthly || 0)
           setLoading(false)
           return
-        }
       }
 
       // Fallback to API if backend is enabled

@@ -140,6 +140,23 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
 
   return (
     <div data-milestone-manager>
+      <div className="row" style={{ justifyContent: "flex-end", marginBottom: "0.5rem" }}>
+        <button
+          className="btn btn-sm"
+          type="button"
+          data-milestone-open-add
+          onClick={() => setShowAddForm(true)}
+        >
+          Add Milestone
+        </button>
+      </div>
+
+      {milestones.length === 0 && !showAddForm && (
+        <div className="small muted" style={{ marginBottom: "0.5rem" }}>
+          Add your first milestone to track progress and projections.
+        </div>
+      )}
+
       {milestones.length > 0 && (
         <div>
           {/* Compact list view for all milestones */}
@@ -369,80 +386,77 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
               </div>
             </div>
           )}
+        </div>
+      )}
 
-          {showAddForm && (
-            <div
-              className="card"
-              style={{ padding: "1rem", marginTop: "1rem" }}
-            >
-              <form onSubmit={handleAdd}>
-                <div className="row" style={{ marginBottom: "0.5rem" }}>
-                  <input
-                    className="input"
-                    value={formData.label}
-                    onChange={(e) =>
-                      setFormData({ ...formData, label: e.target.value })
-                    }
-                    placeholder="Milestone label (e.g., 'Save $50k')"
-                    required
-                  />
-                </div>
-                <div
-                  className="row"
-                  style={{ gap: "0.5rem", marginBottom: "0.5rem" }}
-                >
-                  <input
-                    className="input"
-                    type="number"
-                    step="0.01"
-                    value={formData.targetValue}
-                    onChange={(e) =>
-                      setFormData({ ...formData, targetValue: e.target.value })
-                    }
-                    placeholder="Target value"
-                    required
-                  />
-                  <select
-                    className="select"
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({ ...formData, type: e.target.value as any })
-                    }
-                  >
-                    <option value="net_worth">Net Worth</option>
-                    <option value="invested_assets">Invested Assets</option>
-                    <option value="savings">Savings</option>
-                  </select>
-                  <input
-                    className="input"
-                    type="date"
-                    value={formData.targetDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, targetDate: e.target.value })
-                    }
-                    placeholder="Target date (optional)"
-                  />
-                </div>
-                <div className="row" style={{ gap: "0.5rem" }}>
-                  <button
-                    className="btn btn-sm"
-                    type="submit"
-                    data-milestone-add
-                    style={{ textDecoration: "none" }}
-                  >
-                    Add Milestone
-                  </button>
-                  <button
-                    className="btn btn-sm btn-quiet"
-                    type="button"
-                    onClick={() => setShowAddForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+      {(showAddForm || milestones.length === 0) && (
+        <div className="card" style={{ padding: "1rem", marginTop: "1rem" }}>
+          <form onSubmit={handleAdd}>
+            <div className="row" style={{ marginBottom: "0.5rem" }}>
+              <input
+                className="input"
+                value={formData.label}
+                onChange={(e) =>
+                  setFormData({ ...formData, label: e.target.value })
+                }
+                placeholder="Milestone label (e.g., 'Save $50k')"
+                required
+              />
             </div>
-          )}
+            <div
+              className="row"
+              style={{ gap: "0.5rem", marginBottom: "0.5rem" }}
+            >
+              <input
+                className="input"
+                type="number"
+                step="0.01"
+                value={formData.targetValue}
+                onChange={(e) =>
+                  setFormData({ ...formData, targetValue: e.target.value })
+                }
+                placeholder="Target value"
+                required
+              />
+              <select
+                className="select"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value as any })
+                }
+              >
+                <option value="net_worth">Net Worth</option>
+                <option value="invested_assets">Invested Assets</option>
+                <option value="savings">Savings</option>
+              </select>
+              <input
+                className="input"
+                type="date"
+                value={formData.targetDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, targetDate: e.target.value })
+                }
+                placeholder="Target date (optional)"
+              />
+            </div>
+            <div className="row" style={{ gap: "0.5rem" }}>
+              <button
+                className="btn btn-sm"
+                type="submit"
+                data-milestone-add
+                style={{ textDecoration: "none" }}
+              >
+                Add Milestone
+              </button>
+              <button
+                className="btn btn-sm btn-quiet"
+                type="button"
+                onClick={() => setShowAddForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
