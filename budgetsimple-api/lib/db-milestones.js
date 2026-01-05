@@ -1,5 +1,10 @@
 'use strict'
 
+const {
+  calculateMilestoneProgressFromInputs,
+  calculateMonthlyReturn
+} = require('./projection')
+
 /**
  * Database operations for milestones
  * Supports Epic 5: Milestones & Progress Tracking
@@ -260,7 +265,7 @@ async function getNextMilestone (fastify, userId) {
 /**
  * Calculate milestone progress and ETA
  */
-async function calculateMilestoneProgress (fastify, userId, milestoneId) {
+async function calculateMilestoneProgress (fastify, userId, milestoneId, options = {}) {
   if (!fastify.supabase) {
     fastify.log.warn('Supabase not available, returning null for milestone progress')
     return null
@@ -270,88 +275,63 @@ async function calculateMilestoneProgress (fastify, userId, milestoneId) {
     const milestone = await getMilestone(fastify, userId, milestoneId)
     if (!milestone) return null
 
-    // Get current net worth
-    const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
-      .from('net_worth_snapshots')
-      .select('net_worth, snapshot_date')
-      .eq('user_id', userId)
-      .order('snapshot_date', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (snapshotError && snapshotError.code !== 'PGRST116') {
-      fastify.log.warn(snapshotError, 'Error fetching net worth snapshot, using 0')
-    }
-
-    const currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
     const targetValue = parseFloat(milestone.target_value || 0)
 
-    // Calculate progress
-    const progressPercent = targetValue > 0 ? (currentNetWorth / targetValue) * 100 : 0
-    const remaining = Math.max(0, targetValue - currentNetWorth)
+    // Get current net worth
+    let currentNetWorth = options.currentNetWorth
+    if (currentNetWorth === undefined) {
+      const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
+        .from('net_worth_snapshots')
+        .select('net_worth, snapshot_date')
+        .eq('user_id', userId)
+        .order('snapshot_date', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (snapshotError && snapshotError.code !== 'PGRST116') {
+        fastify.log.warn(snapshotError, 'Error fetching net worth snapshot, using 0')
+      }
+
+      currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
+    }
 
     // Get user assumptions for projection
-    const { data: assumptions } = await fastify.supabase
-      .from('user_assumptions')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
+    let assumptions = options.assumptions
+    if (!assumptions) {
+      const { data } = await fastify.supabase
+        .from('user_assumptions')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      assumptions = data
+    }
 
-    const annualReturn = parseFloat(assumptions?.expected_annual_return || 7.0) / 100
-    const monthlyReturn = Math.pow(1 + annualReturn, 1 / 12) - 1
+    const annualReturnPercent = parseFloat(assumptions?.expected_annual_return ?? 7.0)
+    const projectionHorizonMonths = parseInt(assumptions?.projection_horizon_months ?? 360)
 
     // Calculate monthly contribution (from savings rate or override)
     const monthlyContribution = parseFloat(assumptions?.monthly_contribution_override || 0)
     // TODO: If no override, calculate from actual savings rate
 
-    // Calculate ETA (simplified: linear projection if no return, or compound if return > 0)
-    let etaMonths = null
-    if (monthlyContribution > 0 || monthlyReturn > 0) {
-      if (monthlyReturn > 0) {
-        // Compound growth: NW(t) = NW(0) * (1+r)^t + C * ((1+r)^t - 1) / r
-        // Solve for t where NW(t) >= target
-        let months = 0
-        let projectedNW = currentNetWorth
-        while (projectedNW < targetValue && months < 360) {
-          projectedNW = projectedNW * (1 + monthlyReturn) + monthlyContribution
-          months++
-        }
-        etaMonths = months < 360 ? months : null
-      } else {
-        // Linear: months = remaining / monthlyContribution
-        etaMonths = monthlyContribution > 0 ? Math.ceil(remaining / monthlyContribution) : null
-      }
-    }
-
-    // Calculate ETA date
-    let etaDate = null
-    if (etaMonths !== null) {
-      const eta = new Date()
-      eta.setMonth(eta.getMonth() + etaMonths)
-      etaDate = eta.toISOString().split('T')[0]
-    }
-
-    // Determine status
-    let status = 'on_track'
-    if (milestone.target_date) {
-      const targetDate = new Date(milestone.target_date)
-      if (etaDate) {
-        const eta = new Date(etaDate)
-        const diffMonths = (eta.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
-        if (diffMonths < -3) status = 'ahead'
-        else if (diffMonths > 3) status = 'behind'
-      }
-    }
+    const progress = calculateMilestoneProgressFromInputs({
+      currentNetWorth,
+      targetValue,
+      targetDate: milestone.target_date,
+      annualReturnPercent,
+      monthlyContribution,
+      projectionHorizonMonths
+    })
 
     return {
       milestone,
       currentValue: currentNetWorth,
       targetValue,
-      progressPercent: Math.min(100, progressPercent),
-      remaining,
-      etaMonths,
-      etaDate,
-      status
+      progressPercent: progress.progressPercent,
+      remaining: progress.remaining,
+      etaMonths: progress.etaMonths,
+      etaDate: progress.etaDate,
+      status: progress.status,
+      monthlyReturn: calculateMonthlyReturn(annualReturnPercent) * 100
     }
   } catch (error) {
     fastify.log.error(error, 'Exception calculating milestone progress')

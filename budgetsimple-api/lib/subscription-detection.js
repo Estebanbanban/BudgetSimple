@@ -127,7 +127,8 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    maxVarianceThreshold
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -380,7 +381,11 @@ function detectSubscriptions (transactions, options = {}) {
   }
 
   // Sort by confidence (highest first)
-  const sorted = candidates.sort((a, b) => b.confidenceScore - a.confidenceScore)
+  const filteredCandidates = typeof maxVarianceThreshold === 'number'
+    ? candidates.filter(c => (c.variancePercentage || 0) <= maxVarianceThreshold)
+    : candidates
+
+  const sorted = filteredCandidates.sort((a, b) => b.confidenceScore - a.confidenceScore)
   console.log(`[DETECTION] Final result: ${sorted.length} candidates detected`)
   return sorted
 }
