@@ -25,6 +25,22 @@ export interface MilestoneProgress {
   status: 'ahead' | 'on_track' | 'behind' | 'no_data'
 }
 
+type TransactionRow = {
+  id?: string
+  dateISO?: string
+  date?: string
+  amount?: number
+  type?: string
+  categoryId?: string
+}
+
+type IncomeRow = {
+  id?: string
+  dateISO?: string
+  date?: string
+  amount?: number
+}
+
 // Get the store from runtime
 function getStore() {
   if (typeof window === 'undefined') return null
@@ -39,8 +55,8 @@ function getFinancialData() {
   const runtime = (window as any).budgetsimpleRuntime
   if (!runtime) return { transactions: [], income: [] }
   return {
-    transactions: runtime.transactions() || [],
-    income: runtime.income() || []
+    transactions: (runtime.transactions?.() || []) as TransactionRow[],
+    income: (runtime.income?.() || []) as IncomeRow[]
   }
 }
 
@@ -60,6 +76,28 @@ export async function getMilestones(): Promise<Milestone[]> {
     console.error('Error fetching milestones:', error)
     return []
   }
+}
+
+/**
+ * Get a single milestone by id (local-first).
+ */
+export async function getMilestone(id: string): Promise<Milestone | null> {
+  const store = getStore()
+  if (!store) return null
+  try {
+    const milestones = await store.getAll('milestones')
+    return (milestones.find((m: Milestone) => m.id === id) as Milestone) || null
+  } catch (error) {
+    console.error('Error fetching milestone:', error)
+    return null
+  }
+}
+
+/**
+ * Get computed progress for a milestone (local-first).
+ */
+export async function getMilestoneProgress(milestone: Milestone): Promise<MilestoneProgress | null> {
+  return calculateMilestoneProgress(milestone)
 }
 
 /**
@@ -231,12 +269,18 @@ export async function calculateMilestoneProgress(milestone: Milestone): Promise<
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
     
     const recentIncome = income
-      .filter(i => new Date(i.dateISO || i.date) >= threeMonthsAgo)
+      .filter((i) => {
+        const raw = i.dateISO || i.date
+        if (!raw) return false
+        return new Date(raw) >= threeMonthsAgo
+      })
       .reduce((sum, i) => sum + (i.amount || 0), 0)
     
     const recentExpenses = transactions
-      .filter(t => {
-        const date = new Date(t.dateISO || t.date)
+      .filter((t) => {
+        const raw = t.dateISO || t.date
+        if (!raw) return false
+        const date = new Date(raw)
         return date >= threeMonthsAgo && (t.type === 'expense' || (t.amount && t.amount < 0))
       })
       .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
