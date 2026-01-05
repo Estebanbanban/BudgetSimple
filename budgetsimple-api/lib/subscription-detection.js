@@ -127,7 +127,8 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    maxVarianceThreshold = 0.6 // Skip detection if variance exceeds this (unless strong signal)
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -234,6 +235,12 @@ function detectSubscriptions (transactions, options = {}) {
     // PRIORITY 4: Check amount consistency
     const amounts = txs.map(t => t.amount)
     const amountConsistency = checkAmountConsistency(amounts, amountVarianceTolerance, amountVarianceFixed)
+
+    // Guardrail: skip high-variance merchants unless a strong signal exists
+    if (!categoryMatch && !knownService && amountConsistency.variancePercentage > maxVarianceThreshold) {
+      console.log(`[DETECTION] Skipping ${merchantKey}: variance ${amountConsistency.variancePercentage.toFixed(2)} exceeds threshold ${maxVarianceThreshold}`)
+      continue
+    }
 
     // DECISION LOGIC: Accept if ANY of these conditions are met:
     // 1. Category matches (even single occurrence)
