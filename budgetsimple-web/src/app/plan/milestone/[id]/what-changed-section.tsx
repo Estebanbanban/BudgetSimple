@@ -39,7 +39,15 @@ export default function WhatChangedSection({
         const CONFIG_KEY = "budgetsimple:v1"
         const raw = localStorage.getItem(CONFIG_KEY)
         if (raw) {
-          const config = JSON.parse(raw)
+          const parsed = JSON.parse(raw)
+          const config = parsed && typeof parsed === 'object' ? (parsed as any) : null
+          const settings =
+            config &&
+            Object.prototype.hasOwnProperty.call(config, 'settings') &&
+            config.settings &&
+            typeof config.settings === 'object'
+              ? (config.settings as any)
+              : null
           // Load last month's assumptions (stored in a separate key or calculated)
           // For now, we'll calculate from transactions
           if ((window as any).budgetsimpleRuntime) {
@@ -66,22 +74,42 @@ export default function WhatChangedSection({
               })
               .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
             
-            setLastMonthContribution(Math.max(0, lastMonthIncome - lastMonthExpenses))
-            setLastMonthReturn(config.settings?.planAnnualReturn || 0.07)
-            setLastMonthNetWorth(config.settings?.netWorthManual || 0)
+            const computedLastMonthContribution = Math.max(
+              0,
+              lastMonthIncome - lastMonthExpenses
+            )
+            setLastMonthContribution(computedLastMonthContribution)
+
+            const ar = settings ? Number(settings.planAnnualReturn) : NaN
+            const computedLastMonthReturn =
+              Number.isFinite(ar) && ar >= 0 && ar <= 1 ? ar : 0.07
+            setLastMonthReturn(computedLastMonthReturn)
+
+            const nw = settings ? Number(settings.netWorthManual) : NaN
+            const computedLastMonthNetWorth = Number.isFinite(nw) ? nw : 0
+            setLastMonthNetWorth(computedLastMonthNetWorth)
             
             // Calculate last month's ETA
             const lastMonthInputs: ProjectionInputs = {
-              currentNetWorth: lastMonthNetWorth,
-              monthlyContribution: lastMonthContribution,
-              annualReturn: lastMonthReturn,
+              currentNetWorth: computedLastMonthNetWorth,
+              monthlyContribution: computedLastMonthContribution,
+              annualReturn: computedLastMonthReturn,
               monthsToProject: 120
             }
             const lastETA = calculateETA(lastMonthInputs, milestone.target_value)
             setLastMonthETA(lastETA)
             
             // Calculate drivers
-            calculateDrivers(lastETA, currentETA, lastMonthContribution, currentContribution, lastMonthReturn, currentReturn, lastMonthNetWorth, currentNetWorth)
+            calculateDrivers(
+              lastETA,
+              currentETA,
+              computedLastMonthContribution,
+              currentContribution,
+              computedLastMonthReturn,
+              currentReturn,
+              computedLastMonthNetWorth,
+              currentNetWorth
+            )
           }
         }
       } catch (error) {
