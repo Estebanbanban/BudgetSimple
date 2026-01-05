@@ -24,8 +24,8 @@ import {
 import MilestoneGraph from "@/components/milestone-graph";
 import MilestoneLevers from "@/components/milestone-levers";
 import {
-  showContributionModal,
-  showDateModal,
+  showConfirmModal,
+  showTextPromptModal,
 } from "@/lib/plan-assumptions-modal";
 import WhatChangedSection from "./what-changed-section";
 import AdviceCardsSection from "./advice-cards-section";
@@ -105,12 +105,27 @@ export default function MilestoneDrilldownPage() {
         const CONFIG_KEY = "budgetsimple:v1";
         const raw = localStorage.getItem(CONFIG_KEY);
         if (raw) {
-          const config = JSON.parse(raw);
-          if (config?.settings) {
-            setNetWorth(config.settings.netWorthManual || 0);
-            setAnnualReturn(config.settings.planAnnualReturn || 0.07);
-            setContributionMode(config.settings.planContributionMode || "auto");
-            setManualContribution(config.settings.planManualContribution || 0);
+          const parsed = JSON.parse(raw);
+          const config =
+            parsed && typeof parsed === "object" ? (parsed as any) : null;
+          const settings =
+            config &&
+            Object.prototype.hasOwnProperty.call(config, "settings") &&
+            config.settings &&
+            typeof config.settings === "object"
+              ? (config.settings as any)
+              : null;
+
+          if (settings) {
+            const nw = Number(settings.netWorthManual);
+            const ar = Number(settings.planAnnualReturn);
+            const mode = settings.planContributionMode;
+            const mc = Number(settings.planManualContribution);
+
+            if (Number.isFinite(nw)) setNetWorth(nw);
+            if (Number.isFinite(ar) && ar >= 0 && ar <= 1) setAnnualReturn(ar);
+            if (mode === "auto" || mode === "manual") setContributionMode(mode);
+            if (Number.isFinite(mc) && mc >= 0) setManualContribution(mc);
           }
         }
       } catch (configError) {
@@ -439,11 +454,13 @@ export default function MilestoneDrilldownPage() {
               <button
                 className="btn btn-sm"
                 onClick={async () => {
-                  const label = prompt(
-                    "Edit milestone label:",
-                    milestone.label
-                  );
-                  if (label && label !== milestone.label) {
+                  const label = await showTextPromptModal({
+                    title: "Edit milestone",
+                    label: "Label",
+                    defaultValue: milestone.label,
+                    confirmText: "Save",
+                  });
+                  if (label && label.trim() && label !== milestone.label) {
                     await updateMilestone(milestone.id, { label });
                     await loadData();
                   }
@@ -455,7 +472,12 @@ export default function MilestoneDrilldownPage() {
               <button
                 className="btn btn-sm btn-quiet"
                 onClick={async () => {
-                  if (confirm("Duplicate this milestone?")) {
+                  const ok = await showConfirmModal({
+                    title: "Duplicate milestone",
+                    message: "Duplicate this milestone?",
+                    confirmText: "Duplicate",
+                  });
+                  if (ok) {
                     const { createMilestone } = await import(
                       "@/lib/milestones-local"
                     );
@@ -476,9 +498,14 @@ export default function MilestoneDrilldownPage() {
               <button
                 className="btn btn-sm btn-quiet"
                 onClick={async () => {
-                  if (
-                    confirm("Are you sure you want to delete this milestone?")
-                  ) {
+                  const ok = await showConfirmModal({
+                    title: "Delete milestone",
+                    message:
+                      "Are you sure you want to delete this milestone? This cannot be undone.",
+                    confirmText: "Delete",
+                    danger: true,
+                  });
+                  if (ok) {
                     await deleteMilestone(milestone.id);
                     router.push("/plan");
                   }

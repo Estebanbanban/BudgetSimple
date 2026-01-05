@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { downloadBackup, restoreBackup } from '@/lib/backup'
+import { showConfirmModal } from '@/lib/plan-assumptions-modal'
 
 export default function SettingsPage() {
   const [restoring, setRestoring] = useState(false)
@@ -21,7 +22,13 @@ export default function SettingsPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!confirm('This will replace all your current data. Are you sure?')) {
+    const ok = await showConfirmModal({
+      title: 'Restore backup',
+      message: 'This will replace all your current data. Are you sure?',
+      confirmText: 'Restore',
+      danger: true
+    })
+    if (!ok) {
       return
     }
 
