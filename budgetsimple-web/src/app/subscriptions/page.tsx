@@ -8,6 +8,7 @@ interface SubscriptionCandidate {
   id: string
   merchant: string
   categoryId?: string
+  detectionMethod?: 'category' | 'known_subscription' | 'recurrence'
   estimatedMonthlyAmount: number
   frequency: 'monthly' | 'bi-weekly' | 'quarterly' | 'annual'
   firstDetectedDate: string

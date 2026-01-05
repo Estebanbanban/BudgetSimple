@@ -12,9 +12,13 @@ import {
   type Milestone,
   type MilestoneProgress,
 } from "@/lib/milestones-local";
+import { Badge } from "@/components/ui/badge";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { KebabMenu, MenuItem } from "@/components/ui/menu";
 
 export interface MilestonesManagerRef {
   showAddForm: () => void;
+  editMilestone: (id: string) => void;
 }
 
 const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
@@ -22,6 +26,10 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     showAddForm: () => setShowAddForm(true),
+    editMilestone: (id: string) => {
+      const m = milestones.find((x) => x.id === id);
+      if (m) startEdit(m);
+    },
   }));
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [progresses, setProgresses] = useState<Map<string, MilestoneProgress>>(
@@ -145,7 +153,7 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
           {/* Compact list view for all milestones */}
           {milestones.length > 0 && (
             <div className="table-wrap">
-              <table className="table">
+              <table className="table milestones-table" aria-label="All milestones">
                 <thead>
                   <tr>
                     <th>Milestone</th>
@@ -232,44 +240,51 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                             : "—"}
                         </td>
                         <td>
-                          {progress && progress.status !== "no_data" && (
-                            <span
-                              className={`badge ${
+                          {progress ? (
+                            <Badge
+                              tone={
                                 progress.status === "ahead"
-                                  ? "text-success"
+                                  ? "success"
                                   : progress.status === "on_track"
-                                  ? "text-info"
-                                  : "text-warning"
-                              }`}
+                                  ? "info"
+                                  : progress.status === "behind"
+                                  ? "warning"
+                                  : "neutral"
+                              }
                             >
-                              {progress.status.replace("_", " ")}
-                            </span>
+                              {progress.status === "ahead"
+                                ? "Ahead"
+                                : progress.status === "on_track"
+                                ? "On track"
+                                : progress.status === "behind"
+                                ? "Behind"
+                                : "No data"}
+                            </Badge>
+                          ) : (
+                            "—"
                           )}
                         </td>
                         <td>
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            <a
-                              href={`/plan/milestone/${milestone.id}`}
-                              className="btn btn-sm"
-                              style={{ textDecoration: "none" }}
-                            >
-                              See more
-                            </a>
-                            <button
-                              className="btn btn-sm btn-quiet"
+                          <div
+                            style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ButtonLink href={`/plan/milestone/${milestone.id}`} variant="accent">
+                              View details
+                            </ButtonLink>
+                            <Button
+                              variant="quiet"
                               onClick={() => startEdit(milestone)}
                               data-milestone-edit={milestone.id}
-                              style={{ textDecoration: "none" }}
                             >
                               Edit
-                            </button>
-                            <button
-                              className="btn btn-sm btn-quiet"
-                              onClick={() => handleDelete(milestone.id)}
-                              style={{ textDecoration: "none" }}
-                            >
-                              Delete
-                            </button>
+                            </Button>
+                            <KebabMenu label="Milestone actions">
+                              <MenuItem onClick={() => startEdit(milestone)}>Edit</MenuItem>
+                              <MenuItem danger onClick={() => handleDelete(milestone.id)}>
+                                Delete
+                              </MenuItem>
+                            </KebabMenu>
                           </div>
                         </td>
                       </tr>
@@ -285,9 +300,9 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
             <div className="panel" style={{ marginTop: "1rem" }}>
               <div className="panel-head">
                 <div className="panel-title">Edit Milestone</div>
-                <button className="btn btn-quiet" onClick={cancelEdit}>
+                <Button variant="quiet" onClick={cancelEdit}>
                   Close
-                </button>
+                </Button>
               </div>
               <div className="panel-body">
                 <form onSubmit={handleUpdate}>
@@ -353,16 +368,12 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                       />
                     </div>
                     <div className="row">
-                      <button className="btn btn-accent" type="submit">
-                        Save Changes
-                      </button>
-                      <button
-                        className="btn btn-quiet"
-                        type="button"
-                        onClick={cancelEdit}
-                      >
+                      <Button variant="accent" type="submit">
+                        Save changes
+                      </Button>
+                      <Button variant="quiet" type="button" onClick={cancelEdit}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </form>
@@ -424,21 +435,12 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                   />
                 </div>
                 <div className="row" style={{ gap: "0.5rem" }}>
-                  <button
-                    className="btn btn-sm"
-                    type="submit"
-                    data-milestone-add
-                    style={{ textDecoration: "none" }}
-                  >
-                    Add Milestone
-                  </button>
-                  <button
-                    className="btn btn-sm btn-quiet"
-                    type="button"
-                    onClick={() => setShowAddForm(false)}
-                  >
+                  <Button variant="accent" type="submit" data-milestone-add>
+                    Add milestone
+                  </Button>
+                  <Button variant="quiet" type="button" onClick={() => setShowAddForm(false)}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

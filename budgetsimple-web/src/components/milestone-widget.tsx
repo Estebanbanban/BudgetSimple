@@ -84,7 +84,8 @@ export default function MilestoneWidget() {
   const statusLabels = {
     ahead: 'Ahead of schedule',
     on_track: 'On track',
-    behind: 'Behind schedule'
+    behind: 'Behind schedule',
+    no_data: 'No data'
   }
 
   const statusColors = {

@@ -1,35 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   getMilestone,
   getMilestoneProgress,
   updateMilestone,
   deleteMilestone,
-  formatCurrency,
   formatDate,
   type Milestone,
   type MilestoneProgress,
 } from "@/lib/milestones-local";
 import {
-  generateProjectionCurves,
   calculateETA,
   calculateRequiredContribution,
-  calculateSensitivity,
-  type ProjectionInputs,
-  type ProjectionCurve,
 } from "@/lib/milestone-projection";
 import MilestoneGraph from "@/components/milestone-graph";
 import MilestoneLevers from "@/components/milestone-levers";
-import {
-  showContributionModal,
-  showDateModal,
-} from "@/lib/plan-assumptions-modal";
-import WhatChangedSection from "./what-changed-section";
-import AdviceCardsSection from "./advice-cards-section";
-import HistorySection from "./history-section";
+import { readPlanSettings, writePlanSettings, type ContributionMode } from "@/lib/plan-settings";
+import { formatMoney } from "@/lib/money";
+import { showToast } from "@/lib/toast";
+import { Badge } from "@/components/ui/badge";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { KebabMenu, MenuItem } from "@/components/ui/menu";
 
 export default function MilestoneDrilldownPage() {
   const params = useParams();
@@ -39,13 +32,12 @@ export default function MilestoneDrilldownPage() {
   const [milestone, setMilestone] = useState<Milestone | null>(null);
   const [progress, setProgress] = useState<MilestoneProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [netWorth, setNetWorth] = useState<number>(0);
-  const [monthlyContribution, setMonthlyContribution] = useState<number>(0);
+  const [startingNetWorth, setStartingNetWorth] = useState<number>(0);
+  const [currency, setCurrency] = useState<string>("USD");
   const [annualReturn, setAnnualReturn] = useState<number>(0.07);
-  const [contributionMode, setContributionMode] = useState<"auto" | "manual">(
-    "auto"
-  );
-  const [manualContribution, setManualContribution] = useState<number>(0);
+  const [contributionMode, setContributionMode] = useState<ContributionMode>("auto");
+  const [manualMonthlyContribution, setManualMonthlyContribution] = useState<number>(0);
+  const [autoMonthlyContribution, setAutoMonthlyContribution] = useState<number>(0);
   const [contributionHistory, setContributionHistory] = useState<
     Array<{ month: string; amount: number }>
   >([]);
@@ -101,21 +93,12 @@ export default function MilestoneDrilldownPage() {
       setProgress(prog);
 
       // Load saved assumptions from localStorage first (like plan page does)
-      try {
-        const CONFIG_KEY = "budgetsimple:v1";
-        const raw = localStorage.getItem(CONFIG_KEY);
-        if (raw) {
-          const config = JSON.parse(raw);
-          if (config?.settings) {
-            setNetWorth(config.settings.netWorthManual || 0);
-            setAnnualReturn(config.settings.planAnnualReturn || 0.07);
-            setContributionMode(config.settings.planContributionMode || "auto");
-            setManualContribution(config.settings.planManualContribution || 0);
-          }
-        }
-      } catch (configError) {
-        console.error("Error loading config from localStorage:", configError);
-      }
+      const settings = readPlanSettings();
+      setStartingNetWorth(settings.startingNetWorth);
+      setCurrency(settings.currency);
+      setAnnualReturn(settings.annualReturn);
+      setContributionMode(settings.contributionMode);
+      setManualMonthlyContribution(settings.manualMonthlyContribution);
 
       // Load financial data (only if runtime is available)
       const runtime = (window as any).budgetsimpleRuntime;
@@ -130,35 +113,34 @@ export default function MilestoneDrilldownPage() {
           console.error("Error getting transactions/income:", dataError);
         }
 
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        const inMonth = (d: string) => {
+          const date = new Date(d);
+          return date >= monthStart && date <= monthEnd;
+        };
 
-        const recentIncome = income
-          .filter((i: any) => {
-            const date = new Date(i.dateISO || i.date);
-            return date >= thirtyDaysAgo;
-          })
+        const lastMonthIncome = income
+          .filter((i: any) => inMonth(i.dateISO || i.date))
           .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
 
-        const recentExpenses = transactions
+        const lastMonthExpenses = transactions
           .filter((t: any) => {
-            const date = new Date(t.dateISO || t.date);
+            const dateISO = t.dateISO || t.date;
             return (
-              date >= thirtyDaysAgo &&
+              inMonth(dateISO) &&
               (t.type === "expense" || (t.amount && t.amount < 0))
             );
           })
           .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0);
 
-        const cashflow = recentIncome - recentExpenses;
-        const autoContrib = Math.max(0, (cashflow / 30) * 30);
-        const effectiveContrib =
-          contributionMode === "auto" ? autoContrib : manualContribution;
-        setMonthlyContribution(effectiveContrib);
+        const autoContrib = Math.max(0, lastMonthIncome - lastMonthExpenses);
+        setAutoMonthlyContribution(autoContrib);
 
-        // Calculate contribution history (last 6 months)
+        // Calculate contribution history (last 12 months)
         const history: Array<{ month: string; amount: number }> = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = 11; i >= 0; i--) {
           const monthDate = new Date();
           monthDate.setMonth(monthDate.getMonth() - i);
           const monthStart = new Date(
@@ -196,6 +178,16 @@ export default function MilestoneDrilldownPage() {
           });
         }
         setContributionHistory(history);
+
+        // Seed starting net worth from a simple estimate if user hasn't set it yet.
+        if (!settings.startingNetWorth || settings.startingNetWorth === 0) {
+          const totalIncome = income.reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+          const totalExpenses = transactions
+            .filter((t: any) => t.type === "expense" || (t.amount && t.amount < 0))
+            .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0);
+          const estimatedNW = Math.max(0, totalIncome - totalExpenses);
+          if (estimatedNW > 0) setStartingNetWorth(estimatedNW);
+        }
       }
     } catch (error) {
       console.error("Error loading milestone data:", error);
@@ -210,8 +202,7 @@ export default function MilestoneDrilldownPage() {
     }
   }, [milestoneId, loadData]);
 
-  const effectiveContribution =
-    contributionMode === "auto" ? monthlyContribution : manualContribution;
+  const effectiveContribution = contributionMode === "auto" ? autoMonthlyContribution : manualMonthlyContribution;
 
   if (loading) {
     return (
@@ -239,13 +230,9 @@ export default function MilestoneDrilldownPage() {
             >
               Milestone not found
             </div>
-            <Link
-              href="/plan"
-              className="btn btn-accent"
-              style={{ textDecoration: "none" }}
-            >
+            <ButtonLink href="/plan" variant="accent">
               Back to Plan
-            </Link>
+            </ButtonLink>
           </div>
         </section>
       );
@@ -265,7 +252,7 @@ export default function MilestoneDrilldownPage() {
 
   const requiredContribution = milestone.target_date
     ? calculateRequiredContribution(
-        netWorth,
+        startingNetWorth,
         milestone.target_value,
         milestone.target_date,
         annualReturn
@@ -279,7 +266,7 @@ export default function MilestoneDrilldownPage() {
 
   const eta = calculateETA(
     {
-      currentNetWorth: netWorth,
+      currentNetWorth: startingNetWorth,
       monthlyContribution: effectiveContribution,
       annualReturn,
       monthsToProject: 120,
@@ -287,833 +274,198 @@ export default function MilestoneDrilldownPage() {
     milestone.target_value
   );
 
-  const inputs: ProjectionInputs = {
-    currentNetWorth: netWorth,
-    monthlyContribution: effectiveContribution,
-    annualReturn,
-    monthsToProject: 120,
-  };
-
-  const sensitivityPlus100 = calculateSensitivity(
-    inputs,
-    milestone.target_value,
-    100
-  );
-  const sensitivityMinus100 = calculateSensitivity(
-    inputs,
-    milestone.target_value,
-    -100
-  );
-  const sensitivityReturnPlus1 = calculateSensitivity(
-    { ...inputs, annualReturn: annualReturn + 0.01 },
-    milestone.target_value,
-    0
-  );
-
-  // Calculate contribution consistency
-  const positiveMonths = contributionHistory.filter((h) => h.amount > 0).length;
-  const consistencyScore =
-    contributionHistory.length > 0
-      ? (positiveMonths / contributionHistory.length) * 100
-      : 0;
-  const bestMonth =
-    contributionHistory.length > 0
-      ? Math.max(...contributionHistory.map((h) => h.amount))
-      : 0;
-  const worstMonth =
-    contributionHistory.length > 0
-      ? Math.min(...contributionHistory.map((h) => h.amount))
-      : 0;
-  const avgContribution =
-    contributionHistory.length > 0
-      ? contributionHistory.reduce((sum, h) => sum + h.amount, 0) /
-        contributionHistory.length
-      : 0;
-  const contributionStdDev =
-    contributionHistory.length > 0
-      ? Math.sqrt(
-          contributionHistory.reduce(
-            (sum, h) => sum + Math.pow(h.amount - avgContribution, 2),
-            0
-          ) / contributionHistory.length
-        )
-      : 0;
-  const isVolatile = contributionStdDev > avgContribution * 0.3;
+  const insight = useMemo(() => {
+    const months = contributionHistory.filter((h) => Number.isFinite(h.amount));
+    if (months.length < 3) return null;
+    const avg = months.reduce((s, h) => s + h.amount, 0) / months.length;
+    const positive = months.filter((h) => h.amount > 0).length;
+    if (avg === 0) return "No consistent contributions detected yet.";
+    const consistency = Math.round((positive / months.length) * 100);
+    return `Average contribution ${formatMoney(avg, currency)}/mo • ${consistency}% of months positive.`;
+  }, [contributionHistory, currency]);
 
   return (
     <section className="view" data-view="plan">
-      <div
-        style={{
-          maxWidth: "72rem",
-          margin: "0 auto",
-          padding: "2rem 1.5rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "2rem",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            background: "white",
-            zIndex: 10,
-            padding: "1rem 0",
-            marginBottom: "1rem",
-            borderBottom: "1px solid #e2e8f0",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: "16px",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <Link
-                href="/plan"
-                className="btn btn-quiet btn-sm"
-                style={{
-                  textDecoration: "none",
-                  marginBottom: "8px",
-                  fontSize: "12px",
-                }}
-              >
-                ← Back to Plan
-              </Link>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  marginBottom: "4px",
-                }}
-              >
-                <h1 style={{ fontSize: "24px", fontWeight: "700", margin: 0 }}>
-                  {milestone.label}
-                </h1>
-                <div
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    background:
-                      safeProgress.status === "ahead" ||
-                      safeProgress.status === "on_track"
-                        ? "#ecfdf5"
-                        : "#fffbeb",
-                    color:
-                      safeProgress.status === "ahead" ||
-                      safeProgress.status === "on_track"
-                        ? "#065f46"
-                        : "#92400e",
-                    border: `1px solid ${
-                      safeProgress.status === "ahead" ||
-                      safeProgress.status === "on_track"
-                        ? "#a7f3d0"
-                        : "#fde68a"
-                    }`,
-                  }}
-                >
-                  {safeProgress.status === "ahead"
-                    ? "Ahead"
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space)" }}>
+        <div className="page-head">
+          <div>
+            <ButtonLink href="/plan" variant="quiet">
+              ← Back to Plan
+            </ButtonLink>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+              <h1 style={{ margin: 0 }}>{milestone.label}</h1>
+              <Badge
+                tone={
+                  safeProgress.status === "ahead"
+                    ? "success"
                     : safeProgress.status === "on_track"
-                    ? "On track"
+                    ? "info"
                     : safeProgress.status === "behind"
-                    ? "Behind"
-                    : "No data"}
-                </div>
-              </div>
-              <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-                Target: {formatCurrency(milestone.target_value)}
-                {milestone.target_date &&
-                  ` by ${formatDate(milestone.target_date)}`}
-                {eta && ` • ETA: ${formatDate(eta.date)}`}
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                className="btn btn-sm"
-                onClick={async () => {
-                  const label = prompt(
-                    "Edit milestone label:",
-                    milestone.label
-                  );
-                  if (label && label !== milestone.label) {
-                    await updateMilestone(milestone.id, { label });
-                    await loadData();
-                  }
-                }}
-                style={{ textDecoration: "none" }}
+                    ? "warning"
+                    : "neutral"
+                }
               >
-                Edit
-              </button>
-              <button
-                className="btn btn-sm btn-quiet"
+                {safeProgress.status === "ahead"
+                  ? "Ahead"
+                  : safeProgress.status === "on_track"
+                  ? "On track"
+                  : safeProgress.status === "behind"
+                  ? "Behind"
+                  : "No data"}
+              </Badge>
+            </div>
+            <div className="muted" style={{ marginTop: 6 }}>
+              Target: <b>{formatMoney(milestone.target_value, currency)}</b>
+              {milestone.target_date ? ` by ${formatDate(milestone.target_date)}` : ""}
+              {eta?.date ? ` • ETA: ${formatDate(eta.date)}` : ""}
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: "flex-end" }}>
+            <Button
+              variant="quiet"
+              type="button"
+              onClick={async () => {
+                const label = prompt("Edit milestone name:", milestone.label);
+                if (label && label !== milestone.label) {
+                  await updateMilestone(milestone.id, { label });
+                  await loadData();
+                  showToast("Saved", "success");
+                }
+              }}
+            >
+              Edit
+            </Button>
+            <KebabMenu label="More actions">
+              <MenuItem
                 onClick={async () => {
-                  if (confirm("Duplicate this milestone?")) {
-                    const { createMilestone } = await import(
-                      "@/lib/milestones-local"
-                    );
-                    await createMilestone({
-                      label: `${milestone.label} (Copy)`,
-                      targetValue: milestone.target_value,
-                      targetDate: milestone.target_date,
-                      type: milestone.type,
-                      displayOrder: 999,
-                    });
-                    router.push("/plan");
-                  }
+                  const { createMilestone } = await import("@/lib/milestones-local");
+                  await createMilestone({
+                    label: `${milestone.label} (Copy)`,
+                    targetValue: milestone.target_value,
+                    targetDate: milestone.target_date,
+                    type: milestone.type,
+                    displayOrder: 999,
+                  });
+                  showToast("Milestone duplicated", "success");
+                  router.push("/plan");
                 }}
-                style={{ textDecoration: "none" }}
               >
                 Duplicate
-              </button>
-              <button
-                className="btn btn-sm btn-quiet"
+              </MenuItem>
+              <MenuItem
+                danger
                 onClick={async () => {
-                  if (
-                    confirm("Are you sure you want to delete this milestone?")
-                  ) {
-                    await deleteMilestone(milestone.id);
-                    router.push("/plan");
-                  }
+                  if (!confirm("Delete this milestone?")) return;
+                  await deleteMilestone(milestone.id);
+                  showToast("Milestone deleted", "danger");
+                  router.push("/plan");
                 }}
-                style={{ textDecoration: "none", color: "#dc2626" }}
               >
                 Delete
-              </button>
-            </div>
+              </MenuItem>
+            </KebabMenu>
           </div>
         </div>
 
-        {/* Section A: At a glance tiles */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "12px",
-            marginBottom: "1rem",
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
-              }}
-            >
-              Current Net Worth
-            </div>
-            <div
-              style={{ fontSize: "20px", fontWeight: "700", color: "#1f2933" }}
-            >
-              {formatCurrency(netWorth)}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
-              }}
-            >
-              Progress
-            </div>
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: "700",
-                color: "#1f2933",
-                marginBottom: "4px",
-              }}
-            >
-              {safeProgress.progressPercent.toFixed(1)}%
-            </div>
-            <div style={{ fontSize: "12px", color: "#64748b" }}>
-              {formatCurrency(
-                milestone.target_value - safeProgress.currentValue
-              )}{" "}
-              remaining
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
-              }}
-            >
-              ETA (base)
-            </div>
-            <div
-              style={{ fontSize: "20px", fontWeight: "700", color: "#1f2933" }}
-            >
-              {eta ? formatDate(eta.date) : "--"}
-            </div>
-          </div>
-
-          {requiredContribution && (
-            <div
-              style={{
-                background: gap && gap > 0 ? "#fef2f2" : "#f0fdf4",
-                border: `1px solid ${gap && gap > 0 ? "#fecaca" : "#a7f3d0"}`,
-                borderRadius: "8px",
-                padding: "16px",
-                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  color: "#64748b",
-                  marginBottom: "6px",
-                  fontWeight: "500",
-                }}
-              >
-                Required monthly
-              </div>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  color: gap && gap > 0 ? "#dc2626" : "#059669",
-                  marginBottom: "4px",
-                }}
-              >
-                {formatCurrency(requiredContribution)}/mo
-              </div>
-              {gap !== null && (
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: gap > 0 ? "#dc2626" : "#059669",
-                    fontWeight: "600",
-                  }}
-                >
-                  {gap > 0
-                    ? `+${formatCurrency(gap)}/mo short`
-                    : `${formatCurrency(Math.abs(gap))}/mo ahead`}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Section B: Projection chart */}
-        <div
-          style={{
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            padding: "1.25rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                marginBottom: "4px",
-              }}
-            >
-              Net Worth Projection
-            </div>
-            <div style={{ fontSize: "13px", color: "#64748b" }}>
-              Based on monthly compounding + contributions
-            </div>
-          </div>
-
-          {netWorth === 0 && effectiveContribution === 0 ? (
-            <div
-              style={{
-                padding: "3rem",
-                textAlign: "center",
-                background: "#f8fafc",
-                borderRadius: "8px",
-                border: "1px dashed #cbd5e1",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "14px",
-                  color: "#64748b",
-                  marginBottom: "16px",
-                }}
-              >
-                Set your assumptions to see the projection
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                }}
-              >
-                {netWorth === 0 && (
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      // Scroll to assumptions section
-                      document
-                        .getElementById("assumptions-section")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    style={{ textDecoration: "none" }}
-                  >
-                    Set starting net worth
-                  </button>
-                )}
-                {effectiveContribution === 0 && (
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => {
-                      document
-                        .getElementById("assumptions-section")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    style={{ textDecoration: "none" }}
-                  >
-                    Set contribution
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <MilestoneGraph
-              currentNetWorth={netWorth}
-              monthlyContribution={effectiveContribution}
-              annualReturn={annualReturn}
-            />
-          )}
-        </div>
-
-        {/* Section C: Assumptions & Contribution Engine */}
-        <div
-          id="assumptions-section"
-          style={{
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            padding: "1.25rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                marginBottom: "4px",
-              }}
-            >
-              Assumptions & Contribution
-            </div>
-            <div style={{ fontSize: "13px", color: "#64748b" }}>
-              Control panel for your projection
-            </div>
-          </div>
-
-          {/* Starting Net Worth Input */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "16px",
-              marginBottom: "16px",
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  color: "#475569",
-                  marginBottom: "6px",
-                  fontWeight: "500",
-                }}
-              >
-                Starting Net Worth <span style={{ color: "#dc2626" }}>*</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={netWorth}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value) || 0;
-                  setNetWorth(val);
-                  // Save to config
-                  if (
-                    typeof window !== "undefined" &&
-                    (window as any).budgetsimpleRuntime
-                  ) {
-                    const runtime = (window as any).budgetsimpleRuntime;
-                    const config = runtime.config?.() || runtime.getConfig?.();
-                    if (config?.settings) {
-                      config.settings.netWorthManual = val;
-                      if (runtime.saveConfig) {
-                        runtime.saveConfig();
-                      }
-                    }
-                  }
-                }}
-                className="input"
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                }}
-                placeholder="0.00"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  color: "#475569",
-                  marginBottom: "6px",
-                  fontWeight: "500",
-                }}
-              >
-                Annual Return (%)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                value={(annualReturn * 100).toFixed(2)}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value) || 0;
-                  setAnnualReturn(val / 100);
-                  // Save to config
-                  if (
-                    typeof window !== "undefined" &&
-                    (window as any).budgetsimpleRuntime
-                  ) {
-                    const runtime = (window as any).budgetsimpleRuntime;
-                    const config = runtime.config?.() || runtime.getConfig?.();
-                    if (config?.settings) {
-                      config.settings.planAnnualReturn = val / 100;
-                      if (runtime.saveConfig) {
-                        runtime.saveConfig();
-                      }
-                    }
-                  }
-                }}
-                className="input"
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                }}
-                placeholder="7.00"
-              />
-            </div>
-          </div>
-
-          {/* Contribution History Chart */}
-          <div>
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#64748b",
-                marginBottom: "8px",
-                fontWeight: "500",
-              }}
-            >
-              Contribution History (Last 6 Months)
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-                gap: "4px",
-                height: "100px",
-                marginBottom: "8px",
-                padding: "8px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-              }}
-            >
-              {contributionHistory.length > 0 ? (
-                contributionHistory.map((h, idx) => {
-                  const maxAmount = Math.max(
-                    ...contributionHistory.map((h) => h.amount),
-                    1
-                  );
-                  const height =
-                    maxAmount > 0 ? (h.amount / maxAmount) * 100 : 0;
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "100%",
-                          height: `${Math.max(height, 4)}%`,
-                          minHeight: "4px",
-                          background: h.amount > 0 ? "#2563eb" : "#ef4444",
-                          borderRadius: "4px 4px 0 0",
-                          marginBottom: "4px",
-                          transition: "height 0.3s ease",
-                        }}
-                      />
-                      <div
-                        style={{
-                          fontSize: "9px",
-                          color: "#64748b",
-                          whiteSpace: "nowrap",
-                          transform: "rotate(-45deg)",
-                          transformOrigin: "center",
-                        }}
-                      >
-                        {new Date(h.month + "-01").toLocaleDateString("en-US", {
-                          month: "short",
-                        })}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    textAlign: "center",
-                    fontSize: "12px",
-                    color: "#64748b",
-                    padding: "2rem 0",
-                  }}
-                >
-                  No contribution history yet
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Contribution Insights */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
-              marginTop: "12px",
-            }}
-          >
-            {isVolatile && (
-              <div
-                style={{
-                  padding: "12px",
-                  background: "#fffbeb",
-                  borderRadius: "8px",
-                  border: "1px solid #fde68a",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: "#92400e",
-                    marginBottom: "4px",
-                  }}
-                >
-                  ⚠️ High Volatility
-                </div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>
-                  Your contributions vary a lot (σ ={" "}
-                  {formatCurrency(contributionStdDev)}) → ETA uncertainty
-                </div>
-              </div>
-            )}
-            <div
-              style={{
-                padding: "12px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  marginBottom: "4px",
-                }}
-              >
-                Best Month
-              </div>
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  color: "#059669",
-                }}
-              >
-                +{formatCurrency(bestMonth)}
-              </div>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  marginBottom: "4px",
-                }}
-              >
-                Worst Month
-              </div>
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  color: worstMonth < 0 ? "#dc2626" : "#64748b",
-                }}
-              >
-                {worstMonth < 0
-                  ? formatCurrency(worstMonth)
-                  : `+${formatCurrency(worstMonth)}`}
-              </div>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  marginBottom: "4px",
-                }}
-              >
-                Consistency Score
-              </div>
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  color:
-                    consistencyScore >= 80
-                      ? "#059669"
-                      : consistencyScore >= 60
-                      ? "#f59e0b"
-                      : "#dc2626",
-                }}
-              >
-                {consistencyScore.toFixed(0)}%
-              </div>
-              <div
-                style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}
-              >
-                {positiveMonths} of {contributionHistory.length} months positive
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section D: What should I change? (Levers) */}
-        <MilestoneLevers
-          currentNetWorth={netWorth}
+        <MilestoneGraph
+          currentNetWorth={startingNetWorth}
           monthlyContribution={effectiveContribution}
           annualReturn={annualReturn}
+          currency={currency}
+          focusMilestone={{
+            id: milestone.id,
+            label: milestone.label,
+            targetValue: milestone.target_value,
+            targetDate: milestone.target_date,
+          }}
+        />
+
+        <div className="plan-metrics">
+          <div className="plan-metric">
+            <div className="plan-metric-label">Current net worth</div>
+            <div className="plan-metric-value">{formatMoney(startingNetWorth, currency)}</div>
+          </div>
+          <div className="plan-metric">
+            <div className="plan-metric-label">Required / mo</div>
+            <div className="plan-metric-value">
+              {requiredContribution !== null ? `${formatMoney(requiredContribution, currency)}/mo` : "—"}
+            </div>
+          </div>
+          <div className="plan-metric">
+            <div className="plan-metric-label">Current / mo</div>
+            <div className="plan-metric-value">{formatMoney(effectiveContribution, currency)}/mo</div>
+          </div>
+          <div className="plan-metric">
+            <div className="plan-metric-label">Gap</div>
+            <div className="plan-metric-value" style={{ color: gap && gap > 0 ? "var(--danger)" : undefined }}>
+              {gap !== null ? (gap > 0 ? `+${formatMoney(gap, currency)}/mo` : "On pace") : "—"}
+            </div>
+          </div>
+          <div className="plan-metric">
+            <div className="plan-metric-label">ETA (current pace)</div>
+            <div className="plan-metric-value">{eta?.date ? (formatDate(eta.date) ?? "—") : "—"}</div>
+          </div>
+        </div>
+
+        <MilestoneLevers
+          currentNetWorth={startingNetWorth}
+          monthlyContribution={effectiveContribution}
+          annualReturn={annualReturn}
+          currency={currency}
           milestone={{
             id: milestone.id,
             label: milestone.label,
-            target_value: milestone.target_value,
-            target_date: milestone.target_date,
+            targetValue: milestone.target_value,
+            targetDate: milestone.target_date,
           }}
           onContributionChange={(amount) => {
-            setManualContribution(amount);
             setContributionMode("manual");
-            setMonthlyContribution(amount);
+            setManualMonthlyContribution(amount);
+            writePlanSettings({ contributionMode: "manual", manualMonthlyContribution: amount });
+            showToast("Saved", "success");
           }}
           onDateChange={async (date) => {
-            const { updateMilestone } = await import("@/lib/milestones-local");
             await updateMilestone(milestone.id, { targetDate: date });
             await loadData();
+            showToast("Saved", "success");
           }}
         />
 
-        {/* Section E: Why did my ETA change? (Drivers) */}
-        <WhatChangedSection
-          milestone={milestone}
-          currentETA={eta}
-          currentContribution={effectiveContribution}
-          currentReturn={annualReturn}
-          currentNetWorth={netWorth}
-        />
-
-        {/* Section F: Advice Cards */}
-        <AdviceCardsSection
-          milestone={milestone}
-          monthlyContribution={effectiveContribution}
-          requiredContribution={requiredContribution}
-        />
-
-        {/* Section G: Milestone History */}
-        <HistorySection milestone={milestone} />
+        {contributionHistory.length > 0 ? (
+          <div className="panel">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Contribution history</div>
+                <div className="panel-sub">Last 12 months (net cashflow estimate).</div>
+              </div>
+            </div>
+            <div className="panel-body">
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 110 }}>
+                {contributionHistory.map((h, idx) => {
+                  const max = Math.max(...contributionHistory.map((x) => x.amount), 1);
+                  const height = max > 0 ? (h.amount / max) * 100 : 0;
+                  return (
+                    <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: `${Math.max(6, height)}%`,
+                          borderRadius: "8px 8px 10px 10px",
+                          background: h.amount > 0 ? "rgba(31,111,235,0.82)" : "rgba(229,72,77,0.72)",
+                        }}
+                        title={`${h.month}: ${formatMoney(h.amount, currency)}`}
+                      />
+                      <div className="small muted" style={{ marginTop: 6, fontSize: 10 }}>
+                        {new Date(h.month + "-01").toLocaleDateString("en-US", { month: "short" })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {insight ? <div className="panel-note">{insight}</div> : null}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
