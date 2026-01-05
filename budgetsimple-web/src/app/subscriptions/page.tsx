@@ -1,6 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import {
+  getLocalCandidates,
+  upsertLocalSubscriptionRecord,
+  type SubscriptionFrequency
+} from '@/lib/subscriptions-local'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -16,6 +21,7 @@ interface SubscriptionCandidate {
   occurrenceCount: number
   averageAmount: number
   variancePercentage: number
+  merchantKey?: string
 }
 
 export default function SubscriptionsPage() {
@@ -32,8 +38,31 @@ export default function SubscriptionsPage() {
   const USE_BACKEND_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_USE_BACKEND_SUBSCRIPTIONS === 'true'
 
   useEffect(() => {
-    loadCandidates()
-    loadLocalSummary()
+    let cancelled = false
+    let attempts = 0
+
+    const tick = () => {
+      if (cancelled) return
+      attempts += 1
+
+      // Wait briefly for the global runtime to initialize (it attaches to window asynchronously).
+      if (!USE_BACKEND_SUBSCRIPTIONS && typeof window !== 'undefined') {
+        const rt = (window as any).budgetsimpleRuntime
+        const storeReady = rt && typeof rt.getStore === 'function' && rt.getStore()
+        if (!storeReady && attempts < 25) {
+          setTimeout(tick, 200)
+          return
+        }
+      }
+
+      loadCandidates()
+      loadLocalSummary()
+    }
+
+    tick()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const loadLocalSummary = () => {
@@ -64,26 +93,10 @@ export default function SubscriptionsPage() {
 
       // MVP: Local-first - compute from IndexedDB
       if (!USE_BACKEND_SUBSCRIPTIONS && typeof window !== 'undefined') {
-        const runtime = (window as any).budgetsimpleRuntime
-        if (runtime && typeof runtime.analyzeMerchants === 'function') {
-          const analysis = runtime.analyzeMerchants()
-          // Convert local analysis to candidate format
-          const localCandidates: SubscriptionCandidate[] = analysis.subscriptions.map((sub: any, index: number) => ({
-            id: `local-${index}`,
-            merchant: sub.merchant,
-            estimatedMonthlyAmount: sub.monthly,
-            frequency: 'monthly' as const,
-            firstDetectedDate: new Date().toISOString(),
-            confidenceScore: 0.8,
-            status: 'pending' as const,
-            occurrenceCount: sub.count || 0,
-            averageAmount: sub.monthly,
-            variancePercentage: 0
-          }))
-          setCandidates(localCandidates)
-          setLoading(false)
-          return
-        }
+        const localCandidates = await getLocalCandidates()
+        setCandidates(localCandidates as unknown as SubscriptionCandidate[])
+        setLoading(false)
+        return
       }
 
       // Fallback to API if backend is enabled
@@ -117,6 +130,20 @@ export default function SubscriptionsPage() {
 
   const handleConfirm = async (id: string) => {
     try {
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        const existing = candidates.find(c => c.id === id)
+        await upsertLocalSubscriptionRecord({
+          merchant: existing?.merchant || id,
+          estimatedMonthlyAmount: existing?.estimatedMonthlyAmount || 0,
+          frequency: (existing?.frequency || 'monthly') as SubscriptionFrequency,
+          status: 'confirmed',
+          source: 'detected'
+        })
+        await loadCandidates()
+        setSelectedCandidate(null)
+        loadLocalSummary()
+        return
+      }
       const response = await fetch(`${API_BASE}/api/subscriptions/${id}/confirm`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -133,6 +160,20 @@ export default function SubscriptionsPage() {
 
   const handleReject = async (id: string) => {
     try {
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        const existing = candidates.find(c => c.id === id)
+        await upsertLocalSubscriptionRecord({
+          merchant: existing?.merchant || id,
+          estimatedMonthlyAmount: existing?.estimatedMonthlyAmount || 0,
+          frequency: (existing?.frequency || 'monthly') as SubscriptionFrequency,
+          status: 'rejected',
+          source: 'detected'
+        })
+        await loadCandidates()
+        setSelectedCandidate(null)
+        loadLocalSummary()
+        return
+      }
       const response = await fetch(`${API_BASE}/api/subscriptions/${id}/reject`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -149,6 +190,25 @@ export default function SubscriptionsPage() {
 
   const handleUpdate = async (id: string, updates: Partial<SubscriptionCandidate>) => {
     try {
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        const merchantKey = id.startsWith('local-') ? id.slice('local-'.length) : id
+        const existing = candidates.find(c => c.id === id)
+        const merchant = updates.merchant || existing?.merchant || merchantKey
+        const estimatedMonthlyAmount = updates.estimatedMonthlyAmount ?? existing?.estimatedMonthlyAmount ?? 0
+        const frequency = (updates.frequency || existing?.frequency || 'monthly') as SubscriptionFrequency
+        const status = (existing?.status === 'rejected' ? 'rejected' : 'confirmed') as 'confirmed' | 'rejected'
+        await upsertLocalSubscriptionRecord({
+          merchant,
+          estimatedMonthlyAmount,
+          frequency,
+          status,
+          source: 'detected'
+        })
+        await loadCandidates()
+        setSelectedCandidate(null)
+        loadLocalSummary()
+        return
+      }
       const response = await fetch(`${API_BASE}/api/subscriptions/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -178,6 +238,15 @@ export default function SubscriptionsPage() {
     try {
       setDetecting(true)
       setDetectionMessage(null)
+
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        // Local-first: detection is just re-running local analysis; no API call.
+        await loadCandidates()
+        loadLocalSummary()
+        setDetectionMessage('Recomputed subscriptions from local data. Review them below.')
+        setTimeout(() => setDetectionMessage(null), 4000)
+        return
+      }
 
       // Calculate date range based on selected months
       const endDate = new Date()
@@ -265,6 +334,10 @@ export default function SubscriptionsPage() {
     )
   }
 
+  const pendingCandidates = candidates.filter(c => c.status === 'pending')
+  const confirmedCandidates = candidates.filter(c => c.status === 'confirmed')
+  const rejectedCandidates = candidates.filter(c => c.status === 'rejected')
+
   return (
     <section className="view" data-view="subscriptions" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
       <div className="page-head" style={{ width: '100%', maxWidth: '100%', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-start' }}>
@@ -284,39 +357,47 @@ export default function SubscriptionsPage() {
       {candidates.length === 0 ? (
         <section className="panel">
           <div className="panel-body">
-            <p className="muted">No pending subscription candidates. Run detection to find subscriptions from your transaction history.</p>
-            <div className="small muted" style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-              <strong>API Endpoint:</strong> {API_BASE}
-              <br />
-              Make sure the backend server is running: <code>cd budgetsimple-api && npm run dev</code>
-            </div>
-            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-              <div className="row" style={{ gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                <label className="label" style={{ margin: 0 }}>
-                  Analyze last
-                </label>
-                <select
-                  className="select"
-                  value={detectionMonths}
-                  onChange={(e) => setDetectionMonths(parseInt(e.target.value))}
-                  disabled={detecting}
-                  style={{ width: 'auto' }}
-                >
-                  <option value={3}>3 months</option>
-                  <option value={6}>6 months</option>
-                  <option value={12}>12 months</option>
-                  <option value={24}>24 months</option>
-                </select>
-                <label className="label" style={{ margin: 0 }}>
-                  of transactions
-                </label>
+            <p className="muted">
+              No pending subscription candidates yet.
+              {!USE_BACKEND_SUBSCRIPTIONS ? ' Import transactions (Connect / Import) and re-run detection to find recurring merchants.' : ' Run detection to find subscriptions from your transaction history.'}
+            </p>
+            {USE_BACKEND_SUBSCRIPTIONS && (
+              <div className="small muted" style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                <strong>API Endpoint:</strong> {API_BASE}
+                <br />
+                Make sure the backend server is running: <code>cd budgetsimple-api && npm run dev</code>
               </div>
+            )}
+            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+              {USE_BACKEND_SUBSCRIPTIONS && (
+                <div className="row" style={{ gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                  <label className="label" style={{ margin: 0 }}>
+                    Analyze last
+                  </label>
+                  <select
+                    id="subscriptionRangeMonths"
+                    className="select"
+                    value={detectionMonths}
+                    onChange={(e) => setDetectionMonths(parseInt(e.target.value))}
+                    disabled={detecting}
+                    style={{ width: 'auto' }}
+                  >
+                    <option value={3}>3 months</option>
+                    <option value={6}>6 months</option>
+                    <option value={12}>12 months</option>
+                    <option value={24}>24 months</option>
+                  </select>
+                  <label className="label" style={{ margin: 0 }}>
+                    of transactions
+                  </label>
+                </div>
+              )}
               <button 
                 className="btn btn-accent" 
                 onClick={handleDetect}
                 disabled={detecting}
               >
-                {detecting ? 'Detecting...' : 'Detect Subscriptions'}
+                {detecting ? 'Detecting...' : (USE_BACKEND_SUBSCRIPTIONS ? 'Detect Subscriptions' : 'Detect from local data')}
               </button>
             </div>
             {detectionMessage && (
@@ -352,7 +433,7 @@ export default function SubscriptionsPage() {
             <div className="panel-head" style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="panel-title">Pending Candidates</div>
-                <div className="panel-sub">{candidates.length} subscription{candidates.length !== 1 ? 's' : ''} detected</div>
+                <div className="panel-sub">{pendingCandidates.length} pending · {confirmedCandidates.length} confirmed · {rejectedCandidates.length} rejected</div>
               </div>
               <button 
                 className="btn btn-quiet" 
@@ -361,7 +442,7 @@ export default function SubscriptionsPage() {
                 title="Run detection again to find more subscriptions"
                 style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
               >
-                {detecting ? 'Detecting...' : 'Detect Again'}
+                {detecting ? 'Detecting...' : (USE_BACKEND_SUBSCRIPTIONS ? 'Detect Again' : 'Recompute')}
               </button>
             </div>
             <div className="panel-body">
@@ -379,7 +460,10 @@ export default function SubscriptionsPage() {
                   {detectionMessage}
                 </div>
               )}
-              <div className="table-wrap" style={{ overflowX: 'auto', width: '100%' }}>
+              {pendingCandidates.length === 0 ? (
+                <p className="muted">No pending candidates. Check Confirmed/Rejected below.</p>
+              ) : (
+                <div className="table-wrap" style={{ overflowX: 'auto', width: '100%' }}>
                 <table className="table" style={{ minWidth: '600px', width: '100%' }}>
                   <thead>
                     <tr>
@@ -392,7 +476,7 @@ export default function SubscriptionsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {candidates.map((candidate) => (
+                    {pendingCandidates.map((candidate) => (
                       <tr key={candidate.id}>
                         <td>
                           <div style={{ fontWeight: '500', wordBreak: 'break-word' }}>{candidate.merchant}</div>
@@ -441,8 +525,58 @@ export default function SubscriptionsPage() {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           </section>
+
+          {(confirmedCandidates.length > 0 || rejectedCandidates.length > 0) && (
+            <section className="panel" style={{ width: '100%', maxWidth: '100%' }}>
+              <div className="panel-head">
+                <div>
+                  <div className="panel-title">History</div>
+                  <div className="panel-sub">Confirmed and rejected decisions (local-first)</div>
+                </div>
+              </div>
+              <div className="panel-body">
+                {confirmedCandidates.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div className="small muted" style={{ marginBottom: 6 }}>Confirmed</div>
+                    <div className="table-wrap">
+                      <table className="table">
+                        <tbody>
+                          {confirmedCandidates.map((c) => (
+                            <tr key={c.id}>
+                              <td>{c.merchant}</td>
+                              <td>{formatCurrency(c.estimatedMonthlyAmount)}</td>
+                              <td className="small muted">{c.frequency}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {rejectedCandidates.length > 0 && (
+                  <div>
+                    <div className="small muted" style={{ marginBottom: 6 }}>Rejected</div>
+                    <div className="table-wrap">
+                      <table className="table">
+                        <tbody>
+                          {rejectedCandidates.map((c) => (
+                            <tr key={c.id}>
+                              <td>{c.merchant}</td>
+                              <td>{formatCurrency(c.estimatedMonthlyAmount)}</td>
+                              <td className="small muted">{c.frequency}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {selectedCandidate && (
             <section className="panel" style={{ width: '100%', maxWidth: '100%' }}>
@@ -583,6 +717,18 @@ function AddSubscriptionForm({
     setLoading(true)
 
     try {
+      const USE_BACKEND_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_USE_BACKEND_SUBSCRIPTIONS === 'true'
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        await upsertLocalSubscriptionRecord({
+          merchant,
+          estimatedMonthlyAmount: parseFloat(amount),
+          frequency: frequency as SubscriptionFrequency,
+          status: 'confirmed',
+          source: 'manual'
+        })
+        onSuccess()
+        return
+      }
       const response = await fetch(`${API_BASE}/api/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

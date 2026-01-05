@@ -3639,7 +3639,7 @@ function createRuntime() {
     const expenseRows = transactions.filter((t) => t.type === "expense");
     const byMerchant = new Map<
       string,
-      { dates: string[]; total: number; count: number }
+      { dates: string[]; total: number; count: number; categories: Set<string> }
     >();
     for (const row of expenseRows) {
       const merchant = normalizeMerchant(row.description || "Unknown");
@@ -3647,17 +3647,25 @@ function createRuntime() {
         dates: [],
         total: 0,
         count: 0,
+        categories: new Set<string>(),
       };
       entry.dates.push(row.dateISO);
       entry.total += Math.abs(row.amount);
       entry.count += 1;
+      const catName =
+        config.categories.find((c) => c.id === row.categoryId)?.name || "";
+      if (catName) entry.categories.add(catName);
       byMerchant.set(merchant, entry);
     }
     const merchants = Array.from(byMerchant.entries()).map(
       ([merchant, data]) => {
         const months = new Set(data.dates.map((d) => d.slice(0, 7)));
         const monthly = data.total / Math.max(1, months.size);
-        const isSubscription = isRecurring(data.dates);
+        const isRentOrHousing = Array.from(data.categories).some((c) => {
+          const v = c.toLowerCase();
+          return v.includes("rent") || v.includes("housing") || v.includes("mortgage");
+        });
+        const isSubscription = !isRentOrHousing && isRecurring(data.dates);
         return {
           merchant,
           monthly,

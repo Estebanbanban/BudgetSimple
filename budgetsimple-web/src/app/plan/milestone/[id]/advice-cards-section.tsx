@@ -9,6 +9,22 @@ interface AdviceCardsSectionProps {
   requiredContribution: number | null
 }
 
+type RuntimeTx = {
+  id?: string
+  dateISO?: string
+  date?: string
+  amount?: number
+  type?: string
+  categoryId?: string
+  description?: string
+}
+
+type RuntimeIncome = {
+  dateISO?: string
+  date?: string
+  amount?: number
+}
+
 export default function AdviceCardsSection({
   milestone,
   monthlyContribution,
@@ -23,10 +39,6 @@ export default function AdviceCardsSection({
   }>>([])
 
   useEffect(() => {
-    calculateAdvice()
-  }, [milestone, monthlyContribution, requiredContribution])
-
-  const calculateAdvice = () => {
     const cards: Array<{
       type: 'subscription' | 'budget' | 'lifestyle' | 'spike'
       title: string
@@ -35,41 +47,57 @@ export default function AdviceCardsSection({
       action?: string
     }> = []
 
-    if (typeof window !== 'undefined' && (window as any).budgetsimpleRuntime) {
-      const runtime = (window as any).budgetsimpleRuntime
-      const transactions = runtime.transactions() || []
+    const runtimeUnknown: unknown =
+      typeof window !== 'undefined'
+        ? (window as unknown as { budgetsimpleRuntime?: unknown }).budgetsimpleRuntime
+        : null
+
+    const runtime =
+      (runtimeUnknown as {
+        transactions?: () => RuntimeTx[]
+        income?: () => RuntimeIncome[]
+        analyzeMerchants?: () => { subscriptions?: Array<{ merchant: string; monthly?: number }> }
+        config?: () => { budgets?: Record<string, number> }
+        getConfig?: () => { budgets?: Record<string, number> }
+      }) || null
+
+    if (runtime) {
+      const transactions = runtime.transactions?.() || []
       const config = runtime.config?.() || runtime.getConfig?.()
       const budgets = config?.budgets || {}
 
-      // 1. Subscription leverage
+      // 1) Subscription leverage (local-first)
       const subscriptions = runtime.analyzeMerchants?.()?.subscriptions || []
       if (subscriptions.length > 0) {
         const topSubscription = subscriptions[0]
         const monthlySavings = topSubscription.monthly || 0
         if (monthlySavings > 0 && requiredContribution) {
-          const monthsSaved = Math.round((milestone.target_value - (milestone.target_value * 0.9)) / monthlySavings)
+          const monthsSaved = Math.round(
+            (milestone.target_value - milestone.target_value * 0.9) / monthlySavings
+          )
           cards.push({
             type: 'subscription',
             title: 'Subscription Leverage',
-            message: `Your confirmed subscriptions are ${formatCurrency(monthlySavings)}/mo.`,
-            impact: `Cutting the top subscription (${topSubscription.merchant}) saves ~${monthsSaved} months.`,
+            message: `Your detected subscriptions include ${formatCurrency(monthlySavings)}/mo at the top.`,
+            impact: `Cutting the top subscription (${topSubscription.merchant}) could save ~${monthsSaved} months.`,
             action: 'Review subscriptions'
           })
         }
       }
 
-      // 2. Budget breach
+      // 2) Budget breach (simple)
       const now = new Date()
       const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      
+
       const currentByCategory: Record<string, number> = {}
       transactions
-        .filter((t: any) => {
-          const date = new Date(t.dateISO || t.date)
-          return (t.type === 'expense' || (t.amount && t.amount < 0)) && date >= currentMonth && date <= currentMonthEnd
+        .filter((t) => {
+          const date = new Date((t.dateISO || t.date || '') as string)
+          const amt = t.amount || 0
+          return (t.type === 'expense' || amt < 0) && date >= currentMonth && date <= currentMonthEnd
         })
-        .forEach((t: any) => {
+        .forEach((t) => {
           const category = t.categoryId || 'Uncategorized'
           const amount = Math.abs(t.amount || 0)
           currentByCategory[category] = (currentByCategory[category] || 0) + amount
@@ -83,55 +111,52 @@ export default function AdviceCardsSection({
             type: 'budget',
             title: 'Budget Breach',
             message: `${categoryId} is ${formatCurrency(over)} over target this month.`,
-            impact: `If fixed, you regain ${formatCurrency(over)}/mo toward milestone.`,
+            impact: `If fixed, you regain ${formatCurrency(over)}/mo toward your milestone.`,
             action: 'Adjust budget'
           })
-          break // Only show top breach
+          break
         }
       }
 
-      // 3. Lifestyle inflation alert
+      // 3) Lifestyle inflation alert (simplified)
       const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
-      const threeMonthsAgoEnd = new Date(now.getFullYear(), now.getMonth() - 2, 0)
-      
       const recentSpending = transactions
-        .filter((t: any) => {
-          const date = new Date(t.dateISO || t.date)
-          return (t.type === 'expense' || (t.amount && t.amount < 0)) && date >= threeMonthsAgo && date <= currentMonthEnd
+        .filter((t) => {
+          const date = new Date((t.dateISO || t.date || '') as string)
+          const amt = t.amount || 0
+          return (t.type === 'expense' || amt < 0) && date >= threeMonthsAgo && date <= currentMonthEnd
         })
-        .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
-      
+        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+
       const oldSpending = transactions
-        .filter((t: any) => {
-          const date = new Date(t.dateISO || t.date)
-          return (t.type === 'expense' || (t.amount && t.amount < 0)) && date >= new Date(now.getFullYear(), now.getMonth() - 6, 1) && date < threeMonthsAgo
+        .filter((t) => {
+          const date = new Date((t.dateISO || t.date || '') as string)
+          const amt = t.amount || 0
+          return (t.type === 'expense' || amt < 0) && date >= new Date(now.getFullYear(), now.getMonth() - 6, 1) && date < threeMonthsAgo
         })
-        .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
-      
+        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+
       if (oldSpending > 0) {
         const inflationPercent = ((recentSpending - oldSpending) / oldSpending) * 100
         if (inflationPercent > 15) {
-          const income = runtime.income() || []
+          const income = runtime.income?.() || []
           const recentIncome = income
-            .filter((i: any) => {
-              const date = new Date(i.dateISO || i.date)
-              return date >= threeMonthsAgo
-            })
-            .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
-          
+            .filter((i) => new Date((i.dateISO || i.date || '') as string) >= threeMonthsAgo)
+            .reduce((sum, i) => sum + (i.amount || 0), 0)
           const oldIncome = income
-            .filter((i: any) => {
-              const date = new Date(i.dateISO || i.date)
+            .filter((i) => {
+              const date = new Date((i.dateISO || i.date || '') as string)
               return date >= new Date(now.getFullYear(), now.getMonth() - 6, 1) && date < threeMonthsAgo
             })
-            .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
-          
-          if (Math.abs((recentIncome - oldIncome) / oldIncome) < 0.05) { // Income flat (<5% change)
-            const monthsLost = Math.round((recentSpending - oldSpending) / (requiredContribution || monthlyContribution || 1))
+            .reduce((sum, i) => sum + (i.amount || 0), 0)
+
+          if (oldIncome > 0 && Math.abs((recentIncome - oldIncome) / oldIncome) < 0.05) {
+            const base = requiredContribution || monthlyContribution || 1
+            const monthsLost = Math.round((recentSpending - oldSpending) / base)
             cards.push({
               type: 'lifestyle',
               title: 'Lifestyle Inflation Alert',
-              message: `Spending rose ${inflationPercent.toFixed(0)}% over 3 months while income flat.`,
+              message: `Spending rose ${inflationPercent.toFixed(0)}% over ~3 months while income stayed flat.`,
               impact: `Milestone pushed out ~${monthsLost} months.`,
               action: 'Review spending'
             })
@@ -139,26 +164,27 @@ export default function AdviceCardsSection({
         }
       }
 
-      // 4. Big spikes
+      // 4) Big spikes (top 2)
       const monthTransactions = transactions
-        .filter((t: any) => {
-          const date = new Date(t.dateISO || t.date)
-          return (t.type === 'expense' || (t.amount && t.amount < 0)) && date >= currentMonth && date <= currentMonthEnd
+        .filter((t) => {
+          const date = new Date((t.dateISO || t.date || '') as string)
+          const amt = t.amount || 0
+          return (t.type === 'expense' || amt < 0) && date >= currentMonth && date <= currentMonthEnd
         })
-        .map((t: any) => ({ ...t, absAmount: Math.abs(t.amount || 0) }))
-        .sort((a: { absAmount: number }, b: { absAmount: number }) => b.absAmount - a.absAmount)
-      
-      const totalMonthSpending = monthTransactions.reduce((sum: number, t: { absAmount: number }) => sum + t.absAmount, 0)
+        .map((t) => ({ ...t, absAmount: Math.abs(t.amount || 0) }))
+        .sort((a, b) => b.absAmount - a.absAmount)
+
+      const totalMonthSpending = monthTransactions.reduce((sum, t) => sum + t.absAmount, 0)
       if (totalMonthSpending > 0 && monthTransactions.length >= 2) {
         const topTwo = monthTransactions.slice(0, 2)
-        const topTwoTotal = topTwo.reduce((sum: number, t: { absAmount: number }) => sum + t.absAmount, 0)
+        const topTwoTotal = topTwo.reduce((sum, t) => sum + t.absAmount, 0)
         const percentage = (topTwoTotal / totalMonthSpending) * 100
-        
+
         if (percentage > 30) {
           cards.push({
             type: 'spike',
             title: 'Big Spending Spikes',
-            message: `2 transactions represent ${percentage.toFixed(0)}% of this month's overspend.`,
+            message: `2 transactions represent ${percentage.toFixed(0)}% of this month's spending.`,
             impact: `${topTwo[0].description || 'Transaction 1'}: ${formatCurrency(topTwo[0].absAmount)}, ${topTwo[1].description || 'Transaction 2'}: ${formatCurrency(topTwo[1].absAmount)}`,
             action: 'Review transactions'
           })
@@ -166,8 +192,8 @@ export default function AdviceCardsSection({
       }
     }
 
-    setAdviceCards(cards.slice(0, 3)) // Max 3 cards
-  }
+    setAdviceCards(cards.slice(0, 3))
+  }, [milestone, monthlyContribution, requiredContribution])
 
   if (adviceCards.length === 0) {
     return null

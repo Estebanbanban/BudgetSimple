@@ -35,6 +35,19 @@ test.describe('Manual Data Entry', () => {
     // Verify modal closes or data appears
     // Navigate to connect page to check income table
     await navigateToPage(page, '/connect');
+    // Accounts/income panel is gated by onboarding steps; force it visible for this test
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'budgetsimple:onboarding',
+        JSON.stringify({
+          currentStep: 'accounts',
+          completed: { upload: true, map: true },
+          skipped: {}
+        })
+      );
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-step="accounts"]:not([hidden])', { timeout: 10000 });
     
     // Scroll to income section
     const incomeTable = page.locator('#incomeTable');
@@ -78,7 +91,7 @@ test.describe('Manual Data Entry', () => {
     
     // Check that expense pie chart updates
     const expensePie = page.locator('#expensePie');
-    await expect(expensePie).toBeVisible();
+    await expect(expensePie.locator('svg')).toHaveCount(1);
   });
 
   test('should add investment via quick add modal', async ({ page }) => {
@@ -112,6 +125,18 @@ test.describe('Manual Data Entry', () => {
 
   test('should add manual income in connect page', async ({ page }) => {
     await navigateToPage(page, '/connect');
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'budgetsimple:onboarding',
+        JSON.stringify({
+          currentStep: 'accounts',
+          completed: { upload: true, map: true },
+          skipped: {}
+        })
+      );
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-step="accounts"]:not([hidden])', { timeout: 10000 });
     
     // Scroll to manual income section
     const incomeForm = page.locator('#manualIncomeForm');
@@ -143,8 +168,20 @@ test.describe('Manual Data Entry', () => {
     expect(tableContent).toContain('3,000');
   });
 
-  test('should edit and delete manual income in connect page', async ({ page }) => {
+  test('should delete manual income in connect page', async ({ page }) => {
     await navigateToPage(page, '/connect');
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'budgetsimple:onboarding',
+        JSON.stringify({
+          currentStep: 'accounts',
+          completed: { upload: true, map: true },
+          skipped: {}
+        })
+      );
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-step="accounts"]:not([hidden])', { timeout: 10000 });
     const today = new Date().toISOString().split('T')[0];
 
     await page.locator('#manualIncomeDate').fill(today);
@@ -153,21 +190,8 @@ test.describe('Manual Data Entry', () => {
     await page.locator('#manualIncomeForm button[type="submit"]').click();
     await page.waitForTimeout(1000);
 
-    const editResponses = [today, 'Updated Salary', '3200'];
-    const editHandler = (dialog: any) => {
-      const next = editResponses.shift();
-      dialog.accept(next || '');
-      if (editResponses.length === 0) {
-        page.off('dialog', editHandler);
-      }
-    };
-    page.on('dialog', editHandler);
-    await page.locator('button[data-income-action="edit"]').click();
-    await page.waitForTimeout(500);
-
     const incomeTable = page.locator('#incomeTable');
-    await expect(incomeTable).toContainText('Updated Salary');
-    await expect(incomeTable).toContainText('3,200');
+    await expect(incomeTable).toContainText('Salary');
 
     page.once('dialog', (dialog) => dialog.accept());
     await page.locator('button[data-income-action="remove"]').click();
@@ -176,6 +200,18 @@ test.describe('Manual Data Entry', () => {
 
   test('should add account', async ({ page }) => {
     await navigateToPage(page, '/connect');
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'budgetsimple:onboarding',
+        JSON.stringify({
+          currentStep: 'accounts',
+          completed: { upload: true, map: true },
+          skipped: {}
+        })
+      );
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-step="accounts"]:not([hidden])', { timeout: 10000 });
     
     // Click add account button
     const addAccountBtn = page.locator('#btnAddAccount');

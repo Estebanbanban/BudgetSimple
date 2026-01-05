@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getLocalSubscriptionSummary, getLocalSubscriptionTransactions } from '@/lib/subscriptions-local'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const USE_BACKEND_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_USE_BACKEND_SUBSCRIPTIONS === 'true'
 
 interface Subscription {
   id: string
@@ -37,18 +39,45 @@ export default function SubscriptionSummaryPage() {
   const [selectedSubscription, setSelectedSubscription] = useState<string | null>(null)
 
   useEffect(() => {
-    loadSummary()
+    let cancelled = false
+    let attempts = 0
+
+    const tick = () => {
+      if (cancelled) return
+      attempts += 1
+      if (!USE_BACKEND_SUBSCRIPTIONS && typeof window !== 'undefined') {
+        const rt = (window as any).budgetsimpleRuntime
+        const storeReady = rt && typeof rt.getStore === 'function' && rt.getStore()
+        if (!storeReady) {
+          if (attempts < 100) {
+            setTimeout(tick, 200)
+            return
+          }
+        }
+      }
+      loadSummary()
+    }
+
+    tick()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const loadSummary = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE}/api/subscriptions/summary?userId=demo-user`)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        const local = await getLocalSubscriptionSummary()
+        setSummary(local)
+      } else {
+        const response = await fetch(`${API_BASE}/api/subscriptions/summary?userId=demo-user`)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        setSummary(data)
       }
-      const data = await response.json()
-      setSummary(data)
     } catch (error) {
       console.error('Error loading summary:', error)
       // Set empty summary on error
@@ -231,12 +260,18 @@ function SubscriptionTransactions({
   const loadTransactions = async () => {
     try {
       setLoading(true)
-      const response = await fetch(
-        `${API_BASE}/api/subscriptions/${subscriptionId}/transactions?userId=demo-user`
-      )
-      const data = await response.json()
-      setTransactions(data.transactions || [])
-      setTotalAmount(data.totalAmount || 0)
+      if (!USE_BACKEND_SUBSCRIPTIONS) {
+        const data = await getLocalSubscriptionTransactions(subscriptionId)
+        setTransactions(data.transactions || [])
+        setTotalAmount(data.totalAmount || 0)
+      } else {
+        const response = await fetch(
+          `${API_BASE}/api/subscriptions/${subscriptionId}/transactions?userId=demo-user`
+        )
+        const data = await response.json()
+        setTransactions(data.transactions || [])
+        setTotalAmount(data.totalAmount || 0)
+      }
     } catch (error) {
       console.error('Error loading transactions:', error)
     } finally {

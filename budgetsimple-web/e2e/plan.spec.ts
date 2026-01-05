@@ -7,23 +7,22 @@ test.describe("Plan", () => {
     await navigateToPage(page, "/plan");
   });
 
-  test("should create envelope and add contribution", async ({ page }) => {
-    await page.locator(".envelope-add").click();
-    await page.fill("#createEnvelopeName", "Trip");
-    await page.fill("#createEnvelopeTarget", "1200");
-    await page.locator("#createEnvelopeForm button[type=\"submit\"]").click();
+  test("should add a milestone", async ({ page }) => {
+    await expect(page.locator("[data-milestone-manager]")).toHaveCount(1);
+    await page.waitForFunction(() => (window as any).budgetsimpleRuntime);
 
-    const envelopeCard = page.locator(".envelope-card", { hasText: "Trip" });
-    await expect(envelopeCard).toBeVisible();
-    await envelopeCard.click();
+    // With no milestones, the add form should be visible by default.
+    const labelInput = page.getByPlaceholder("Milestone label (e.g., 'Save $50k')");
 
-    await expect(page.locator("#envelopeModal")).toBeVisible();
-    await page.fill("#envelopeContribAmount", "150");
-    await page.locator("#envelopeContribForm button[type=\"submit\"]").click();
+    // Fill add form (shown by milestones manager)
+    await expect(labelInput).toBeVisible({ timeout: 10000 });
+    await page.getByPlaceholder("Milestone label (e.g., 'Save $50k')").fill('Save $50k');
+    await page.getByPlaceholder('Target value').fill('50000');
 
-    const rows = await page.locator("#envelopeContribTable tr").count();
-    expect(rows).toBeGreaterThan(0);
-    await expect(page.locator("#envelopeChart svg")).toBeVisible();
+    await page.locator('[data-milestone-add]').click();
+
+    // Should appear in table
+    await expect(page.locator('text=Save $50k')).toBeVisible();
   });
 
   test("should edit and remove budgets", async ({ page }) => {

@@ -41,7 +41,9 @@ Backend is only used when:
 ✅ **Subscription Detection**
 - Uses `analyzeMerchants()` from `runtime.ts`
 - Detects recurring patterns from IndexedDB transactions
-- No API calls required
+- Confirm/reject + manual subscriptions are stored locally (IndexedDB `meta`)
+- Summary + drilldowns work locally
+- No API calls required (backend is optional)
 
 ✅ **Monthly Summaries**
 - Computed from local transactions
