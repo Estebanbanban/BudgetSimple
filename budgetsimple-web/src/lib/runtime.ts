@@ -786,9 +786,9 @@ function createRuntime() {
       fileInput?.click();
     });
     on(fileInput, "change", async () => {
-      if (!fileInput?.files?.[0]) return;
+      if (!fileInput?.files?.length) return;
       analyzing && (analyzing.hidden = false);
-      await handleCsvFile(fileInput.files[0]);
+      await handleCsvFiles(fileInput.files);
       analyzing && (analyzing.hidden = true);
       markOnboardingComplete("upload");
       if (onboarding.currentStep === "upload") setOnboardingStep("map");
@@ -803,9 +803,9 @@ function createRuntime() {
     on(dropzone, "drop", async (e) => {
       e.preventDefault();
       const dt = (e as DragEvent).dataTransfer;
-      if (!dt?.files?.[0]) return;
+      if (!dt?.files?.length) return;
       analyzing && (analyzing.hidden = false);
-      await handleCsvFile(dt.files[0]);
+      await handleCsvFiles(dt.files);
       analyzing && (analyzing.hidden = true);
       markOnboardingComplete("upload");
       if (onboarding.currentStep === "upload") setOnboardingStep("map");
@@ -1626,16 +1626,42 @@ function createRuntime() {
     });
   }
 
-  async function handleCsvFile(file: File) {
-    const text = await file.text();
-    const { headers, rows } = parseCsv(text);
-    lastCsvHeaders = headers;
-    lastCsvRows = rows;
+  function headersMatch(a: string[], b: string[]) {
+    if (a.length !== b.length) return false;
+    return a.every(
+      (val, idx) => val.trim().toLowerCase() === (b[idx] || "").trim().toLowerCase()
+    );
+  }
+
+  async function handleCsvFiles(files: FileList | File[]) {
+    const csvFiles = Array.from(files || []).filter((file) =>
+      /\.csv$/i.test(file.name) || /csv/.test(file.type)
+    );
+    if (!csvFiles.length) return;
+
+    const parsed: { file: File; headers: string[]; rows: string[][] }[] = [];
+    const skipped: string[] = [];
+
+    for (const file of csvFiles) {
+      const text = await file.text();
+      const { headers, rows } = parseCsv(text);
+      if (!headers.length && !rows.length) continue;
+      if (!parsed.length || headersMatch(parsed[0].headers, headers)) {
+        parsed.push({ file, headers, rows });
+      } else {
+        skipped.push(file.name);
+      }
+    }
+
+    if (!parsed.length) return;
+
+    lastCsvHeaders = parsed[0].headers;
+    lastCsvRows = parsed.flatMap((entry) => entry.rows);
 
     // Detect and show format settings
-    detectAndDisplayFormats(headers, rows);
+    detectAndDisplayFormats(lastCsvHeaders, lastCsvRows);
 
-    renderMapping("mappingGrid", headers, [
+    renderMapping("mappingGrid", lastCsvHeaders, [
       "date",
       "amount",
       "description",
@@ -1644,9 +1670,20 @@ function createRuntime() {
       "currency",
       "type",
     ]);
-    renderPreview("previewTable", headers, rows);
+    renderPreview("previewTable", lastCsvHeaders, lastCsvRows);
     const note = byId("txFileNote");
-    if (note) note.textContent = `${file.name} - ${rows.length} rows`;
+    if (note) {
+      const loadedNames = parsed.map((entry) => entry.file.name);
+      const baseMessage = `${loadedNames.length} file${
+        loadedNames.length === 1 ? "" : "s"
+      } loaded (${loadedNames.join(", ")}) - ${lastCsvRows.length} rows`;
+      note.textContent =
+        skipped.length === 0
+          ? baseMessage
+          : `${baseMessage}. Skipped ${skipped.length} file${
+              skipped.length === 1 ? "" : "s"
+            } with different columns: ${skipped.join(", ")}.`;
+    }
     // Show preview, format, and mapping panels
     const previewPanel = byId("previewPanel");
     if (previewPanel) previewPanel.hidden = false;
