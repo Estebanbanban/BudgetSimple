@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { formatCurrency, type Milestone } from '@/lib/milestones-local'
 
 interface AdviceCardsSectionProps {
@@ -14,19 +14,7 @@ export default function AdviceCardsSection({
   monthlyContribution,
   requiredContribution
 }: AdviceCardsSectionProps) {
-  const [adviceCards, setAdviceCards] = useState<Array<{
-    type: 'subscription' | 'budget' | 'lifestyle' | 'spike'
-    title: string
-    message: string
-    impact: string
-    action?: string
-  }>>([])
-
-  useEffect(() => {
-    calculateAdvice()
-  }, [milestone, monthlyContribution, requiredContribution])
-
-  const calculateAdvice = () => {
+  const adviceCards = useMemo(() => {
     const cards: Array<{
       type: 'subscription' | 'budget' | 'lifestyle' | 'spike'
       title: string
@@ -166,8 +154,8 @@ export default function AdviceCardsSection({
       }
     }
 
-    setAdviceCards(cards.slice(0, 3)) // Max 3 cards
-  }
+    return cards.slice(0, 3) // Max 3 cards
+  }, [milestone, monthlyContribution, requiredContribution])
 
   if (adviceCards.length === 0) {
     return null

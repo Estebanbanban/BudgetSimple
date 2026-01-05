@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { formatDate, type Milestone } from "@/lib/milestones-local";
 
 interface HistorySectionProps {
@@ -14,18 +14,9 @@ interface HistoryEntry {
 }
 
 export default function HistorySection({ milestone }: HistorySectionProps) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [etaHistory, setEtaHistory] = useState<
-    Array<{ month: string; eta: number }>
-  >([]);
-
-  useEffect(() => {
-    loadHistory();
-  }, [milestone]);
-
-  const loadHistory = () => {
-    // For MVP, we'll create a simple history from milestone metadata
-    // In production, this would be stored separately
+  const { history, etaHistory } = useMemo(() => {
+    // For MVP, we'll create a simple history from milestone metadata.
+    // In production, this would be stored separately.
     const entries: HistoryEntry[] = [];
 
     if (milestone.created_at) {
@@ -56,9 +47,8 @@ export default function HistorySection({ milestone }: HistorySectionProps) {
       });
     }
 
-    setHistory(entries);
-    setEtaHistory(etaHistoryData);
-  };
+    return { history: entries, etaHistory: etaHistoryData };
+  }, [milestone]);
 
   const hasDrift =
     etaHistory.length >= 2 &&

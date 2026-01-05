@@ -29,68 +29,7 @@ export default function WhatChangedSection({
     months: number
   }>>([])
 
-  useEffect(() => {
-    loadLastMonthData()
-  }, [])
-
-  const loadLastMonthData = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const CONFIG_KEY = "budgetsimple:v1"
-        const raw = localStorage.getItem(CONFIG_KEY)
-        if (raw) {
-          const config = JSON.parse(raw)
-          // Load last month's assumptions (stored in a separate key or calculated)
-          // For now, we'll calculate from transactions
-          if ((window as any).budgetsimpleRuntime) {
-            const runtime = (window as any).budgetsimpleRuntime
-            const transactions = runtime.transactions() || []
-            const income = runtime.income() || []
-            
-            // Calculate last month's contribution
-            const now = new Date()
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-            const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-            
-            const lastMonthIncome = income
-              .filter((i: any) => {
-                const date = new Date(i.dateISO || i.date)
-                return date >= lastMonth && date <= lastMonthEnd
-              })
-              .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
-            
-            const lastMonthExpenses = transactions
-              .filter((t: any) => {
-                const date = new Date(t.dateISO || t.date)
-                return date >= lastMonth && date <= lastMonthEnd && (t.type === 'expense' || (t.amount && t.amount < 0))
-              })
-              .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
-            
-            setLastMonthContribution(Math.max(0, lastMonthIncome - lastMonthExpenses))
-            setLastMonthReturn(config.settings?.planAnnualReturn || 0.07)
-            setLastMonthNetWorth(config.settings?.netWorthManual || 0)
-            
-            // Calculate last month's ETA
-            const lastMonthInputs: ProjectionInputs = {
-              currentNetWorth: lastMonthNetWorth,
-              monthlyContribution: lastMonthContribution,
-              annualReturn: lastMonthReturn,
-              monthsToProject: 120
-            }
-            const lastETA = calculateETA(lastMonthInputs, milestone.target_value)
-            setLastMonthETA(lastETA)
-            
-            // Calculate drivers
-            calculateDrivers(lastETA, currentETA, lastMonthContribution, currentContribution, lastMonthReturn, currentReturn, lastMonthNetWorth, currentNetWorth)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading last month data:', error)
-      }
-    }
-  }
-
-  const calculateDrivers = (
+  function calculateDrivers (
     lastETA: { month: number; date: string } | null,
     currentETA: { month: number; date: string } | null,
     lastContrib: number,
@@ -99,7 +38,7 @@ export default function WhatChangedSection({
     currentReturn: number,
     lastNW: number,
     currentNW: number
-  ) => {
+  ) {
     const driversList: Array<{ driver: string; impact: string; months: number }> = []
     
     if (lastETA && currentETA) {
@@ -236,6 +175,67 @@ export default function WhatChangedSection({
     driversList.sort((a, b) => Math.abs(b.months) - Math.abs(a.months))
     setDrivers(driversList.slice(0, 3))
   }
+
+  const loadLastMonthData = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const CONFIG_KEY = "budgetsimple:v1"
+        const raw = localStorage.getItem(CONFIG_KEY)
+        if (raw) {
+          const config = JSON.parse(raw)
+          // Load last month's assumptions (stored in a separate key or calculated)
+          // For now, we'll calculate from transactions
+          if ((window as any).budgetsimpleRuntime) {
+            const runtime = (window as any).budgetsimpleRuntime
+            const transactions = runtime.transactions() || []
+            const income = runtime.income() || []
+            
+            // Calculate last month's contribution
+            const now = new Date()
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+            const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+            
+            const lastMonthIncome = income
+              .filter((i: any) => {
+                const date = new Date(i.dateISO || i.date)
+                return date >= lastMonth && date <= lastMonthEnd
+              })
+              .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+            
+            const lastMonthExpenses = transactions
+              .filter((t: any) => {
+                const date = new Date(t.dateISO || t.date)
+                return date >= lastMonth && date <= lastMonthEnd && (t.type === 'expense' || (t.amount && t.amount < 0))
+              })
+              .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+            
+            setLastMonthContribution(Math.max(0, lastMonthIncome - lastMonthExpenses))
+            setLastMonthReturn(config.settings?.planAnnualReturn || 0.07)
+            setLastMonthNetWorth(config.settings?.netWorthManual || 0)
+            
+            // Calculate last month's ETA
+            const lastMonthInputs: ProjectionInputs = {
+              currentNetWorth: lastMonthNetWorth,
+              monthlyContribution: lastMonthContribution,
+              annualReturn: lastMonthReturn,
+              monthsToProject: 120
+            }
+            const lastETA = calculateETA(lastMonthInputs, milestone.target_value)
+            setLastMonthETA(lastETA)
+            
+            // Calculate drivers
+            calculateDrivers(lastETA, currentETA, lastMonthContribution, currentContribution, lastMonthReturn, currentReturn, lastMonthNetWorth, currentNetWorth)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading last month data:', error)
+      }
+    }
+  }
+
+  useEffect(() => {
+    loadLastMonthData()
+  }, [])
 
   const etaDelta = lastMonthETA && currentETA 
     ? currentETA.month - lastMonthETA.month 

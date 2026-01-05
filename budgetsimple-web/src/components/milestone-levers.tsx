@@ -6,18 +6,13 @@ import {
   calculateSensitivity,
   type ProjectionInputs
 } from '@/lib/milestone-projection'
-import { formatCurrency } from '@/lib/milestones-local'
+import { formatCurrency, type Milestone } from '@/lib/milestones-local'
 
 interface MilestoneLeversProps {
   currentNetWorth: number
   monthlyContribution: number
   annualReturn: number
-  milestone: {
-    id: string
-    label: string
-    targetValue: number
-    targetDate?: string
-  }
+  milestone: Milestone
   onContributionChange?: (amount: number) => void
   onDateChange?: (date: string) => void
 }
@@ -36,7 +31,7 @@ export default function MilestoneLevers({
   const requiredContribution = milestone.target_date
     ? calculateRequiredContribution(
         currentNetWorth,
-        milestone.targetValue,
+        milestone.target_value,
         milestone.target_date,
         annualReturn
       )
@@ -53,11 +48,11 @@ export default function MilestoneLevers({
     monthsToProject: 120
   }
 
-  const sensitivityPlus100 = calculateSensitivity(inputs, milestone.targetValue, 100)
-  const sensitivityMinus100 = calculateSensitivity(inputs, milestone.targetValue, -100)
+  const sensitivityPlus100 = calculateSensitivity(inputs, milestone.target_value, 100)
+  const sensitivityMinus100 = calculateSensitivity(inputs, milestone.target_value, -100)
   const sensitivityReturnPlus1 = calculateSensitivity(
     { ...inputs, annualReturn: annualReturn + 0.01 },
-    milestone.targetValue,
+    milestone.target_value,
     0
   )
 

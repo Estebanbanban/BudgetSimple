@@ -30,28 +30,7 @@ export default function MilestoneGraph({
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number; data: any } | null>(null)
   const [showBreakdown, setShowBreakdown] = useState(false)
 
-  useEffect(() => {
-    loadMilestones()
-  }, [])
-
-  useEffect(() => {
-    if (currentNetWorth !== null && monthlyContribution !== null && milestones.length > 0) {
-      calculateCurves()
-    }
-  }, [currentNetWorth, monthlyContribution, annualReturn, milestones]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    // Redraw graph when window resizes
-    const handleResize = () => {
-      if (curves.length > 0) {
-        drawGraph(curves)
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [curves])
-
-  const loadMilestones = async () => {
+  async function loadMilestones () {
     try {
       const ms = await getMilestones()
       setMilestones(ms)
@@ -60,7 +39,7 @@ export default function MilestoneGraph({
     }
   }
 
-  const calculateCurves = () => {
+  function calculateCurves () {
     const inputs: ProjectionInputs = {
       currentNetWorth,
       monthlyContribution,
@@ -73,7 +52,7 @@ export default function MilestoneGraph({
     drawGraph(projectionCurves)
   }
 
-  const drawGraph = (projectionCurves: ProjectionCurve[]) => {
+  function drawGraph (projectionCurves: ProjectionCurve[]) {
     if (!svgRef.current || projectionCurves.length === 0) return
 
     const svg = svgRef.current
@@ -262,6 +241,27 @@ export default function MilestoneGraph({
     yAxisLabel.textContent = 'Net Worth'
     svg.appendChild(yAxisLabel)
   }
+
+  useEffect(() => {
+    loadMilestones()
+  }, [])
+
+  useEffect(() => {
+    if (currentNetWorth !== null && monthlyContribution !== null && milestones.length > 0) {
+      calculateCurves()
+    }
+  }, [currentNetWorth, monthlyContribution, annualReturn, milestones]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // Redraw graph when window resizes
+    const handleResize = () => {
+      if (curves.length > 0) {
+        drawGraph(curves)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [curves])
 
   return (
     <div className="panel">

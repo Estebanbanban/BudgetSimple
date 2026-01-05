@@ -121,7 +121,7 @@ export default function ConnectPage() {
                         <option value="auto">Auto-detect</option>
                         <option value="us">US (1,234.56)</option>
                         <option value="eu">European (1.234,56)</option>
-                        <option value="swiss">Swiss (1'234.56)</option>
+                        <option value="swiss">Swiss (1&apos;234.56)</option>
                       </select>
                       <div className="small muted" id="detectedNumberFormat">Detected: Auto</div>
                     </div>
@@ -259,7 +259,7 @@ export default function ConnectPage() {
                   <div className="panel-head">
                     <div>
                       <div className="panel-title">Manual income</div>
-                      <div className="panel-sub">Add sources like "Job", "Parents", etc.</div>
+                      <div className="panel-sub">Add sources like &quot;Job&quot;, &quot;Parents&quot;, etc.</div>
                     </div>
                   </div>
                   <div className="panel-body">

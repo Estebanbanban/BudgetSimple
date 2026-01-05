@@ -16,6 +16,7 @@ interface SubscriptionCandidate {
   occurrenceCount: number
   averageAmount: number
   variancePercentage: number
+  detectionMethod?: 'category' | 'known_subscription' | 'recurrence' | 'unknown'
 }
 
 export default function SubscriptionsPage() {

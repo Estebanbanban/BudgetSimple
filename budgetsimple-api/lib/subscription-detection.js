@@ -127,7 +127,10 @@ function detectSubscriptions (transactions, options = {}) {
   const {
     minOccurrences = 2,
     amountVarianceTolerance = 0.05, // ±5%
-    amountVarianceFixed = 2.0 // ±$2
+    amountVarianceFixed = 2.0, // ±$2
+    // Hard ceiling on variance for *pattern-based* detection. If exceeded, we skip
+    // recurrence/fallback detection (but still allow category/known-service matches).
+    maxVarianceThreshold = null
   } = options
 
   if (!transactions || transactions.length === 0) {
@@ -234,6 +237,9 @@ function detectSubscriptions (transactions, options = {}) {
     // PRIORITY 4: Check amount consistency
     const amounts = txs.map(t => t.amount)
     const amountConsistency = checkAmountConsistency(amounts, amountVarianceTolerance, amountVarianceFixed)
+    const exceedsMaxVariance =
+      typeof maxVarianceThreshold === 'number' &&
+      amountConsistency.variancePercentage > maxVarianceThreshold
 
     // DECISION LOGIC: Accept if ANY of these conditions are met:
     // 1. Category matches (even single occurrence)
@@ -276,7 +282,7 @@ function detectSubscriptions (transactions, options = {}) {
     }
     // Case 3: Recurring pattern (requires 2+ occurrences)
     // EXCLUDE rent/housing from recurrence-based detection unless category says subscription
-    else if (recurrence && txs.length >= minOccurrences && !isRentOrHousing) {
+    else if (recurrence && txs.length >= minOccurrences && !isRentOrHousing && !exceedsMaxVariance) {
       // More lenient: accept if recurrence exists, even if amounts vary
       shouldDetect = true
       detectionMethod = 'recurrence'
@@ -292,7 +298,7 @@ function detectSubscriptions (transactions, options = {}) {
     }
     // Case 4: Fallback - any merchant with 2+ occurrences (very lenient)
     // EXCLUDE rent/housing from fallback detection
-    else if (txs.length >= minOccurrences && txs.length >= 2 && !isRentOrHousing) {
+    else if (txs.length >= minOccurrences && txs.length >= 2 && !isRentOrHousing && !exceedsMaxVariance) {
       // Even without clear recurrence, if we have multiple transactions to same merchant, it might be a subscription
       // Check if dates are somewhat spread out (not all on same day)
       const dates = txs.map(t => new Date(t.date).getTime())
@@ -312,7 +318,9 @@ function detectSubscriptions (transactions, options = {}) {
 
     // Skip if no detection method matched
     if (!shouldDetect) {
-      console.log(`[DETECTION] Skipping ${merchantKey}: categoryMatch=${categoryMatch}, knownService=${!!knownService}, recurrence=${!!recurrence}, amountConsistent=${amountConsistency.isConsistent}`)
+      console.log(
+        `[DETECTION] Skipping ${merchantKey}: categoryMatch=${categoryMatch}, knownService=${!!knownService}, recurrence=${!!recurrence}, amountConsistent=${amountConsistency.isConsistent}, variance=${(amountConsistency.variancePercentage || 0).toFixed(2)}, exceedsMaxVariance=${exceedsMaxVariance}`
+      )
       continue
     }
     

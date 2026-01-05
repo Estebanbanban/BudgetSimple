@@ -81,10 +81,11 @@ export default function MilestoneWidget() {
     )
   }
 
-  const statusLabels = {
+  const statusLabels: Record<MilestoneProgress['status'], string> = {
     ahead: 'Ahead of schedule',
     on_track: 'On track',
-    behind: 'Behind schedule'
+    behind: 'Behind schedule',
+    no_data: 'No data yet'
   }
 
   const statusColors = {

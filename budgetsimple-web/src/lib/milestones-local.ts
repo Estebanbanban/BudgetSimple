@@ -25,6 +25,20 @@ export interface MilestoneProgress {
   status: 'ahead' | 'on_track' | 'behind' | 'no_data'
 }
 
+type RuntimeTransaction = {
+  amount?: number
+  type?: string
+  categoryId?: string
+  dateISO?: string
+  date?: string
+}
+
+type RuntimeIncome = {
+  amount?: number
+  dateISO?: string
+  date?: string
+}
+
 // Get the store from runtime
 function getStore() {
   if (typeof window === 'undefined') return null
@@ -34,13 +48,13 @@ function getStore() {
 }
 
 // Get transactions and income from runtime
-function getFinancialData() {
+function getFinancialData(): { transactions: RuntimeTransaction[]; income: RuntimeIncome[] } {
   if (typeof window === 'undefined') return { transactions: [], income: [] }
   const runtime = (window as any).budgetsimpleRuntime
   if (!runtime) return { transactions: [], income: [] }
   return {
-    transactions: runtime.transactions() || [],
-    income: runtime.income() || []
+    transactions: (runtime.transactions?.() || []) as RuntimeTransaction[],
+    income: (runtime.income?.() || []) as RuntimeIncome[]
   }
 }
 
@@ -60,6 +74,14 @@ export async function getMilestones(): Promise<Milestone[]> {
     console.error('Error fetching milestones:', error)
     return []
   }
+}
+
+/**
+ * Get a single milestone by id
+ */
+export async function getMilestone(id: string): Promise<Milestone | null> {
+  const milestones = await getMilestones()
+  return milestones.find((m) => m.id === id) || null
 }
 
 /**
@@ -180,7 +202,7 @@ export async function reorderMilestones(ids: string[]): Promise<boolean> {
 /**
  * Calculate current value based on milestone type
  */
-function calculateCurrentValue(milestone: Milestone, transactions: any[], income: any[]): number {
+function calculateCurrentValue(milestone: Milestone, transactions: RuntimeTransaction[], income: RuntimeIncome[]): number {
   switch (milestone.type) {
     case 'net_worth':
       // Net worth = total income - total expenses + investments
@@ -231,12 +253,18 @@ export async function calculateMilestoneProgress(milestone: Milestone): Promise<
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
     
     const recentIncome = income
-      .filter(i => new Date(i.dateISO || i.date) >= threeMonthsAgo)
+      .filter(i => {
+        const dateStr = i.dateISO || i.date
+        if (!dateStr) return false
+        return new Date(dateStr) >= threeMonthsAgo
+      })
       .reduce((sum, i) => sum + (i.amount || 0), 0)
     
     const recentExpenses = transactions
       .filter(t => {
-        const date = new Date(t.dateISO || t.date)
+        const dateStr = t.dateISO || t.date
+        if (!dateStr) return false
+        const date = new Date(dateStr)
         return date >= threeMonthsAgo && (t.type === 'expense' || (t.amount && t.amount < 0))
       })
       .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
@@ -280,6 +308,18 @@ export async function calculateMilestoneProgress(milestone: Milestone): Promise<
     etaDate,
     status
   }
+}
+
+/**
+ * Convenience helper: fetch milestone then calculate progress
+ */
+export async function getMilestoneProgress(milestoneOrId: string | Milestone): Promise<MilestoneProgress | null> {
+  const milestone =
+    typeof milestoneOrId === 'string'
+      ? await getMilestone(milestoneOrId)
+      : milestoneOrId
+  if (!milestone) return null
+  return calculateMilestoneProgress(milestone)
 }
 
 /**
