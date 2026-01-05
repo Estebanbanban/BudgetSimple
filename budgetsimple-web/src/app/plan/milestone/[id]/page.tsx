@@ -23,10 +23,6 @@ import {
 } from "@/lib/milestone-projection";
 import MilestoneGraph from "@/components/milestone-graph";
 import MilestoneLevers from "@/components/milestone-levers";
-import {
-  showContributionModal,
-  showDateModal,
-} from "@/lib/plan-assumptions-modal";
 import WhatChangedSection from "./what-changed-section";
 import AdviceCardsSection from "./advice-cards-section";
 import HistorySection from "./history-section";
@@ -1078,12 +1074,7 @@ export default function MilestoneDrilldownPage() {
           currentNetWorth={netWorth}
           monthlyContribution={effectiveContribution}
           annualReturn={annualReturn}
-          milestone={{
-            id: milestone.id,
-            label: milestone.label,
-            target_value: milestone.target_value,
-            target_date: milestone.target_date,
-          }}
+          milestone={milestone}
           onContributionChange={(amount) => {
             setManualContribution(amount);
             setContributionMode("manual");

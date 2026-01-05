@@ -47,7 +47,7 @@ export function showIncomeEditModal(
   `
 
   // Form state
-  let formData = {
+  const formData = {
     dateISO: income.dateISO || '',
     source: income.source || '',
     amount: income.amount?.toString() || '',

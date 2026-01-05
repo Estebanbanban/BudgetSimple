@@ -64,6 +64,7 @@ type Transaction = {
   type: TxType;
   categoryId: string;
   description: string;
+  merchant?: string;
   account: string;
   sourceFile: string;
   createdAt: number;
@@ -190,7 +191,7 @@ function createRuntime() {
     "health",
   ];
   const onboardRequired = new Set(["upload", "map"]);
-  let onboarding = loadOnboarding();
+  const onboarding = loadOnboarding();
   const boundEvents = new WeakMap<HTMLElement, Set<string>>();
   let rebindTimer: number | null = null;
   let isRendering = false;
@@ -1370,7 +1371,7 @@ function createRuntime() {
             budgetAmount.value = String(amount || "");
             budgetAmount.focus();
           }
-          budgetForm.dataset.editingBudget = name;
+          if (budgetForm) budgetForm.dataset.editingBudget = name;
           if (submitBtn) submitBtn.textContent = "Update";
         }
         if (action === "remove") {
@@ -2471,9 +2472,13 @@ function createRuntime() {
     if (!el) return;
     const emptyEl = byId("cashflowPreviewEmpty");
     const range = getRange();
+    const safeRange =
+      range.from && range.to
+        ? { from: range.from, to: range.to }
+        : { from: "0000-01-01", to: "9999-12-31" };
 
     // Compute flow graph from local data (same as main map)
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    const flowGraph = computeFlowGraphFromLocalData(safeRange);
 
     // Show empty state if no data
     if (!flowGraph.nodes || flowGraph.nodes.length === 0) {
@@ -2536,9 +2541,13 @@ function createRuntime() {
     const categoryListEl = byId("cashflowCategoryList");
     if (!el) return;
     const range = getRange();
+    const safeRange =
+      range.from && range.to
+        ? { from: range.from, to: range.to }
+        : { from: "0000-01-01", to: "9999-12-31" };
 
     // Compute flow graph from local data
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    const flowGraph = computeFlowGraphFromLocalData(safeRange);
 
     // Show empty state if no data
     if (!flowGraph.nodes || flowGraph.nodes.length === 0) {
@@ -2933,7 +2942,11 @@ function createRuntime() {
     if (!container) return;
 
     const range = getRange();
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    const safeRange =
+      range.from && range.to
+        ? { from: range.from, to: range.to }
+        : { from: "0000-01-01", to: "9999-12-31" };
+    const flowGraph = computeFlowGraphFromLocalData(safeRange);
     const { nodes, metadata } = flowGraph;
 
     if (metadata.totalIncome === 0) {
@@ -5048,7 +5061,7 @@ function createRuntime() {
           date: formatFullDate(`${month}-01`),
           description: "Rent budget (no transaction)",
           category: rentBudget.name,
-          type: "budget",
+          type: "expense",
           amount: formatCurrency(value),
           amountValue: value,
         });
@@ -6793,6 +6806,7 @@ function createRuntime() {
           name: "Expenses",
           total: totalExpenses,
           categories: [],
+          type: "expenses",
           details: [
             {
               id: "expenses:all",
@@ -6809,6 +6823,7 @@ function createRuntime() {
           name: "Savings",
           total: totalSavings,
           categories: [],
+          type: "savings",
           details: [
             {
               id: "savings",
@@ -6826,6 +6841,7 @@ function createRuntime() {
           name: "Allocated",
           total: totalIncome,
           categories: [],
+          type: "expenses",
           details: [
             {
               id: "allocated",
@@ -7714,7 +7730,11 @@ function createRuntime() {
 
     // Compute drilldown data from local data
     const range = getRange();
-    const drilldownData = computeDrilldownFromLocalData(nodeId, range);
+    const safeRange =
+      range.from && range.to
+        ? { from: range.from, to: range.to }
+        : { from: "0000-01-01", to: "9999-12-31" };
+    const drilldownData = computeDrilldownFromLocalData(nodeId, safeRange);
 
     if (explainTitle)
       explainTitle.textContent = drilldownData.nodeLabel || nodeId;
@@ -7733,7 +7753,7 @@ function createRuntime() {
         tx.category || "",
         formatCurrency(tx.amount),
       ]);
-      renderTable("cashflowExplainTable", rows, headers);
+      renderTable("cashflowExplainTable", [headers, ...rows]);
     }
 
     // Highlight selected node
