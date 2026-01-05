@@ -1,3 +1,5 @@
+import { calculateWhatChanged, type WhatChangedItem } from "./whatChanged";
+
 const CONFIG_KEY = "budgetsimple:v1";
 const DB_NAME = "budgetsimple";
 const DB_VERSION = 3; // Incremented to add milestones store
@@ -2156,16 +2158,10 @@ function createRuntime() {
       const date = new Date(year, mon - 2, 1);
       return date.toISOString().slice(0, 7);
     })();
-
-    // Get spending for both months
     const currentSpend = categorySpendForMonth(month);
     const prevSpend = categorySpendForMonth(prevMonth);
-    
-    // Get income for both months
     const currentIncome = incomeForMonth(month);
     const prevIncome = incomeForMonth(prevMonth);
-    
-    // Get total expenses
     const currentTotal = Object.values(currentSpend).reduce((sum, val) => sum + val, 0);
     const prevTotal = Object.values(prevSpend).reduce((sum, val) => sum + val, 0);
 
@@ -2181,112 +2177,109 @@ function createRuntime() {
 
     if (emptyEl) emptyEl.hidden = true;
 
-    const changes: Array<{
-      category: string;
-      current: number;
-      previous: number;
-      change: number;
-      changePercent: number;
-      type: 'expense' | 'income';
-    }> = [];
-
-    // Calculate category changes
-    const allCategories = new Set([...Object.keys(currentSpend), ...Object.keys(prevSpend)]);
-    for (const category of allCategories) {
-      const current = currentSpend[category] || 0;
-      const previous = prevSpend[category] || 0;
-      if (current === 0 && previous === 0) continue;
-      
-      const change = current - previous;
-      const changePercent = previous > 0 ? (change / previous) * 100 : (current > 0 ? 100 : 0);
-      
-      // Only show significant changes (>10% or >$50)
-      if (Math.abs(change) > 50 || Math.abs(changePercent) > 10) {
-        changes.push({
-          category,
-          current,
-          previous,
-          change,
-          changePercent,
-          type: 'expense'
-        });
-      }
-    }
-
-    // Add income change
-    if (currentIncome > 0 || prevIncome > 0) {
-      const incomeChange = currentIncome - prevIncome;
-      const incomeChangePercent = prevIncome > 0 ? (incomeChange / prevIncome) * 100 : (currentIncome > 0 ? 100 : 0);
-      changes.push({
-        category: 'Income',
-        current: currentIncome,
-        previous: prevIncome,
-        change: incomeChange,
-        changePercent: incomeChangePercent,
-        type: 'income'
-      });
-    }
-
-    // Add total expenses change
-    const totalChange = currentTotal - prevTotal;
-    const totalChangePercent = prevTotal > 0 ? (totalChange / prevTotal) * 100 : (currentTotal > 0 ? 100 : 0);
-    changes.push({
-      category: 'Total Expenses',
-      current: currentTotal,
-      previous: prevTotal,
-      change: totalChange,
-      changePercent: totalChangePercent,
-      type: 'expense'
+    const changes = calculateWhatChanged({
+      month,
+      previousMonth: prevMonth,
+      currentSpend,
+      previousSpend: prevSpend,
+      currentIncome,
+      previousIncome: prevIncome,
+      transactions,
+      categories: config.categories,
+      normalizeMerchant,
     });
 
-    // Sort by absolute change (largest first)
-    changes.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-
-    // Take top 5 changes
-    const topChanges = changes.slice(0, 5);
-
-    if (topChanges.length === 0) {
+    if (!changes.length) {
       list.innerHTML = "";
       if (emptyEl) emptyEl.hidden = false;
       return;
     }
 
-    list.innerHTML = topChanges
-      .map((change) => {
-        const isIncrease = change.change > 0;
-        const isIncome = change.type === 'income';
-        const arrow = isIncrease ? '↑' : '↓';
-        const colorClass = isIncome 
-          ? (isIncrease ? 'text-success' : 'text-danger')
-          : (isIncrease ? 'text-danger' : 'text-success');
-        const sign = isIncrease ? '+' : '';
-        
-        return `
-          <div class="action-item">
-            <div>
-              <div class="action-title">
-                ${escapeHtml(change.category)} 
-                <span class="${colorClass}">
-                  ${arrow} ${sign}${formatCurrency(Math.abs(change.change))} 
-                  (${sign}${change.changePercent.toFixed(1)}%)
-                </span>
-              </div>
-              <div class="action-sub">
-                ${formatCurrency(change.current)} this month vs ${formatCurrency(change.previous)} last month
-              </div>
-            </div>
-            <button class="btn btn-quiet" type="button" data-drilldown-url="${escapeHtml(
-              buildDrilldownUrl({
-                source: change.type === 'income' ? 'income' : 'category-spike',
-                category: change.category
-              })
-            )}">
-              View details
-            </button>
-          </div>
-        `;
-      })
+    list.innerHTML = changes
+      .map((change) => buildChangeHtml(change))
       .join("");
+  }
+
+  function buildChangeHtml(change: WhatChangedItem) {
+    const isIncrease = change.change > 0;
+    const isIncome = change.type === "income";
+    const arrow = isIncrease ? "↑" : "↓";
+    const colorClass = isIncome
+      ? isIncrease
+        ? "text-success"
+        : "text-danger"
+      : isIncrease
+      ? "text-danger"
+      : "text-success";
+    const sign = isIncrease ? "+" : "";
+    const driverMerchant =
+      change.drivers.merchantSpike?.merchant ||
+      change.drivers.largestTransaction?.merchant ||
+      null;
+    const anomalyBadge = change.drivers.anomaly
+      ? `<span class="badge badge-eta">Anomaly</span>`
+      : "";
+    const explanation = buildDriverSummary(change);
+
+    return `
+      <div class="action-item${change.drivers.anomaly ? " is-anomaly" : ""}">
+        <div>
+          <div class="action-title">
+            ${escapeHtml(change.category)}
+            <span class="${colorClass}">
+              ${arrow} ${sign}${formatCurrency(Math.abs(change.change))}
+              (${sign}${change.changePercent.toFixed(1)}%)
+            </span>
+            ${anomalyBadge}
+          </div>
+          <div class="action-sub">
+            ${formatCurrency(change.current)} this month vs ${formatCurrency(change.previous)} last month
+          </div>
+          <div class="action-sub muted small">
+            ${escapeHtml(explanation)}
+          </div>
+        </div>
+        <button class="btn btn-quiet" type="button" data-drilldown-url="${escapeHtml(
+          buildDrilldownUrl({
+            source: change.type === "income" ? "income" : "category-spike",
+            category: change.category === "Total Expenses" ? null : change.category,
+            merchant: driverMerchant,
+          })
+        )}">
+          View details
+        </button>
+      </div>
+    `;
+  }
+
+  function buildDriverSummary(change: WhatChangedItem) {
+    const parts: string[] = [];
+    const spike = change.drivers.merchantSpike;
+    const largest = change.drivers.largestTransaction;
+
+    if (spike) {
+      const direction = spike.delta >= 0 ? "up" : "down";
+      parts.push(
+        `${spike.merchant} ${direction} ${formatCurrency(Math.abs(spike.delta))} (${formatCurrency(
+          spike.current
+        )} this month)`
+      );
+    }
+
+    if (largest) {
+      parts.push(
+        `Largest txn ${formatCurrency(largest.amount)} on ${formatFullDate(
+          largest.dateISO
+        )}: ${largest.description}`
+      );
+    }
+
+    if (!parts.length) {
+      return change.type === "income"
+        ? "Change driven by income timing."
+        : "No standout drivers; change is spread across merchants.";
+    }
+    return parts.join(" • ");
   }
 
   function incomeForMonth(month: string): number {
@@ -2856,6 +2849,7 @@ function createRuntime() {
       category: params.get("category"),
       view: params.get("view") || "",
       envelopeId: params.get("envelope") || "",
+      merchant: params.get("merchant") || "",
       range: rangeFromParams(params),
     };
   }
@@ -3151,6 +3145,7 @@ function createRuntime() {
       category: params.category,
       view: params.view,
       envelopeId: params.envelopeId,
+      merchant: params.merchant,
       range: params.range,
     });
 
@@ -4727,6 +4722,7 @@ function createRuntime() {
     const category = params.get("category");
     const view = params.get("view") || "";
     const envelopeId = params.get("envelope") || "";
+    const merchant = params.get("merchant") || "";
     const range = rangeFromParams(params);
     const titleEl = byId("drilldownTitle");
     const totalEl = byId("drilldownTotal");
@@ -4740,6 +4736,7 @@ function createRuntime() {
       category,
       view,
       envelopeId,
+      merchant,
       range,
     });
     if (titleEl) titleEl.textContent = result.title;
@@ -4801,6 +4798,7 @@ function createRuntime() {
     category?: string | null;
     view?: string;
     envelopeId?: string;
+    merchant?: string;
   }) {
     const params = new URLSearchParams();
     const preset = config.settings.defaultRangePreset || "month";
@@ -4815,6 +4813,7 @@ function createRuntime() {
     if (options.category) params.set("category", options.category);
     if (options.view) params.set("view", options.view);
     if (options.envelopeId) params.set("envelope", options.envelopeId);
+    if (options.merchant) params.set("merchant", options.merchant);
     return `/cashflow?${params.toString()}`;
   }
 
@@ -4825,6 +4824,7 @@ function createRuntime() {
     category?: string | null;
     view?: string;
     envelopeId?: string;
+    merchant?: string;
   }) {
     const url = buildDrilldownUrl(options);
     window.open(url, "_blank");
@@ -4837,9 +4837,10 @@ function createRuntime() {
     category: string | null;
     view: string;
     envelopeId: string;
+    merchant?: string;
     range: { from: string | null; to: string | null };
   }) {
-    const { source, metric, chart, category, view, envelopeId, range } =
+    const { source, metric, chart, category, view, envelopeId, merchant, range } =
       options;
     const rows: Array<Record<string, string | number>> = [];
     const totals = summarizeRange(range);
@@ -4907,7 +4908,8 @@ function createRuntime() {
       if (chart === "expense-pie") {
         title = category ? `Category: ${category}` : "Expenses by category";
         filters = `Range: ${formatRangeLabel()} · Expenses`;
-        rows.push(...expenseRows(range, category));
+        if (merchant) filters += ` · ${merchant}`;
+        rows.push(...expenseRows(range, category, merchant));
         totalLabel = formatCurrency(sumRowAmounts(rows));
       }
       if (chart === "mom") {
@@ -4915,6 +4917,7 @@ function createRuntime() {
         filters = `Range: ${formatRangeLabel()} · ${
           view === "cashflow" ? "Cashflow" : "Expenses"
         }`;
+        if (merchant) filters += ` · ${merchant}`;
         if (view === "cashflow") {
           rows.push(
             ...incomeRows(range),
@@ -4922,16 +4925,24 @@ function createRuntime() {
             ...investmentRows(range)
           );
         } else {
-          rows.push(...expenseRows(range, category));
+          rows.push(...expenseRows(range, category, merchant));
         }
         totalLabel = formatCurrency(sumRowAmounts(rows));
       }
       if (chart === "daily") {
         title = category ? `Daily spending: ${category}` : "Daily spending";
         filters = `Range: ${formatRangeLabel()} · Expenses`;
-        rows.push(...expenseRows(range, category));
+        if (merchant) filters += ` · ${merchant}`;
+        rows.push(...expenseRows(range, category, merchant));
         totalLabel = formatCurrency(sumRowAmounts(rows));
       }
+    }
+
+    if (source === "income") {
+      title = "Income drilldown";
+      filters = `Range: ${formatRangeLabel()} · Income`;
+      rows.push(...incomeRows(range));
+      totalLabel = formatCurrency(sumRowAmounts(rows));
     }
 
     if (source === "subscriptions") {
@@ -4957,7 +4968,8 @@ function createRuntime() {
     if (source === "category-spike" && category) {
       title = `Category spike: ${category}`;
       filters = `Range: ${formatRangeLabel()} · Expenses`;
-      rows.push(...expenseRows(range, category));
+      if (merchant) filters += ` · ${merchant}`;
+      rows.push(...expenseRows(range, category, merchant));
       totalLabel = formatCurrency(sumRowAmounts(rows));
     }
 
@@ -5027,7 +5039,8 @@ function createRuntime() {
 
   function expenseRows(
     range: { from: string | null; to: string | null },
-    category?: string | null
+    category?: string | null,
+    merchant?: string | null
   ) {
     const rows = transactions
       .filter((t) => t.type === "expense" && withinRange(t.dateISO, range))
@@ -5036,6 +5049,10 @@ function createRuntime() {
         const name =
           config.categories.find((c) => c.id === t.categoryId)?.name || "";
         return name.toLowerCase() === category.toLowerCase();
+      })
+      .filter((t) => {
+        if (!merchant) return true;
+        return normalizeMerchant(t.description || "") === merchant;
       })
       .map((t) => toRow(t));
     const rentBudget = buildRentBudgetByMonth(
