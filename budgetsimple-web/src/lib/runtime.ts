@@ -1233,6 +1233,10 @@ function createRuntime() {
                 getCategoryIdByName("Housing", "expense"),
               description: "Rent",
               account: config.settings.accounts[0]?.name || "Bank",
+              currency:
+                config.settings.accounts[0]?.currency ||
+                config.settings.currency ||
+                "USD",
               sourceFile: "manual",
               createdAt: Date.now(),
               hash: hashRow([dateISO, amount, "Rent", "manual"]),
@@ -1335,6 +1339,10 @@ function createRuntime() {
                 getCategoryIdByName("Housing", "expense"),
               description: "Rent",
               account: config.settings.accounts[0]?.name || "Bank",
+              currency:
+                config.settings.accounts[0]?.currency ||
+                config.settings.currency ||
+                "USD",
               sourceFile: "manual",
               createdAt: Date.now(),
               hash: hashRow([dateISO, amount, "Rent", "manual"]),
@@ -1607,6 +1615,7 @@ function createRuntime() {
         dateISO: date,
         amount: Math.abs(amount),
         source,
+        currency: config.settings.currency || "USD",
         createdAt: Date.now(),
       };
       await store.put("income", row);
@@ -1633,6 +1642,7 @@ function createRuntime() {
         categoryId: getCategoryIdByName(cat, "expense"),
         description: desc,
         account,
+        currency: config.settings.currency || "USD",
         sourceFile: "manual",
         createdAt: Date.now(),
         hash: hashRow([date, amount, desc, account]),
@@ -1658,6 +1668,7 @@ function createRuntime() {
         categoryId: getCategoryIdByName("Investments", "investment"),
         description: instrument,
         account: "Investing",
+        currency: config.settings.currency || "USD",
         sourceFile: "manual",
         createdAt: Date.now(),
         hash: hashRow([date, amount, instrument, "Investing"]),
@@ -1768,6 +1779,12 @@ function createRuntime() {
       const account = record.account || "Bank";
       const categoryName = (record.category || "Uncategorized").trim();
       const amount = normalizeAmount(amountValue, type);
+      const currency =
+        normalizeCurrency(record.currency) ||
+        detectCurrencyFromText(record.amount) ||
+        normalizeCurrency(csvFormatSettings.currencySymbol) ||
+        config.settings.currency ||
+        "USD";
       const hash = hashRow([dateISO, amount, description, account]);
 
       if (type === "income") {
@@ -1784,6 +1801,7 @@ function createRuntime() {
           dateISO,
           amount: Math.abs(amountValue),
           source: description,
+          currency,
           createdAt: Date.now(),
         });
       } else {
@@ -1799,6 +1817,7 @@ function createRuntime() {
           categoryId,
           description,
           account,
+          currency,
           sourceFile: record.sourceFile || "import",
           createdAt: Date.now(),
           hash,
@@ -1843,20 +1862,21 @@ function createRuntime() {
     for (const row of rows) {
       const record = mapRow(headers, row, mapping);
       const dateISO = parseDate(record.date);
-      // Handle amount parsing with currency stripping
-      let amountStr = (record.amount || "").toString().trim();
-      amountStr = amountStr
-        .replace(/^[A-Z]{2,3}\$/i, "")
-        .replace(/^\$/, "")
-        .replace(/,/g, "")
-        .trim();
-      const amountValue = Number(amountStr);
+      const amountValue = parseAmount(record.amount, {
+        numberFormat: "auto",
+        currencySymbol: "",
+      });
       if (!dateISO || Number.isNaN(amountValue)) continue;
+      const currency =
+        detectCurrencyFromText(record.amount) ||
+        config.settings.currency ||
+        "USD";
       imported.push({
         id: uid(),
         dateISO,
         amount: Math.abs(amountValue),
         source: record.source || "Income",
+        currency,
         createdAt: Date.now(),
       });
     }
@@ -3787,9 +3807,12 @@ function createRuntime() {
     const flaggedDuplicates = transactions.filter((t) => t.isDuplicate).length;
     const duplicateCount =
       flaggedDuplicates || countDuplicateTransactions(transactions);
+    const missingCurrency =
+      transactions.filter((t) => !normalizeCurrency(t.currency)).length +
+      income.filter((i) => !normalizeCurrency(i.currency)).length;
     const rows = [
       ["Duplicates", String(duplicateCount)],
-      ["Missing currency", "0"],
+      ["Missing currency", String(missingCurrency)],
       [
         "Uncategorized",
         String(
@@ -7931,7 +7954,7 @@ function createRuntime() {
     let inQuotes = false;
     for (let i = 0; i < clean.length; i += 1) {
       const char = clean[i];
-      if (char === '"' && text[i + 1] === '"') {
+      if (char === '"' && clean[i + 1] === '"') {
         field += '"';
         i += 1;
       } else if (char === '"') {
@@ -7955,8 +7978,43 @@ function createRuntime() {
       rows.push(current);
     }
     const headers = rows.shift() || [];
-    const cleanRows = rows.filter((row) => row.some((c) => c.trim() !== ""));
+    const headerLen = headers.length;
+    const cleanRows = rows
+      .filter((row) => row.some((c) => c.trim() !== ""))
+      .map((row) => fixDecimalCommaSplits(row, headerLen, delimiter));
     return { headers, rows: cleanRows };
+  }
+
+  // Heuristic for broken CSVs using comma delimiter + comma decimals without quotes.
+  // Example: headers 3 cols, row becomes 4 cols because amount "1.234,56" splits to ["1.234","56"].
+  function fixDecimalCommaSplits(
+    row: string[],
+    headerLen: number,
+    delimiter: "," | ";" | "\t"
+  ) {
+    if (!Array.isArray(row) || headerLen <= 0) return row;
+    if (delimiter !== "," || row.length <= headerLen) return row;
+
+    const out = row.slice();
+    while (out.length > headerLen) {
+      let merged = false;
+      for (let i = 0; i < out.length - 1; i += 1) {
+        const left = (out[i] || "").trim();
+        const right = (out[i + 1] || "").trim();
+        // Merge number + 2-digit decimal part
+        if (
+          (/^\d{1,3}(\.\d{3})*$/.test(left) || /^\d+$/.test(left)) &&
+          /^\d{2}$/.test(right)
+        ) {
+          out[i] = `${left},${right}`;
+          out.splice(i + 1, 1);
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) break;
+    }
+    return out;
   }
 
   function detectDelimiter(line: string) {
@@ -8197,30 +8255,52 @@ function createRuntime() {
     return "expense";
   }
 
-  function parseAmount(value?: string): number {
+  function parseAmount(
+    value?: string,
+    formatSettings: { numberFormat: string; currencySymbol: string } = {
+      numberFormat: csvFormatSettings.numberFormat,
+      currencySymbol: csvFormatSettings.currencySymbol,
+    }
+  ): number {
     if (!value || !value.trim()) return NaN;
     let amountStr = value.trim();
-    const format = csvFormatSettings.numberFormat;
-    const currencySymbol = csvFormatSettings.currencySymbol;
+    const format = formatSettings.numberFormat;
+    const currencySymbol = formatSettings.currencySymbol;
+
+    // Normalize negatives: (123.45) or 123.45- or -123.45
+    let isNegative = false;
+    if (/^\(.*\)$/.test(amountStr)) {
+      isNegative = true;
+      amountStr = amountStr.slice(1, -1).trim();
+    }
+    if (amountStr.startsWith("-")) {
+      isNegative = true;
+      amountStr = amountStr.slice(1).trim();
+    }
+    if (amountStr.endsWith("-")) {
+      isNegative = true;
+      amountStr = amountStr.slice(0, -1).trim();
+    }
 
     // Remove currency symbol (explicit or auto-detect)
     if (currencySymbol) {
-      amountStr = amountStr.replace(
-        new RegExp(`^${escapeRegex(currencySymbol)}`, "i"),
-        ""
-      );
+      const sym = escapeRegex(currencySymbol);
+      amountStr = amountStr.replace(new RegExp(`^\\s*${sym}\\s*`, "i"), "");
+      amountStr = amountStr.replace(new RegExp(`\\s*${sym}\\s*$`, "i"), "");
     } else {
-      // Auto-detect: remove common currency prefixes/suffixes
-      amountStr = amountStr.replace(/^[A-Z]{2,3}\$/i, ""); // CA$, USD$, EUR$
-      amountStr = amountStr.replace(/^\$/, ""); // $
-      amountStr = amountStr.replace(/\s*[€£¥]\s*$/, ""); // €, £, ¥ (suffix)
+      // Auto-detect: remove common currency tokens at start/end
+      amountStr = amountStr
+        .replace(/^\s*(?:[A-Z]{2,3}\$|[A-Z]{3}|\$|€|£|¥)\s*/i, "")
+        .replace(/\s*(?:[A-Z]{2,3}\$|[A-Z]{3}|\$|€|£|¥)\s*$/i, "");
     }
     amountStr = amountStr.trim();
 
     // Handle different number formats
     if (
       format === "eu" ||
-      (format === "auto" && /^\d{1,3}(\.\d{3})*,\d{2}$/.test(amountStr))
+      (format === "auto" &&
+        (/^\d{1,3}(\.\d{3})*,\d{2}$/.test(amountStr) ||
+          /^\d+,\d{2}$/.test(amountStr)))
     ) {
       // European: 1.234,56 (dot for thousands, comma for decimal)
       amountStr = amountStr.replace(/\./g, "").replace(",", ".");
@@ -8239,7 +8319,48 @@ function createRuntime() {
     // Remove any remaining spaces
     amountStr = amountStr.replace(/\s+/g, "");
 
-    return Number(amountStr);
+    const num = Number(amountStr);
+    if (Number.isNaN(num)) return NaN;
+    return isNegative ? -Math.abs(num) : num;
+  }
+
+  function normalizeCurrency(value?: string) {
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const upper = trimmed.toUpperCase();
+
+    // ISO codes
+    if (/^[A-Z]{3}$/.test(upper)) return upper;
+
+    const map: Record<string, string> = {
+      "$": "USD",
+      "US$": "USD",
+      "USD$": "USD",
+      "USD": "USD",
+      "CA$": "CAD",
+      "C$": "CAD",
+      "CAD$": "CAD",
+      "CAD": "CAD",
+      "€": "EUR",
+      "EUR": "EUR",
+      "£": "GBP",
+      "GBP": "GBP",
+      "¥": "JPY",
+      "JPY": "JPY",
+      "CHF": "CHF",
+    };
+
+    if (map[upper]) return map[upper];
+    const compact = upper.replace(/\s+/g, "");
+    return map[compact];
+  }
+
+  function detectCurrencyFromText(text?: string) {
+    if (!text) return undefined;
+    const match = text.match(/([A-Z]{2,3}\$|[A-Z]{3}|\$|€|£|¥)/i);
+    if (!match) return undefined;
+    return normalizeCurrency(match[1]);
   }
 
   function escapeRegex(str: string): string {
@@ -8355,10 +8476,14 @@ function createRuntime() {
   }
 
   function formatCurrency(value: number) {
+    const currency = config.settings.currency || "USD";
+    const abs = Math.abs(value || 0);
+    const hasCents = Math.round(abs * 100) % 100 !== 0;
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: config.settings.currency || "USD",
-      maximumFractionDigits: 0,
+      currency,
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: 2,
     }).format(value || 0);
   }
 
