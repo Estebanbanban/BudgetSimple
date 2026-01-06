@@ -34,7 +34,7 @@ import HistorySection from "./history-section";
 export default function MilestoneDrilldownPage() {
   const params = useParams();
   const router = useRouter();
-  const milestoneId = params?.id as string;
+  const milestoneId = (params?.id as string) || null;
 
   const [milestone, setMilestone] = useState<Milestone | null>(null);
   const [progress, setProgress] = useState<MilestoneProgress | null>(null);
@@ -205,10 +205,14 @@ export default function MilestoneDrilldownPage() {
   }, [milestoneId, router]);
 
   useEffect(() => {
-    if (milestoneId) {
+    if (milestoneId && typeof window !== "undefined") {
       loadData();
+    } else if (!milestoneId && typeof window !== "undefined") {
+      // If no milestone ID, redirect to plan page
+      router.push("/plan");
     }
-  }, [milestoneId, loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [milestoneId]);
 
   const effectiveContribution =
     contributionMode === "auto" ? monthlyContribution : manualContribution;
@@ -263,29 +267,39 @@ export default function MilestoneDrilldownPage() {
     status: "no_data" as const,
   };
 
-  const requiredContribution = milestone.target_date
-    ? calculateRequiredContribution(
-        netWorth,
-        milestone.target_value,
-        milestone.target_date,
-        annualReturn
-      )
-    : null;
+  let requiredContribution: number | null = null;
+  try {
+    requiredContribution = milestone.target_date
+      ? calculateRequiredContribution(
+          netWorth,
+          milestone.target_value,
+          milestone.target_date,
+          annualReturn
+        )
+      : null;
+  } catch (error) {
+    console.error("Error calculating required contribution:", error);
+  }
 
   const gap =
     requiredContribution && effectiveContribution
       ? requiredContribution - effectiveContribution
       : null;
 
-  const eta = calculateETA(
-    {
-      currentNetWorth: netWorth,
-      monthlyContribution: effectiveContribution,
-      annualReturn,
-      monthsToProject: 120,
-    },
-    milestone.target_value
-  );
+  let eta: { month: number; date: string } | null = null;
+  try {
+    eta = calculateETA(
+      {
+        currentNetWorth: netWorth,
+        monthlyContribution: effectiveContribution,
+        annualReturn,
+        monthsToProject: 120,
+      },
+      milestone.target_value
+    );
+  } catch (error) {
+    console.error("Error calculating ETA:", error);
+  }
 
   const inputs: ProjectionInputs = {
     currentNetWorth: netWorth,
@@ -294,21 +308,29 @@ export default function MilestoneDrilldownPage() {
     monthsToProject: 120,
   };
 
-  const sensitivityPlus100 = calculateSensitivity(
-    inputs,
-    milestone.target_value,
-    100
-  );
-  const sensitivityMinus100 = calculateSensitivity(
-    inputs,
-    milestone.target_value,
-    -100
-  );
-  const sensitivityReturnPlus1 = calculateSensitivity(
-    { ...inputs, annualReturn: annualReturn + 0.01 },
-    milestone.target_value,
-    0
-  );
+  let sensitivityPlus100: { monthsEarlier: number } | null = null;
+  let sensitivityMinus100: { monthsEarlier: number } | null = null;
+  let sensitivityReturnPlus1: { monthsEarlier: number } | null = null;
+
+  try {
+    sensitivityPlus100 = calculateSensitivity(
+      inputs,
+      milestone.target_value,
+      100
+    );
+    sensitivityMinus100 = calculateSensitivity(
+      inputs,
+      milestone.target_value,
+      -100
+    );
+    sensitivityReturnPlus1 = calculateSensitivity(
+      { ...inputs, annualReturn: annualReturn + 0.01 },
+      milestone.target_value,
+      0
+    );
+  } catch (error) {
+    console.error("Error calculating sensitivity:", error);
+  }
 
   // Calculate contribution consistency
   const positiveMonths = contributionHistory.filter((h) => h.amount > 0).length;
@@ -359,9 +381,9 @@ export default function MilestoneDrilldownPage() {
             top: 0,
             background: "white",
             zIndex: 10,
-            padding: "1rem 0",
-            marginBottom: "1rem",
-            borderBottom: "1px solid #e2e8f0",
+            padding: "1.5rem 0",
+            marginBottom: "1.5rem",
+            borderBottom: "2px solid #e2e8f0",
           }}
         >
           <div
@@ -378,8 +400,11 @@ export default function MilestoneDrilldownPage() {
                 className="btn btn-quiet btn-sm"
                 style={{
                   textDecoration: "none",
-                  marginBottom: "8px",
+                  marginBottom: "12px",
                   fontSize: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
                 ← Back to Plan
@@ -389,53 +414,91 @@ export default function MilestoneDrilldownPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "12px",
-                  marginBottom: "4px",
+                  marginBottom: "8px",
+                  flexWrap: "wrap",
                 }}
               >
-                <h1 style={{ fontSize: "24px", fontWeight: "700", margin: 0 }}>
+                <h1
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: "700",
+                    margin: 0,
+                    lineHeight: "1.2",
+                  }}
+                >
                   {milestone.label}
                 </h1>
                 <div
                   style={{
-                    padding: "4px 12px",
-                    borderRadius: "6px",
+                    padding: "6px 14px",
+                    borderRadius: "8px",
                     fontSize: "12px",
                     fontWeight: "600",
                     background:
                       safeProgress.status === "ahead" ||
                       safeProgress.status === "on_track"
                         ? "#ecfdf5"
-                        : "#fffbeb",
+                        : safeProgress.status === "behind"
+                        ? "#fffbeb"
+                        : "#f1f5f9",
                     color:
                       safeProgress.status === "ahead" ||
                       safeProgress.status === "on_track"
                         ? "#065f46"
-                        : "#92400e",
+                        : safeProgress.status === "behind"
+                        ? "#92400e"
+                        : "#475569",
                     border: `1px solid ${
                       safeProgress.status === "ahead" ||
                       safeProgress.status === "on_track"
                         ? "#a7f3d0"
-                        : "#fde68a"
+                        : safeProgress.status === "behind"
+                        ? "#fde68a"
+                        : "#cbd5e1"
                     }`,
                   }}
                 >
                   {safeProgress.status === "ahead"
-                    ? "Ahead"
+                    ? "Ahead of schedule"
                     : safeProgress.status === "on_track"
                     ? "On track"
                     : safeProgress.status === "behind"
-                    ? "Behind"
+                    ? "Behind schedule"
                     : "No data"}
                 </div>
               </div>
-              <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-                Target: {formatCurrency(milestone.target_value)}
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#64748b",
+                  margin: 0,
+                  lineHeight: "1.5",
+                }}
+              >
+                Target:{" "}
+                <strong style={{ color: "#1f2933" }}>
+                  {formatCurrency(milestone.target_value)}
+                </strong>
                 {milestone.target_date &&
                   ` by ${formatDate(milestone.target_date)}`}
-                {eta && ` • ETA: ${formatDate(eta.date)}`}
+                {eta && (
+                  <>
+                    {" • "}
+                    <span style={{ color: "#059669", fontWeight: "600" }}>
+                      ETA: {formatDate(eta.date)}
+                    </span>
+                  </>
+                )}
               </p>
             </div>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 className="btn btn-sm"
                 onClick={async () => {
@@ -492,148 +555,242 @@ export default function MilestoneDrilldownPage() {
         </div>
 
         {/* Section A: At a glance tiles */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "12px",
-            marginBottom: "1rem",
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div
+        <div>
+          <div style={{ marginBottom: "12px" }}>
+            <h2
               style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
-              }}
-            >
-              Current Net Worth
-            </div>
-            <div
-              style={{ fontSize: "20px", fontWeight: "700", color: "#1f2933" }}
-            >
-              {formatCurrency(netWorth)}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
-              }}
-            >
-              Progress
-            </div>
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: "700",
+                fontSize: "16px",
+                fontWeight: "600",
+                margin: 0,
                 color: "#1f2933",
-                marginBottom: "4px",
               }}
             >
-              {safeProgress.progressPercent.toFixed(1)}%
-            </div>
-            <div style={{ fontSize: "12px", color: "#64748b" }}>
-              {formatCurrency(
-                milestone.target_value - safeProgress.currentValue
-              )}{" "}
-              remaining
-            </div>
+              At a glance
+            </h2>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#64748b",
+                margin: "4px 0 0 0",
+              }}
+            >
+              Key metrics for this milestone
+            </p>
           </div>
-
           <div
             style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "16px",
             }}
           >
             <div
               style={{
-                fontSize: "11px",
-                color: "#64748b",
-                marginBottom: "6px",
-                fontWeight: "500",
+                background: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "20px",
+                boxShadow:
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                transition: "all 0.2s ease",
               }}
-            >
-              ETA (base)
-            </div>
-            <div
-              style={{ fontSize: "20px", fontWeight: "700", color: "#1f2933" }}
-            >
-              {eta ? formatDate(eta.date) : "--"}
-            </div>
-          </div>
-
-          {requiredContribution && (
-            <div
-              style={{
-                background: gap && gap > 0 ? "#fef2f2" : "#f0fdf4",
-                border: `1px solid ${gap && gap > 0 ? "#fecaca" : "#a7f3d0"}`,
-                borderRadius: "8px",
-                padding: "16px",
-                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#e2e8f0";
               }}
             >
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "12px",
                   color: "#64748b",
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Current Net Worth
+              </div>
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "700",
+                  color: "#1f2933",
+                  lineHeight: "1.2",
+                }}
+              >
+                {formatCurrency(netWorth)}
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "20px",
+                boxShadow:
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#e2e8f0";
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Progress
+              </div>
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "700",
+                  color: "#1f2933",
                   marginBottom: "6px",
+                  lineHeight: "1.2",
+                }}
+              >
+                {safeProgress.progressPercent.toFixed(1)}%
+              </div>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#64748b",
                   fontWeight: "500",
                 }}
               >
-                Required monthly
+                {formatCurrency(
+                  milestone.target_value - safeProgress.currentValue
+                )}{" "}
+                remaining
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "20px",
+                boxShadow:
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = "#e2e8f0";
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                ETA (base)
               </div>
               <div
                 style={{
-                  fontSize: "20px",
+                  fontSize: "24px",
                   fontWeight: "700",
-                  color: gap && gap > 0 ? "#dc2626" : "#059669",
-                  marginBottom: "4px",
+                  color: "#1f2933",
+                  lineHeight: "1.2",
                 }}
               >
-                {formatCurrency(requiredContribution)}/mo
+                {eta ? formatDate(eta.date) : "--"}
               </div>
-              {gap !== null && (
+            </div>
+
+            {requiredContribution && (
+              <div
+                style={{
+                  background: gap && gap > 0 ? "#fef2f2" : "#f0fdf4",
+                  border: `2px solid ${gap && gap > 0 ? "#fecaca" : "#a7f3d0"}`,
+                  borderRadius: "12px",
+                  padding: "20px",
+                  boxShadow:
+                    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)";
+                }}
+              >
                 <div
                   style={{
                     fontSize: "12px",
-                    color: gap > 0 ? "#dc2626" : "#059669",
-                    fontWeight: "600",
+                    color: "#64748b",
+                    marginBottom: "8px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
                   }}
                 >
-                  {gap > 0
-                    ? `+${formatCurrency(gap)}/mo short`
-                    : `${formatCurrency(Math.abs(gap))}/mo ahead`}
+                  Required monthly
                 </div>
-              )}
-            </div>
-          )}
+                <div
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: "700",
+                    color: gap && gap > 0 ? "#dc2626" : "#059669",
+                    marginBottom: "6px",
+                    lineHeight: "1.2",
+                  }}
+                >
+                  {formatCurrency(requiredContribution)}/mo
+                </div>
+                {gap !== null && (
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: gap > 0 ? "#dc2626" : "#059669",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {gap > 0
+                      ? `+${formatCurrency(gap)}/mo short`
+                      : `${formatCurrency(Math.abs(gap))}/mo ahead`}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Section B: Projection chart */}
@@ -725,6 +882,10 @@ export default function MilestoneDrilldownPage() {
               currentNetWorth={netWorth}
               monthlyContribution={effectiveContribution}
               annualReturn={annualReturn}
+              milestone={{
+                target_value: milestone.target_value,
+                target_date: milestone.target_date,
+              }}
             />
           )}
         </div>
@@ -859,6 +1020,204 @@ export default function MilestoneDrilldownPage() {
                 placeholder="7.00"
               />
             </div>
+          </div>
+
+          {/* Contribution Mode Selector */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "12px",
+                color: "#475569",
+                marginBottom: "8px",
+                fontWeight: "500",
+              }}
+            >
+              Contribution Mode
+            </label>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: `1px solid ${
+                    contributionMode === "auto" ? "#2563eb" : "#e2e8f0"
+                  }`,
+                  background: contributionMode === "auto" ? "#eff6ff" : "white",
+                  flex: 1,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="contributionMode"
+                  value="auto"
+                  checked={contributionMode === "auto"}
+                  onChange={(e) => {
+                    setContributionMode("auto");
+                    // Save to config
+                    if (
+                      typeof window !== "undefined" &&
+                      (window as any).budgetsimpleRuntime
+                    ) {
+                      const runtime = (window as any).budgetsimpleRuntime;
+                      const config =
+                        runtime.config?.() || runtime.getConfig?.();
+                      if (config?.settings) {
+                        config.settings.planContributionMode = "auto";
+                        if (runtime.saveConfig) {
+                          runtime.saveConfig();
+                        }
+                      }
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: contributionMode === "auto" ? "500" : "400",
+                  }}
+                >
+                  Auto from cashflow
+                </span>
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: `1px solid ${
+                    contributionMode === "manual" ? "#2563eb" : "#e2e8f0"
+                  }`,
+                  background:
+                    contributionMode === "manual" ? "#eff6ff" : "white",
+                  flex: 1,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="contributionMode"
+                  value="manual"
+                  checked={contributionMode === "manual"}
+                  onChange={(e) => {
+                    setContributionMode("manual");
+                    // Save to config
+                    if (
+                      typeof window !== "undefined" &&
+                      (window as any).budgetsimpleRuntime
+                    ) {
+                      const runtime = (window as any).budgetsimpleRuntime;
+                      const config =
+                        runtime.config?.() || runtime.getConfig?.();
+                      if (config?.settings) {
+                        config.settings.planContributionMode = "manual";
+                        if (runtime.saveConfig) {
+                          runtime.saveConfig();
+                        }
+                      }
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: contributionMode === "manual" ? "500" : "400",
+                  }}
+                >
+                  Manual fixed amount
+                </span>
+              </label>
+            </div>
+
+            {/* Current Contribution Estimate (Auto mode) */}
+            {contributionMode === "auto" && (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  background: "#f0fdf4",
+                  borderRadius: "6px",
+                  border: "1px solid #a7f3d0",
+                  marginBottom: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#64748b",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Current estimate (from transactions)
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#059669",
+                  }}
+                >
+                  {formatCurrency(monthlyContribution)}/mo
+                </div>
+              </div>
+            )}
+
+            {/* Manual Contribution Input (Manual mode) */}
+            {contributionMode === "manual" && (
+              <div style={{ marginBottom: "12px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "12px",
+                    color: "#475569",
+                    marginBottom: "6px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Monthly Contribution{" "}
+                  <span style={{ color: "#dc2626" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={manualContribution || ""}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setManualContribution(val);
+                    // Save to config
+                    if (
+                      typeof window !== "undefined" &&
+                      (window as any).budgetsimpleRuntime
+                    ) {
+                      const runtime = (window as any).budgetsimpleRuntime;
+                      const config =
+                        runtime.config?.() || runtime.getConfig?.();
+                      if (config?.settings) {
+                        config.settings.planManualContribution = val;
+                        if (runtime.saveConfig) {
+                          runtime.saveConfig();
+                        }
+                      }
+                    }
+                  }}
+                  className="input"
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                  }}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
           </div>
 
           {/* Contribution History Chart */}

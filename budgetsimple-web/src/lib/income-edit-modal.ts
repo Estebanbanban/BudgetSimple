@@ -4,11 +4,11 @@
  */
 
 export interface IncomeEditData {
-  id: string
-  dateISO: string
-  source: string
-  amount: number
-  currency?: string
+  id: string;
+  dateISO: string;
+  source: string;
+  amount: number;
+  currency?: string;
 }
 
 export function showIncomeEditModal(
@@ -16,12 +16,12 @@ export function showIncomeEditModal(
   onSave: (data: IncomeEditData) => Promise<void>
 ): void {
   // Remove existing modal if any
-  const existing = document.getElementById('income-edit-modal')
-  if (existing) existing.remove()
+  const existing = document.getElementById("income-edit-modal");
+  if (existing) existing.remove();
 
   // Create modal overlay
-  const overlay = document.createElement('div')
-  overlay.id = 'income-edit-modal'
+  const overlay = document.createElement("div");
+  overlay.id = "income-edit-modal";
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -33,10 +33,10 @@ export function showIncomeEditModal(
     align-items: center;
     justify-content: center;
     z-index: 10000;
-  `
+  `;
 
   // Create modal content
-  const modal = document.createElement('div')
+  const modal = document.createElement("div");
   modal.style.cssText = `
     background: white;
     border-radius: 12px;
@@ -44,15 +44,15 @@ export function showIncomeEditModal(
     width: 90%;
     max-width: 500px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  `
+  `;
 
   // Form state
   let formData = {
-    dateISO: income.dateISO || '',
-    source: income.source || '',
-    amount: income.amount?.toString() || '',
-    currency: income.currency || 'USD'
-  }
+    dateISO: income.dateISO || "",
+    source: income.source || "",
+    amount: income.amount?.toString() || "",
+    currency: income.currency || "USD",
+  };
 
   // Build modal HTML
   modal.innerHTML = `
@@ -133,63 +133,115 @@ export function showIncomeEditModal(
         </div>
       </form>
     </div>
-  `
+  `;
 
-  modal.appendChild(modal)
-  overlay.appendChild(modal)
-  document.body.appendChild(overlay)
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
 
   // Close handlers
   const close = () => {
-    overlay.remove()
+    overlay.remove();
+  };
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+
+  const closeBtn = modal.querySelector("#modal-close");
+  const cancelBtn = modal.querySelector("#modal-cancel");
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  if (cancelBtn) cancelBtn.addEventListener("click", close);
+
+  // Exchange rates (same as in runtime.ts - base: USD)
+  const EXCHANGE_RATES: Record<string, number> = {
+    USD: 1.0,
+    CAD: 1.35,
+    EUR: 0.92,
+    GBP: 0.79,
+    JPY: 149.0,
+    CHF: 0.88,
+    AUD: 1.52,
+    CNY: 7.24,
+    INR: 83.0,
+    MXN: 17.0,
+    BRL: 4.95,
+  };
+
+  function convertCurrency(
+    amount: number,
+    fromCurrency: string,
+    toCurrency: string
+  ): number {
+    if (!fromCurrency || !toCurrency || fromCurrency === toCurrency)
+      return amount;
+    if (!EXCHANGE_RATES[fromCurrency] || !EXCHANGE_RATES[toCurrency])
+      return amount;
+    const amountInUSD = amount / EXCHANGE_RATES[fromCurrency];
+    return amountInUSD * EXCHANGE_RATES[toCurrency];
   }
 
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close()
-  })
+  // Handle currency change - convert amount
+  const currencySelectEl = modal.querySelector(
+    "#edit-currency"
+  ) as HTMLSelectElement;
+  const amountInputEl = modal.querySelector("#edit-amount") as HTMLInputElement;
+  let originalCurrency = formData.currency;
+  let originalAmount = parseFloat(formData.amount) || 0;
 
-  const closeBtn = modal.querySelector('#modal-close')
-  const cancelBtn = modal.querySelector('#modal-cancel')
-  if (closeBtn) closeBtn.addEventListener('click', close)
-  if (cancelBtn) cancelBtn.addEventListener('click', close)
+  if (currencySelectEl && amountInputEl) {
+    currencySelectEl.addEventListener("change", () => {
+      const newCurrency = currencySelectEl.value;
+      if (newCurrency !== originalCurrency && originalAmount > 0) {
+        const convertedAmount = convertCurrency(
+          originalAmount,
+          originalCurrency,
+          newCurrency
+        );
+        amountInputEl.value = convertedAmount.toFixed(2);
+        originalAmount = convertedAmount;
+        originalCurrency = newCurrency;
+      }
+    });
+  }
 
   // Form submission
-  const form = modal.querySelector('#income-edit-form') as HTMLFormElement
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    
-    const dateInput = modal.querySelector('#edit-date') as HTMLInputElement
-    const sourceInput = modal.querySelector('#edit-source') as HTMLInputElement
-    const amountInput = modal.querySelector('#edit-amount') as HTMLInputElement
-    const currencySelect = modal.querySelector('#edit-currency') as HTMLSelectElement
+  const form = modal.querySelector("#income-edit-form") as HTMLFormElement;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const dateInput = modal.querySelector("#edit-date") as HTMLInputElement;
+    const sourceInput = modal.querySelector("#edit-source") as HTMLInputElement;
+    const amountInput = modal.querySelector("#edit-amount") as HTMLInputElement;
+    const currencySelect = modal.querySelector(
+      "#edit-currency"
+    ) as HTMLSelectElement;
 
     const updatedData: IncomeEditData = {
       id: income.id,
       dateISO: dateInput.value,
       source: sourceInput.value,
       amount: parseFloat(amountInput.value),
-      currency: currencySelect.value
-    }
+      currency: currencySelect.value,
+    };
 
-    const saveBtn = modal.querySelector('#modal-save') as HTMLButtonElement
-    saveBtn.disabled = true
-    saveBtn.textContent = 'Saving...'
+    const saveBtn = modal.querySelector("#modal-save") as HTMLButtonElement;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
 
     try {
-      await onSave(updatedData)
-      close()
+      await onSave(updatedData);
+      close();
     } catch (error) {
-      console.error('Error saving income:', error)
-      alert('Failed to save income. Please try again.')
-      saveBtn.disabled = false
-      saveBtn.textContent = 'Save Changes'
+      console.error("Error saving income:", error);
+      alert("Failed to save income. Please try again.");
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Changes";
     }
-  })
+  });
 }
 
 function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
-

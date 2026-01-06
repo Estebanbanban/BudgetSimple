@@ -81,10 +81,11 @@ export default function MilestoneWidget() {
     )
   }
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     ahead: 'Ahead of schedule',
     on_track: 'On track',
-    behind: 'Behind schedule'
+    behind: 'Behind schedule',
+    no_data: 'No data'
   }
 
   const statusColors = {
@@ -153,7 +154,7 @@ export default function MilestoneWidget() {
             borderRadius: '50%',
             backgroundColor: statusColor
           }} />
-          {statusLabels[progress.status]}
+          {statusLabels[progress.status] || 'Unknown'}
         </span>
         {progress.etaDate && (
           <span>ETA: {formatDate(progress.etaDate)}</span>

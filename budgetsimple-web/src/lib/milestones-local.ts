@@ -215,7 +215,28 @@ function calculateCurrentValue(milestone: Milestone, transactions: any[], income
  */
 export async function calculateMilestoneProgress(milestone: Milestone): Promise<MilestoneProgress | null> {
   const { transactions, income } = getFinancialData()
-  const currentValue = calculateCurrentValue(milestone, transactions, income)
+  
+  // Get saved net worth if available (for net_worth milestones)
+  let savedNetWorth: number | undefined
+  if (typeof window !== 'undefined') {
+    try {
+      const CONFIG_KEY = "budgetsimple:v1"
+      const raw = localStorage.getItem(CONFIG_KEY)
+      if (raw) {
+        const config = JSON.parse(raw)
+        savedNetWorth = config?.settings?.netWorthManual
+      }
+    } catch (error) {
+      // Ignore
+    }
+  }
+  
+  // Use saved net worth for net_worth milestones if available
+  let currentValue = calculateCurrentValue(milestone, transactions, income)
+  if (milestone.type === 'net_worth' && savedNetWorth !== undefined) {
+    currentValue = savedNetWorth
+  }
+  
   const targetValue = milestone.target_value
   const progressPercent = targetValue > 0 ? Math.min(100, (currentValue / targetValue) * 100) : 0
   const remaining = Math.max(0, targetValue - currentValue)
@@ -231,15 +252,15 @@ export async function calculateMilestoneProgress(milestone: Milestone): Promise<
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
     
     const recentIncome = income
-      .filter(i => new Date(i.dateISO || i.date) >= threeMonthsAgo)
-      .reduce((sum, i) => sum + (i.amount || 0), 0)
+      .filter((i: any) => new Date(i.dateISO || i.date) >= threeMonthsAgo)
+      .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
     
     const recentExpenses = transactions
-      .filter(t => {
+      .filter((t: any) => {
         const date = new Date(t.dateISO || t.date)
         return date >= threeMonthsAgo && (t.type === 'expense' || (t.amount && t.amount < 0))
       })
-      .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+      .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
     
     const monthlyPace = (recentIncome - recentExpenses) / 3 // Average over 3 months
     
@@ -280,6 +301,21 @@ export async function calculateMilestoneProgress(milestone: Milestone): Promise<
     etaDate,
     status
   }
+}
+
+/**
+ * Get a specific milestone by ID
+ */
+export async function getMilestone(id: string): Promise<Milestone | null> {
+  const milestones = await getMilestones()
+  return milestones.find(m => m.id === id) || null
+}
+
+/**
+ * Get progress for a specific milestone
+ */
+export async function getMilestoneProgress(milestone: Milestone): Promise<MilestoneProgress | null> {
+  return await calculateMilestoneProgress(milestone)
 }
 
 /**

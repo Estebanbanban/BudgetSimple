@@ -16,6 +16,7 @@ interface SubscriptionCandidate {
   occurrenceCount: number
   averageAmount: number
   variancePercentage: number
+  detectionMethod?: 'category' | 'known_subscription' | 'recurrence' | 'fallback'
 }
 
 export default function SubscriptionsPage() {
@@ -116,6 +117,14 @@ export default function SubscriptionsPage() {
   }
 
   const handleConfirm = async (id: string) => {
+    // Local-first mode: just remove from local state
+    if (!USE_BACKEND_SUBSCRIPTIONS) {
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
+      return
+    }
+
+    // Backend mode: call API
     try {
       const response = await fetch(`${API_BASE}/api/subscriptions/${id}/confirm`, {
         method: 'PATCH',
@@ -128,10 +137,21 @@ export default function SubscriptionsPage() {
       }
     } catch (error) {
       console.error('Error confirming subscription:', error)
+      // Fall back to local removal
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
     }
   }
 
   const handleReject = async (id: string) => {
+    // Local-first mode: just remove from local state
+    if (!USE_BACKEND_SUBSCRIPTIONS) {
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
+      return
+    }
+
+    // Backend mode: call API
     try {
       const response = await fetch(`${API_BASE}/api/subscriptions/${id}/reject`, {
         method: 'PATCH',
@@ -144,6 +164,45 @@ export default function SubscriptionsPage() {
       }
     } catch (error) {
       console.error('Error rejecting subscription:', error)
+      // Fall back to local removal
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
+    }
+  }
+
+  const handleDelete = async (id: string, merchant: string) => {
+    if (!confirm(`Are you sure you want to delete the subscription "${merchant}"? This action cannot be undone.`)) {
+      return
+    }
+
+    // Local-first mode: just remove from local state
+    if (!USE_BACKEND_SUBSCRIPTIONS) {
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
+      return
+    }
+
+    // Backend mode: call API
+    try {
+      const response = await fetch(`${API_BASE}/api/subscriptions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'demo-user' })
+      })
+
+      if (response.ok) {
+        await loadCandidates()
+        setSelectedCandidate(null)
+      } else {
+        // If DELETE fails, try reject as fallback
+        await handleReject(id)
+      }
+    } catch (error) {
+      console.error('Error deleting subscription:', error)
+      // If API fails, fall back to removing from local state
+      setCandidates(candidates.filter(c => c.id !== id))
+      setSelectedCandidate(null)
+      alert('Failed to delete subscription from backend, but removed from local view.')
     }
   }
 
@@ -379,8 +438,8 @@ export default function SubscriptionsPage() {
                   {detectionMessage}
                 </div>
               )}
-              <div className="table-wrap" style={{ overflowX: 'auto', width: '100%' }}>
-                <table className="table" style={{ minWidth: '600px', width: '100%' }}>
+              <div className="table-wrap" style={{ overflowX: 'auto', width: '100%', maxWidth: '100%' }}>
+                <table className="table" style={{ minWidth: '600px', width: '100%', tableLayout: 'auto' }}>
                   <thead>
                     <tr>
                       <th style={{ minWidth: '150px' }}>Merchant</th>
@@ -434,6 +493,14 @@ export default function SubscriptionsPage() {
                             >
                               Reject
                             </button>
+                            <button
+                              className="btn btn-sm btn-quiet"
+                              onClick={() => handleDelete(candidate.id, candidate.merchant)}
+                              title="Delete this subscription"
+                              style={{ fontSize: '12px', padding: '4px 8px', color: '#e5484d' }}
+                            >
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -465,6 +532,7 @@ export default function SubscriptionsPage() {
                   onUpdate={(updates) => handleUpdate(selectedCandidate.id, updates)}
                   onConfirm={() => handleConfirm(selectedCandidate.id)}
                   onReject={() => handleReject(selectedCandidate.id)}
+                  onDelete={() => handleDelete(selectedCandidate.id, selectedCandidate.merchant)}
                 />
               </div>
             </section>
@@ -489,12 +557,14 @@ function SubscriptionDetail({
   candidate,
   onUpdate,
   onConfirm,
-  onReject
+  onReject,
+  onDelete
 }: {
   candidate: SubscriptionCandidate
   onUpdate: (updates: Partial<SubscriptionCandidate>) => void
   onConfirm: () => void
   onReject: () => void
+  onDelete: () => void
 }) {
   const [merchant, setMerchant] = useState(candidate.merchant)
   const [amount, setAmount] = useState(candidate.estimatedMonthlyAmount)
@@ -559,6 +629,13 @@ function SubscriptionDetail({
           </button>
           <button className="btn btn-quiet" onClick={onReject}>
             Reject
+          </button>
+          <button 
+            className="btn btn-quiet" 
+            onClick={onDelete}
+            style={{ color: '#e5484d' }}
+          >
+            Delete
           </button>
         </div>
       </div>

@@ -16,8 +16,8 @@
   --control-border: rgba(17, 18, 22, 0.14);
   --control-text: rgba(17, 18, 22, 0.92);
   --space: 14px;
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 .nav-item {
@@ -47,9 +47,21 @@ body {
   padding: 0;
   font-family: var(--font);
   color: var(--text);
-  background: radial-gradient(1400px 900px at 20% -10%, rgba(31, 111, 235, 0.045), transparent 60%),
-    radial-gradient(1200px 900px at 85% 0%, rgba(18, 185, 129, 0.045), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(250, 250, 250, 0.0) 38%),
+  background: radial-gradient(
+      1400px 900px at 20% -10%,
+      rgba(31, 111, 235, 0.045),
+      transparent 60%
+    ),
+    radial-gradient(
+      1200px 900px at 85% 0%,
+      rgba(18, 185, 129, 0.045),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(250, 250, 250, 0) 38%
+    ),
     var(--bg);
   box-sizing: border-box;
 }
@@ -173,7 +185,7 @@ body {
 
 .icon-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.10);
+  box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.1);
 }
 
 .icon-btn svg {
@@ -207,7 +219,7 @@ body {
   height: calc(100vh - 92px);
   overflow: visible;
   border-right: 1px solid rgba(17, 18, 22, 0.06);
-  background: rgba(250, 250, 250, 0.20);
+  background: rgba(250, 250, 250, 0.2);
   z-index: 6;
 }
 
@@ -234,7 +246,7 @@ body {
   border-radius: 999px;
   border: 1px solid var(--control-border);
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 24px rgba(17, 18, 22, 0.10);
+  box-shadow: 0 10px 24px rgba(17, 18, 22, 0.1);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -247,7 +259,8 @@ body {
 
 .nav-edge-toggle:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.10), 0 10px 24px rgba(17, 18, 22, 0.10);
+  box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.1),
+    0 10px 24px rgba(17, 18, 22, 0.1);
 }
 
 .nav-edge-ico {
@@ -641,7 +654,11 @@ body.nav-collapsed .nav-label {
 
 .select {
   padding-right: 34px;
-  background-image: linear-gradient(45deg, transparent 50%, rgba(17, 18, 22, 0.62) 50%),
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      rgba(17, 18, 22, 0.62) 50%
+    ),
     linear-gradient(135deg, rgba(17, 18, 22, 0.62) 50%, transparent 50%),
     linear-gradient(to right, transparent, transparent);
   background-position: calc(100% - 18px) 15px, calc(100% - 13px) 15px, 0 0;
@@ -696,6 +713,13 @@ body.nav-collapsed .nav-label {
   color: rgba(17, 18, 22, 0.4);
 }
 
+/* Ensure buttons never have underlines */
+.btn,
+button.btn,
+a.btn {
+  text-decoration: none !important;
+}
+
 .btn-accent {
   border-color: rgba(31, 111, 235, 0.24);
   background: rgba(31, 111, 235, 0.92);
@@ -707,7 +731,7 @@ body.nav-collapsed .nav-label {
 }
 
 .btn-accent:disabled {
-  background: rgba(31, 111, 235, 0.30);
+  background: rgba(31, 111, 235, 0.3);
   color: rgba(255, 255, 255, 0.72);
 }
 
@@ -732,7 +756,8 @@ body.nav-collapsed .nav-label {
 }
 
 .btn-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  opacity: 0.8;
 }
 
 .text-danger {
@@ -775,13 +800,13 @@ body.nav-collapsed .nav-label {
   flex-wrap: wrap;
 }
 
-.row>.input,
-.row>.select {
+.row > .input,
+.row > .select {
   flex: 1 1 240px;
   max-width: none;
 }
 
-.row>.btn {
+.row > .btn {
   flex: 0 0 auto;
 }
 
@@ -841,7 +866,7 @@ body.nav-collapsed .nav-label {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(17, 18, 22, 0.10);
+  border: 1px solid rgba(17, 18, 22, 0.1);
   background: rgba(255, 255, 255, 0.86);
   color: rgba(17, 18, 22, 0.82);
   font-size: 12px;
@@ -858,14 +883,15 @@ body.nav-collapsed .nav-label {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(17, 18, 22, 0.30);
+  background: rgba(17, 18, 22, 0.3);
 }
 
 .panel-body {
-  padding: 16px;
+  padding: 1.25rem; /* p-5 equivalent */
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 1rem; /* space-y-4 equivalent */
   min-height: 0;
 }
 
@@ -885,7 +911,7 @@ body.nav-collapsed .nav-label {
   scroll-margin-top: 90px;
 }
 
-.view>.panel {
+.view > .panel {
   margin-bottom: var(--space);
 }
 
@@ -943,14 +969,14 @@ body.nav-collapsed .nav-label {
 .ring.ring-lg {
   width: 110px;
   height: 110px;
-  box-shadow: 0 18px 42px rgba(17, 18, 22, 0.10);
+  box-shadow: 0 18px 42px rgba(17, 18, 22, 0.1);
 }
 
 .ring.ring-lg::after {
   inset: 10px;
 }
 
-.ring.ring-lg>span {
+.ring.ring-lg > span {
   font-size: 18px;
   font-weight: 850;
   letter-spacing: -0.02em;
@@ -997,7 +1023,10 @@ body.nav-collapsed .nav-label {
   width: 46px;
   height: 46px;
   border-radius: 999px;
-  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(17, 18, 22, 0.10) 0);
+  background: conic-gradient(
+    var(--c) calc(var(--p) * 1%),
+    rgba(17, 18, 22, 0.1) 0
+  );
   position: relative;
   flex: 0 0 auto;
 }
@@ -1011,7 +1040,7 @@ body.nav-collapsed .nav-label {
   border: 1px solid rgba(17, 18, 22, 0.08);
 }
 
-.ring>span {
+.ring > span {
   position: absolute;
   inset: 0;
   display: grid;
@@ -1023,7 +1052,8 @@ body.nav-collapsed .nav-label {
 }
 
 .ring.is-gold {
-  box-shadow: 0 10px 24px rgba(246, 196, 69, 0.28), 0 0 0 6px rgba(246, 196, 69, 0.10);
+  box-shadow: 0 10px 24px rgba(246, 196, 69, 0.28),
+    0 0 0 6px rgba(246, 196, 69, 0.1);
 }
 
 .ring.is-gold::before {
@@ -1031,11 +1061,26 @@ body.nav-collapsed .nav-label {
   position: absolute;
   inset: -10px;
   border-radius: 999px;
-  background:
-    radial-gradient(6px 6px at 25% 25%, rgba(246, 196, 69, 0.95), transparent 60%),
-    radial-gradient(5px 5px at 72% 18%, rgba(255, 255, 255, 0.9), transparent 60%),
-    radial-gradient(4px 4px at 82% 72%, rgba(246, 196, 69, 0.75), transparent 60%),
-    radial-gradient(3px 3px at 18% 78%, rgba(255, 255, 255, 0.7), transparent 60%);
+  background: radial-gradient(
+      6px 6px at 25% 25%,
+      rgba(246, 196, 69, 0.95),
+      transparent 60%
+    ),
+    radial-gradient(
+      5px 5px at 72% 18%,
+      rgba(255, 255, 255, 0.9),
+      transparent 60%
+    ),
+    radial-gradient(
+      4px 4px at 82% 72%,
+      rgba(246, 196, 69, 0.75),
+      transparent 60%
+    ),
+    radial-gradient(
+      3px 3px at 18% 78%,
+      rgba(255, 255, 255, 0.7),
+      transparent 60%
+    );
   opacity: 0.85;
   filter: blur(0.2px);
   animation: sparkle 2.2s ease-in-out infinite;
@@ -1110,24 +1155,29 @@ body.nav-collapsed .nav-label {
 
 .action-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(17, 18, 22, 0.08);
-  background: rgba(255, 255, 255, 0.7);
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  margin-bottom: 12px;
 }
 
 .action-title {
-  font-weight: 650;
+  font-weight: 700;
+  font-size: 16px;
   letter-spacing: -0.01em;
+  margin-bottom: 6px;
+  color: #1f2933;
 }
 
 .action-sub {
   margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
 }
 
 .envelopes-hero {
@@ -1165,7 +1215,7 @@ body.nav-collapsed .nav-label {
 .envelope-inline-create {
   grid-column: 1 / -1;
   border-radius: 18px;
-  border: 1px solid rgba(17, 18, 22, 0.10);
+  border: 1px solid rgba(17, 18, 22, 0.1);
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 20px 60px rgba(17, 18, 22, 0.08);
   padding: 14px;
@@ -1209,7 +1259,7 @@ body.nav-collapsed .nav-label {
 
 .envelope-card {
   border-radius: 18px;
-  border: 1px solid rgba(17, 18, 22, 0.10);
+  border: 1px solid rgba(17, 18, 22, 0.1);
   background: rgba(255, 255, 255, 0.72);
   padding: 14px;
   box-shadow: 0 18px 60px rgba(17, 18, 22, 0.08);
@@ -1252,7 +1302,7 @@ body.nav-collapsed .nav-label {
   inset: 7px;
 }
 
-.ring.ring-md>span {
+.ring.ring-md > span {
   font-size: 12px;
   font-weight: 850;
 }
@@ -1378,7 +1428,7 @@ body.nav-collapsed .nav-label {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto auto !important;
   }
-  
+
   .cashflow-details-panel {
     margin-top: 24px;
   }
@@ -1413,10 +1463,18 @@ body.nav-collapsed .nav-label {
   position: relative;
   width: min(820px, calc(100vw - 24px));
   margin: 70px auto;
-  background: radial-gradient(900px 260px at 10% 0%, rgba(31, 111, 235, 0.10), transparent 55%),
-    radial-gradient(900px 260px at 90% 0%, rgba(18, 185, 129, 0.10), transparent 55%),
+  background: radial-gradient(
+      900px 260px at 10% 0%,
+      rgba(31, 111, 235, 0.1),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 260px at 90% 0%,
+      rgba(18, 185, 129, 0.1),
+      transparent 55%
+    ),
     rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(17, 18, 22, 0.10);
+  border: 1px solid rgba(17, 18, 22, 0.1);
   box-shadow: 0 40px 120px rgba(0, 0, 0, 0.25);
   border-radius: 18px;
   overflow: hidden;
@@ -1459,7 +1517,7 @@ body.nav-collapsed .nav-label {
 }
 
 .onboard-step {
-  border: 1px solid rgba(17, 18, 22, 0.10);
+  border: 1px solid rgba(17, 18, 22, 0.1);
   border-radius: 14px;
   padding: 12px;
   background: rgba(255, 255, 255, 0.85);
@@ -1546,6 +1604,19 @@ body.nav-collapsed .nav-label {
   font-size: 13px;
 }
 
+.table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.table tbody tr[data-category],
+.table tbody tr[data-merchant] {
+  cursor: pointer;
+}
+
 .table th,
 .table td {
   padding: 10px 10px;
@@ -1626,18 +1697,30 @@ body.nav-collapsed .nav-label {
   overflow: hidden;
 }
 
-.budget-bar>div {
+.budget-bar > div {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, rgba(18, 185, 129, 0.95), rgba(31, 111, 235, 0.95));
+  background: linear-gradient(
+    90deg,
+    rgba(18, 185, 129, 0.95),
+    rgba(31, 111, 235, 0.95)
+  );
 }
 
-.budget-item.is-warn .budget-bar>div {
-  background: linear-gradient(90deg, rgba(244, 183, 64, 0.95), rgba(31, 111, 235, 0.9));
+.budget-item.is-warn .budget-bar > div {
+  background: linear-gradient(
+    90deg,
+    rgba(244, 183, 64, 0.95),
+    rgba(31, 111, 235, 0.9)
+  );
 }
 
-.budget-item.is-over .budget-bar>div {
-  background: linear-gradient(90deg, rgba(229, 72, 77, 0.95), rgba(244, 183, 64, 0.95));
+.budget-item.is-over .budget-bar > div {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 72, 77, 0.95),
+    rgba(244, 183, 64, 0.95)
+  );
 }
 
 .table-actions {
@@ -1679,7 +1762,8 @@ body.nav-collapsed .nav-label {
 
 .footer-link:hover {
   color: rgba(17, 18, 22, 0.92);
-  text-decoration: underline;
+  text-decoration: none;
+  opacity: 0.9;
 }
 
 .pulse {
@@ -1688,15 +1772,15 @@ body.nav-collapsed .nav-label {
 
 @keyframes pulseRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.0);
+    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
   }
 
   20% {
-    box-shadow: 0 0 0 6px rgba(31, 111, 235, 0.10);
+    box-shadow: 0 0 0 6px rgba(31, 111, 235, 0.1);
   }
 
   100% {
-    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.0);
+    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
   }
 }
 

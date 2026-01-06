@@ -7,6 +7,7 @@
 **Symptom:** Console shows "Failed to fetch" when loading milestones, subscriptions, or other API data.
 
 **Causes:**
+
 1. Backend server not running
 2. Backend server crashed
 3. CORS configuration issue
@@ -15,19 +16,23 @@
 **Solutions:**
 
 1. **Check if backend is running:**
+
    ```bash
    cd budgetsimple-api
    npm run dev
    ```
+
    The backend should start on `http://localhost:3001`
 
 2. **Check backend logs:**
    Look for errors in the terminal where the backend is running.
 
 3. **Verify API endpoint:**
+
    ```bash
    curl http://localhost:3001/api/milestones/next?userId=demo-user
    ```
+
    Should return JSON (even if empty).
 
 4. **Check CORS:**
@@ -42,6 +47,7 @@
 **Symptom:** Milestone widget shows "No milestones yet" even after creating them.
 
 **Causes:**
+
 1. Database not connected
 2. Migrations not run
 3. RLS policies blocking access
@@ -50,16 +56,19 @@
 **Solutions:**
 
 1. **Run database migrations:**
+
    ```bash
    # In Supabase dashboard, run:
    # budgetsimple-api/migrations/002_create_milestones_tables.sql
    ```
 
 2. **Check Supabase connection:**
+
    - Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set
    - Check backend logs for connection errors
 
 3. **Verify RLS policies:**
+
    - Ensure policies allow `demo-user` access (for development)
    - Or use real auth with proper user IDs
 
@@ -72,6 +81,7 @@
 **Symptom:** "No subscription patterns detected" even with subscription data.
 
 **Causes:**
+
 1. No transactions in date range
 2. Transactions not marked as expenses
 3. Detection algorithm too strict
@@ -80,15 +90,18 @@
 **Solutions:**
 
 1. **Check transaction data:**
+
    - Verify transactions exist in database
    - Check date range covers transaction dates
    - Ensure transactions have `type='expense'` or `amount < 0`
 
 2. **Check detection logs:**
+
    - Backend logs show detection process
    - Look for "No transactions found" messages
 
 3. **Test with debug endpoint:**
+
    ```bash
    curl http://localhost:3001/api/subscriptions/debug?userId=demo-user
    ```
@@ -102,6 +115,7 @@
 **Symptom:** Backend logs show Supabase connection errors.
 
 **Causes:**
+
 1. Missing environment variables
 2. Invalid Supabase credentials
 3. Network issues
@@ -110,6 +124,7 @@
 **Solutions:**
 
 1. **Check environment variables:**
+
    ```bash
    # In budgetsimple-api/.env or environment
    SUPABASE_URL=https://your-project.supabase.co
@@ -117,6 +132,7 @@
    ```
 
 2. **Verify Supabase project:**
+
    - Check project is active in Supabase dashboard
    - Verify URL and keys are correct
 
@@ -132,6 +148,7 @@
 **Symptom:** `npm run build` or `npm run dev` fails.
 
 **Causes:**
+
 1. TypeScript errors
 2. Missing dependencies
 3. Environment variable issues
@@ -139,12 +156,14 @@
 **Solutions:**
 
 1. **Install dependencies:**
+
    ```bash
    cd budgetsimple-web
    npm install
    ```
 
 2. **Check TypeScript errors:**
+
    ```bash
    npm run type-check
    ```
@@ -157,6 +176,7 @@
 **Symptom:** Browser console shows CORS policy errors.
 
 **Causes:**
+
 1. Backend CORS not configured
 2. Frontend URL not in allowed origins
 3. Credentials not handled correctly
@@ -164,6 +184,7 @@
 **Solutions:**
 
 1. **Check CORS configuration:**
+
    - See `budgetsimple-api/plugins/cors.js`
    - Ensure frontend URL is in allowed origins
 
@@ -187,4 +208,3 @@
 3. Verify environment variables are set
 4. Test API endpoints directly with curl
 5. Check Supabase dashboard for database issues
-

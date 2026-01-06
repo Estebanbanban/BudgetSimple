@@ -3,6 +3,7 @@
 ## Quick Setup: Personal Access Token
 
 ### Step 1: Generate Token
+
 1. Go to: https://github.com/settings/tokens
 2. Click **"Generate new token"** → **"Generate new token (classic)"**
 3. Fill in:
@@ -15,6 +16,7 @@
 ### Step 2: Push Using Token
 
 When you run `git push`, you'll be prompted:
+
 - **Username:** `Estebanbanban`
 - **Password:** [paste your token here] ← NOT your GitHub password!
 
@@ -35,6 +37,7 @@ git push -u origin main
 ## Alternative: SSH Setup (For Frequent Use)
 
 ### Step 1: Generate SSH Key
+
 ```bash
 ssh-keygen -t ed25519 -C "your_email@example.com"
 # Press Enter to accept default location
@@ -42,6 +45,7 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 ```
 
 ### Step 2: Add to GitHub
+
 ```bash
 # Copy your public key
 cat ~/.ssh/id_ed25519.pub
@@ -49,6 +53,7 @@ cat ~/.ssh/id_ed25519.pub
 ```
 
 Then:
+
 1. Go to: https://github.com/settings/keys
 2. Click **"New SSH key"**
 3. Title: "MacBook - BudgetSimple"
@@ -56,6 +61,7 @@ Then:
 5. Click **"Add SSH key"**
 
 ### Step 3: Switch to SSH URL
+
 ```bash
 git remote set-url origin git@github.com:Estebanbanban/BudgetSimple.git
 git push -u origin main
@@ -66,11 +72,13 @@ git push -u origin main
 ## Quick Test
 
 After setup, verify:
+
 ```bash
 git push -u origin main
 ```
 
 If successful, you'll see:
+
 ```
 Enumerating objects: 812, done.
 Counting objects: 100% (812/812), done.
@@ -79,4 +87,3 @@ To https://github.com/Estebanbanban/BudgetSimple.git
  * [new branch]      main -> main
 Branch 'main' set up to track remote branch 'main' from 'origin'.
 ```
-

@@ -192,20 +192,28 @@ export function calculateSensitivity(
 
 /**
  * Generate multiple projection curves (base, conservative, aggressive)
+ * Conservative: 4% return (or base - 30% if base is lower), -20% contribution
+ * Aggressive: 9% return (or base + 30% if base is higher), +20% contribution
  */
 export function generateProjectionCurves(
   inputs: ProjectionInputs
 ): ProjectionCurve[] {
   const base = projectNetWorth(inputs);
 
+  // Conservative: 4% annual return (0.04), -20% contribution
+  const conservativeReturn = 0.04;
   const conservative = projectNetWorth({
     ...inputs,
-    annualReturn: Math.max(0.02, inputs.annualReturn - 0.02), // 2% lower
+    annualReturn: conservativeReturn,
+    monthlyContribution: inputs.monthlyContribution * 0.8, // -20%
   });
 
+  // Aggressive: 9% annual return (0.09), +20% contribution
+  const aggressiveReturn = 0.09;
   const aggressive = projectNetWorth({
     ...inputs,
-    annualReturn: inputs.annualReturn + 0.02, // 2% higher
+    annualReturn: aggressiveReturn,
+    monthlyContribution: inputs.monthlyContribution * 1.2, // +20%
   });
 
   return [

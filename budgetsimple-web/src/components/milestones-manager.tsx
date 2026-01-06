@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   getMilestones,
   createMilestone,
@@ -18,6 +20,7 @@ export interface MilestonesManagerRef {
 }
 
 const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
+  const router = useRouter();
   const [showAddForm, setShowAddForm] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -167,9 +170,19 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                       <tr
                         key={milestone.id}
                         style={{ cursor: "pointer" }}
-                        onClick={() =>
-                          (window.location.href = `/plan/milestone/${milestone.id}`)
-                        }
+                        onClick={(e) => {
+                          // Don't navigate if clicking on action buttons
+                          const target = e.target as HTMLElement;
+                          if (
+                            target.closest("button") ||
+                            target.closest("a") ||
+                            target.tagName === "BUTTON" ||
+                            target.tagName === "A"
+                          ) {
+                            return;
+                          }
+                          router.push(`/plan/milestone/${milestone.id}`);
+                        }}
                       >
                         <td style={{ fontWeight: "500" }}>{milestone.label}</td>
                         <td>{formatCurrency(milestone.target_value)}</td>
@@ -246,18 +259,21 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                             </span>
                           )}
                         </td>
-                        <td>
+                        <td onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: "flex", gap: "4px" }}>
-                            <a
+                            <Link
                               href={`/plan/milestone/${milestone.id}`}
                               className="btn btn-sm"
                               style={{ textDecoration: "none" }}
                             >
                               See more
-                            </a>
+                            </Link>
                             <button
                               className="btn btn-sm btn-quiet"
-                              onClick={() => startEdit(milestone)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEdit(milestone);
+                              }}
                               data-milestone-edit={milestone.id}
                               style={{ textDecoration: "none" }}
                             >
@@ -265,7 +281,10 @@ const MilestonesManager = forwardRef<MilestonesManagerRef>((props, ref) => {
                             </button>
                             <button
                               className="btn btn-sm btn-quiet"
-                              onClick={() => handleDelete(milestone.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(milestone.id);
+                              }}
                               style={{ textDecoration: "none" }}
                             >
                               Delete

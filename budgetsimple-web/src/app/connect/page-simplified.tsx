@@ -50,19 +50,16 @@ export default function ConnectPage() {
             </div>
             <div className="panel-body onboard-panel-body">
               <div className="dropzone" id="txDropzone" role="button" tabIndex={0} aria-label="Upload transactions CSV">
-                <div className="dropzone-title">Drop your transactions CSV files here</div>
+                <div className="dropzone-title">Drop your transactions CSV here</div>
                 <div className="dropzone-sub muted">or</div>
                 <div className="row">
-                  <input id="txCsvFile" className="input" type="file" accept=".csv,text/csv" multiple hidden />
+                  <input id="txCsvFile" className="input" type="file" accept=".csv,text/csv" hidden />
                   <button className="btn" id="btnChooseTxCsv" type="button">
-                    Choose CSV files
+                    Choose CSV
                   </button>
                   <span className="small muted" id="txAnalyzing" hidden>
                     Analyzing...
                   </span>
-                </div>
-                <div className="small muted" style={{ marginTop: '8px' }}>
-                  You can select multiple CSV files to import at once
                 </div>
               </div>
               <div className="small muted" id="txFileNote" />
@@ -183,37 +180,39 @@ export default function ConnectPage() {
             <div className="panel-head">
               <div>
                 <div className="panel-title">Set your rent</div>
-                <div className="panel-sub">Add rent periods with date ranges (e.g., last month $1175, this month no rent)</div>
+                <div className="panel-sub">Monthly rent amount and payment date</div>
               </div>
             </div>
             <div className="panel-body onboard-panel-body">
-              <div id="onboardRentPeriods" style={{ marginBottom: '16px', minHeight: '120px', position: 'relative', zIndex: 1 }}>
-                {/* Rent periods will be added here dynamically */}
+              <div className="row row-gap">
+                <div>
+                  <label className="label">Monthly rent amount</label>
+                  <input id="importRentAmount" className="input" type="number" step="0.01" placeholder="e.g., 1200" />
+                </div>
+                <div>
+                  <label className="label">Pay day (1-28)</label>
+                  <input id="importRentPayDay" className="input" type="number" min="1" max="28" placeholder="1" defaultValue="1" />
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button className="btn btn-quiet" id="btnAddRentPeriod" type="button" style={{ textDecoration: 'none', cursor: 'pointer', padding: '10px 16px', fontSize: '14px', fontWeight: '500', border: '1px solid #d1d5db', borderRadius: '6px', background: 'white' }}>
-                  + Add Rent Period
+              <div className="row" style={{ marginTop: '12px' }}>
+                <button className="btn" id="btnSaveRentFromImport" type="button">
+                  Save rent
                 </button>
-                <button className="btn btn-accent" id="btnSaveRentFromImport" type="button" style={{ textDecoration: 'none', cursor: 'pointer', padding: '10px 20px', fontSize: '14px', fontWeight: '500', borderRadius: '6px', background: '#3b82f6', color: 'white', border: 'none' }}>
-                  Save rent periods
-                </button>
+                <div className="small muted" id="importRentSavedNote" />
               </div>
-              <div className="small muted" id="importRentSavedNote" style={{ marginBottom: '8px', minHeight: '18px', fontSize: '12px' }} />
-              <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.5' }}>
-                💡 Add multiple periods to handle lease changes or months without rent. Set an end date to stop rent automatically.
+              <div className="panel-note" style={{ marginTop: '12px' }}>
+                You can edit rent periods with date ranges later. This sets your default monthly rent.
               </div>
             </div>
-            <div className="onboard-actions" data-onboard-actions="rent" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '16px', borderTop: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-quiet" type="button" data-onboard-back style={{ textDecoration: 'none' }}>
-                  Back
-                </button>
-                <button className="btn btn-quiet" type="button" data-onboard-skip style={{ textDecoration: 'none' }}>
-                  Skip
-                </button>
-              </div>
-              <button className="btn btn-accent" type="button" data-onboard-next style={{ textDecoration: 'none' }}>
+            <div className="onboard-actions" data-onboard-actions="rent">
+              <button className="btn btn-quiet" type="button" data-onboard-back>
+                Back
+              </button>
+              <button className="btn" type="button" data-onboard-next>
                 Next
+              </button>
+              <button className="btn btn-quiet" type="button" data-onboard-skip>
+                Skip
               </button>
             </div>
           </section>

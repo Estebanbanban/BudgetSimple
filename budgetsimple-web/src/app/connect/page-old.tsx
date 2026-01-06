@@ -5,7 +5,7 @@ export default function ConnectPage() {
         <div>
           <h1>Connect / Import</h1>
           <p className="muted">
-            A guided flow to import CSVs, set rent, add salary, and review your data.
+            A guided flow to import CSVs, confirm accounts, review merchants, and land on a useful dashboard.
           </p>
         </div>
       </div>
@@ -50,19 +50,16 @@ export default function ConnectPage() {
             </div>
             <div className="panel-body onboard-panel-body">
               <div className="dropzone" id="txDropzone" role="button" tabIndex={0} aria-label="Upload transactions CSV">
-                <div className="dropzone-title">Drop your transactions CSV files here</div>
+                <div className="dropzone-title">Drop your transactions CSV here</div>
                 <div className="dropzone-sub muted">or</div>
                 <div className="row">
-                  <input id="txCsvFile" className="input" type="file" accept=".csv,text/csv" multiple hidden />
+                  <input id="txCsvFile" className="input" type="file" accept=".csv,text/csv" hidden />
                   <button className="btn" id="btnChooseTxCsv" type="button">
-                    Choose CSV files
+                    Choose CSV
                   </button>
                   <span className="small muted" id="txAnalyzing" hidden>
                     Analyzing...
                   </span>
-                </div>
-                <div className="small muted" style={{ marginTop: '8px' }}>
-                  You can select multiple CSV files to import at once
                 </div>
               </div>
               <div className="small muted" id="txFileNote" />
@@ -179,53 +176,34 @@ export default function ConnectPage() {
             </div>
           </section>
 
-          <section className="panel onboard-panel" data-step="rent">
+          <section className="panel onboard-panel" data-step="accounts">
             <div className="panel-head">
               <div>
-                <div className="panel-title">Set your rent</div>
-                <div className="panel-sub">Add rent periods with date ranges (e.g., last month $1175, this month no rent)</div>
+                <div className="panel-title">Confirm accounts + income</div>
+                <div className="panel-sub">Add accounts and income sources before insights.</div>
               </div>
             </div>
             <div className="panel-body onboard-panel-body">
-              <div id="onboardRentPeriods" style={{ marginBottom: '16px', minHeight: '120px', position: 'relative', zIndex: 1 }}>
-                {/* Rent periods will be added here dynamically */}
-              </div>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button className="btn btn-quiet" id="btnAddRentPeriod" type="button" style={{ textDecoration: 'none', cursor: 'pointer', padding: '10px 16px', fontSize: '14px', fontWeight: '500', border: '1px solid #d1d5db', borderRadius: '6px', background: 'white' }}>
-                  + Add Rent Period
-                </button>
-                <button className="btn btn-accent" id="btnSaveRentFromImport" type="button" style={{ textDecoration: 'none', cursor: 'pointer', padding: '10px 20px', fontSize: '14px', fontWeight: '500', borderRadius: '6px', background: '#3b82f6', color: 'white', border: 'none' }}>
-                  Save rent periods
-                </button>
-              </div>
-              <div className="small muted" id="importRentSavedNote" style={{ marginBottom: '8px', minHeight: '18px', fontSize: '12px' }} />
-              <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.5' }}>
-                💡 Add multiple periods to handle lease changes or months without rent. Set an end date to stop rent automatically.
-              </div>
-            </div>
-            <div className="onboard-actions" data-onboard-actions="rent" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '16px', borderTop: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-quiet" type="button" data-onboard-back style={{ textDecoration: 'none' }}>
-                  Back
-                </button>
-                <button className="btn btn-quiet" type="button" data-onboard-skip style={{ textDecoration: 'none' }}>
-                  Skip
-                </button>
-              </div>
-              <button className="btn btn-accent" type="button" data-onboard-next style={{ textDecoration: 'none' }}>
-                Next
-              </button>
-            </div>
-          </section>
+              <section className="panel onboard-subpanel">
+                <div className="panel-head">
+                  <div>
+                    <div className="panel-title">Accounts</div>
+                    <div className="panel-sub">Add or manage accounts. Display currency is set in Settings.</div>
+                  </div>
+                  <div className="panel-actions">
+                    <button className="btn btn-quiet" id="btnAddAccount" type="button">
+                      Add account
+                    </button>
+                  </div>
+                </div>
+                <div className="panel-body">
+                  <div className="table-wrap">
+                    <table className="table" id="accountsConfirmTable" />
+                  </div>
+                  <div className="panel-note">Display currency is set in Settings and affects all dashboards.</div>
+                </div>
+              </section>
 
-          <section className="panel onboard-panel" data-step="salary">
-            <div className="panel-head">
-              <div>
-                <div className="panel-title">Add your salary</div>
-                <div className="panel-sub">Upload CSV or enter manually</div>
-              </div>
-            </div>
-            <div className="panel-body onboard-panel-body">
               <div className="grid income-grid onboard-subgrid">
                 <section className="panel">
                   <div className="panel-head">
@@ -289,7 +267,144 @@ export default function ConnectPage() {
                 </section>
               </div>
             </div>
-            <div className="onboard-actions" data-onboard-actions="salary">
+            <div className="onboard-actions" data-onboard-actions="accounts">
+              <button className="btn btn-quiet" type="button" data-onboard-back>
+                Back
+              </button>
+              <button className="btn" type="button" data-onboard-next>
+                Next
+              </button>
+            </div>
+          </section>
+
+          <section className="panel onboard-panel" data-step="location">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Confirm location</div>
+                <div className="panel-sub">Used for benchmark comparisons and scores.</div>
+              </div>
+            </div>
+            <div className="panel-body onboard-panel-body">
+              <div className="grid onboard-subgrid">
+                <div>
+                  <label className="label">Country</label>
+                  <input id="locationCountry" className="input" type="text" placeholder="Country" />
+                </div>
+                <div>
+                  <label className="label">City</label>
+                  <input id="locationCity" className="input" type="text" placeholder="City" />
+                </div>
+                <div>
+                  <label className="label">ZIP / Postal</label>
+                  <input id="locationZip" className="input" type="text" placeholder="ZIP / Postal code" />
+                </div>
+              </div>
+              <div className="row">
+                <button className="btn" id="btnSaveLocation" type="button">
+                  Save location
+                </button>
+                <div className="small muted" id="locationSavedNote" />
+              </div>
+              <div className="panel-note">You can update this later in Settings.</div>
+            </div>
+            <div className="onboard-actions" data-onboard-actions="location">
+              <button className="btn btn-quiet" type="button" data-onboard-back>
+                Back
+              </button>
+              <button className="btn" type="button" data-onboard-next>
+                Next
+              </button>
+              <button className="btn btn-quiet" type="button" data-onboard-skip>
+                Skip
+              </button>
+            </div>
+          </section>
+
+          <section className="panel onboard-panel" data-step="review">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Review top merchants + subscriptions</div>
+                <div className="panel-sub">Confirm recurring spenders and categories.</div>
+              </div>
+              <div className="panel-actions">
+                <button className="btn btn-quiet" id="btnReviewMerchants" type="button">
+                  Review
+                </button>
+              </div>
+            </div>
+            <div className="panel-body onboard-panel-body">
+              <div className="table-wrap">
+                <table className="table" id="merchantReviewTable" />
+              </div>
+              <div className="panel-note">Subscriptions you confirm will show in dashboard summaries.</div>
+            </div>
+            <div className="onboard-actions" data-onboard-actions="review">
+              <button className="btn btn-quiet" type="button" data-onboard-back>
+                Back
+              </button>
+              <button className="btn" type="button" data-onboard-next>
+                Next
+              </button>
+              <button className="btn btn-quiet" type="button" data-onboard-skip>
+                Skip
+              </button>
+            </div>
+          </section>
+
+          <section className="panel onboard-panel" data-step="envelope">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Set first envelope (optional)</div>
+                <div className="panel-sub">Create a savings goal to anchor your plan.</div>
+              </div>
+            </div>
+            <div className="panel-body onboard-panel-body">
+              <div className="panel-note">
+                Envelopes are goal-based savings buckets. Add one now to see progress tracking and projections.
+              </div>
+              <div className="envelopes-combined" style={{ marginTop: 12 }}>
+                <button className="envelopes-empty envelope-add envelope-first-card" type="button">
+                  <div className="big-plus">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z" />
+                    </svg>
+                  </div>
+                  <div className="envelope-card-title" style={{ marginTop: 8 }}>Create your first envelope</div>
+                  <div className="envelope-card-sub">Pick a goal and target amount.</div>
+                </button>
+              </div>
+              <div className="table-wrap">
+                <table className="table" id="envelopeOnboardTable" />
+              </div>
+              <div className="panel-note">You can skip this and add envelopes later in Plan.</div>
+            </div>
+            <div className="onboard-actions" data-onboard-actions="envelope">
+              <button className="btn btn-quiet" type="button" data-onboard-back>
+                Back
+              </button>
+              <button className="btn" type="button" data-onboard-next>
+                Next
+              </button>
+              <button className="btn btn-quiet" type="button" data-onboard-skip>
+                Skip
+              </button>
+            </div>
+          </section>
+
+          <section className="panel onboard-panel" data-step="health">
+            <div className="panel-head">
+              <div>
+                <div className="panel-title">Data health</div>
+                <div className="panel-sub">Duplicates, missing currencies, unmatched merchants.</div>
+              </div>
+            </div>
+            <div className="panel-body onboard-panel-body">
+              <div className="table-wrap">
+                <table className="table" id="dataHealthTable" />
+              </div>
+              <div className="small muted">Resolve issues before you trust dashboard insights.</div>
+            </div>
+            <div className="onboard-actions" data-onboard-actions="health">
               <button className="btn btn-quiet" type="button" data-onboard-back>
                 Back
               </button>
@@ -303,4 +418,3 @@ export default function ConnectPage() {
     </section>
   );
 }
-

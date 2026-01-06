@@ -35,6 +35,10 @@ type Settings = {
   defaultRangePreset: string;
   rangePresetUserSet?: boolean;
   netWorthManual?: number;
+  netWorthCurrency?: string;
+  planAnnualReturn?: number;
+  planContributionMode?: 'auto' | 'manual';
+  planManualContribution?: number;
   manualIncomeSources?: string[];
   categoryColors: Record<string, string>;
   navCollapsed: boolean;
@@ -43,6 +47,13 @@ type Settings = {
   rentBudget: number | null;
   rentMode: "monthly" | "once" | "off";
   rentPayDay: number;
+  rentPeriods?: Array<{
+    id: string;
+    amount: number;
+    startDate: string;
+    endDate?: string;
+    payDay: number;
+  }>;
   location?: {
     country?: string;
     city?: string;
@@ -69,6 +80,7 @@ type Transaction = {
   createdAt: number;
   hash: string;
   isDuplicate?: boolean;
+  currency?: string; // Currency of the transaction (e.g., 'USD', 'CAD', 'EUR')
 };
 
 type Income = {
@@ -182,14 +194,11 @@ function createRuntime() {
   };
   const onboardSteps = [
     "upload",
-    "map",
-    "accounts",
-    "location",
+    "rent",
+    "salary",
     "review",
-    "envelope",
-    "health",
   ];
-  const onboardRequired = new Set(["upload", "map"]);
+  const onboardRequired = new Set(["upload"]);
   let onboarding = loadOnboarding();
   const boundEvents = new WeakMap<HTMLElement, Set<string>>();
   let rebindTimer: number | null = null;
@@ -236,6 +245,7 @@ function createRuntime() {
     bindDrilldownButtons();
     bindLocation();
     bindOnboarding();
+    bindTableToggles();
   }
 
   function observeDom() {
@@ -670,7 +680,7 @@ function createRuntime() {
                 row.dateISO = updatedData.dateISO;
                 row.source = updatedData.source;
                 row.amount = updatedData.amount;
-                row.currency = updatedData.currency;
+                row.currency = updatedData.currency || 'USD';
                 await store.put("income", row);
               } else {
                 const row = current as Transaction;
@@ -786,12 +796,18 @@ function createRuntime() {
       fileInput?.click();
     });
     on(fileInput, "change", async () => {
-      if (!fileInput?.files?.[0]) return;
+      if (!fileInput?.files || fileInput.files.length === 0) return;
+      const files = Array.from(fileInput.files);
       analyzing && (analyzing.hidden = false);
-      await handleCsvFile(fileInput.files[0]);
+      await handleMultipleCsvFiles(files);
       analyzing && (analyzing.hidden = true);
       markOnboardingComplete("upload");
       if (onboarding.currentStep === "upload") setOnboardingStep("map");
+      // Clear the input AFTER processing to allow selecting the same or different files again
+      // Use setTimeout to ensure the change event completes first
+      setTimeout(() => {
+        if (fileInput) fileInput.value = "";
+      }, 0);
     });
 
     on(dropzone, "click", (e) => {
@@ -803,29 +819,55 @@ function createRuntime() {
     on(dropzone, "drop", async (e) => {
       e.preventDefault();
       const dt = (e as DragEvent).dataTransfer;
-      if (!dt?.files?.[0]) return;
+      if (!dt?.files || dt.files.length === 0) return;
+      // Filter to only CSV files
+      const csvFiles = Array.from(dt.files).filter(file => 
+        file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv'
+      );
+      if (csvFiles.length === 0) return;
       analyzing && (analyzing.hidden = false);
-      await handleCsvFile(dt.files[0]);
+      await handleMultipleCsvFiles(csvFiles);
       analyzing && (analyzing.hidden = true);
       markOnboardingComplete("upload");
       if (onboarding.currentStep === "upload") setOnboardingStep("map");
+      // Clear the dropzone data transfer to allow dropping again
+      if (dt) {
+        dt.clearData();
+      }
     });
 
     on(importBtn, "click", async () => {
-      if (!lastCsvRows.length || !lastCsvHeaders.length) return;
-      // Read format settings
-      const dateFormatSelect = byId<HTMLSelectElement>("dateFormat");
-      const numberFormatSelect = byId<HTMLSelectElement>("numberFormat");
-      const currencySymbolInput = byId<HTMLInputElement>("currencySymbol");
-      csvFormatSettings = {
-        dateFormat: dateFormatSelect?.value || "auto",
-        numberFormat: numberFormatSelect?.value || "auto",
-        currencySymbol: currencySymbolInput?.value?.trim() || "",
-      };
-      const mapping = readMapping("mappingGrid");
-      await importTransactions(lastCsvHeaders, lastCsvRows, mapping);
-      markOnboardingComplete("map");
-      if (onboarding.currentStep === "map") setOnboardingStep("accounts");
+      if (!lastCsvRows.length || !lastCsvHeaders.length) {
+        console.error('No CSV data to import. Please upload CSV files first.');
+        alert('No CSV data to import. Please upload CSV files first.');
+        return;
+      }
+      
+      try {
+        // Read format settings
+        const dateFormatSelect = byId<HTMLSelectElement>("dateFormat");
+        const numberFormatSelect = byId<HTMLSelectElement>("numberFormat");
+        const currencySymbolInput = byId<HTMLInputElement>("currencySymbol");
+        csvFormatSettings = {
+          dateFormat: dateFormatSelect?.value || "auto",
+          numberFormat: numberFormatSelect?.value || "auto",
+          currencySymbol: currencySymbolInput?.value?.trim() || "",
+        };
+        
+        const mapping = readMapping("mappingGrid");
+        // Mapping can be empty - the import function will use auto-detection
+        // Just log a warning if mapping is empty, but allow import to proceed
+        if (!mapping || Object.keys(mapping).length === 0) {
+          console.warn('No explicit mapping found. Will use auto-detection for date and amount columns.');
+        }
+        
+        await importTransactions(lastCsvHeaders, lastCsvRows, mapping);
+        markOnboardingComplete("map");
+        if (onboarding.currentStep === "map") setOnboardingStep("accounts");
+      } catch (error) {
+        console.error('Error importing transactions:', error);
+        alert(`Error importing transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     });
 
     // Format settings bindings
@@ -1123,100 +1165,364 @@ function createRuntime() {
   }
 
   function bindRent() {
-    // Connect page quick rent
+    // Connect page rent periods - COMPLETELY REWRITTEN
     const saveRentFromImport = byId("btnSaveRentFromImport");
-    const importRentAmount = byId<HTMLInputElement>("importRentAmount");
-    const importRentMode = byId<HTMLSelectElement>("importRentMode");
+    const addRentPeriodBtn = byId("btnAddRentPeriod");
+    const rentPeriodsContainer = byId("onboardRentPeriods");
     const importRentSavedNote = byId("importRentSavedNote");
 
-    if (saveRentFromImport) {
-      on(saveRentFromImport, "click", async () => {
-        if (!importRentAmount?.value) return;
-        const amount = Number(importRentAmount.value);
-        const mode = importRentMode?.value || "monthly";
+    if (!rentPeriodsContainer) {
+      console.warn('Rent periods container not found');
+      return;
+    }
 
-        config.settings.rentBudget = amount;
-        config.settings.rentMode = mode as "monthly" | "once" | "off";
+    // Store rent periods in memory during onboarding
+    let rentPeriods: Array<{
+      id: string;
+      amount: number;
+      startDate: string;
+      endDate?: string;
+      payDay: number;
+      currency: string;
+    }> = [];
+
+    // Get available currencies from the currency select
+    const getAvailableCurrencies = (): string[] => {
+      const currencySelect = byId<HTMLSelectElement>("currencySelect");
+      if (currencySelect) {
+        return Array.from(currencySelect.options).map(opt => opt.value);
+      }
+      return ["USD", "CAD", "EUR", "GBP", "CHF", "JPY"];
+    };
+
+    // Use event delegation - single listener on container for all inputs
+    const handleContainerEvent = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const periodId = target.getAttribute('data-period-id');
+      if (!periodId) return;
+
+      const period = rentPeriods.find(p => p.id === periodId);
+      if (!period) return;
+
+      if (target.classList.contains('rent-amount')) {
+        const input = target as HTMLInputElement;
+        const val = parseFloat(input.value);
+        period.amount = isNaN(val) ? 0 : val;
+      } else if (target.classList.contains('rent-payday')) {
+        const input = target as HTMLInputElement;
+        const val = parseInt(input.value);
+        if (!isNaN(val)) {
+          period.payDay = Math.max(1, Math.min(28, val));
+          input.value = period.payDay.toString();
+        }
+      } else if (target.classList.contains('rent-start')) {
+        const input = target as HTMLInputElement;
+        period.startDate = input.value;
+      } else if (target.classList.contains('rent-end')) {
+        const input = target as HTMLInputElement;
+        period.endDate = input.value || undefined;
+      } else if (target.classList.contains('rent-currency')) {
+        const select = target as HTMLSelectElement;
+        period.currency = select.value || config.settings.currency || "USD";
+      } else if (target.hasAttribute('data-remove-period')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const removeId = target.getAttribute('data-remove-period');
+        if (rentPeriods.length > 1 && removeId) {
+          rentPeriods = rentPeriods.filter(p => p.id !== removeId);
+          renderRentPeriods();
+        }
+      }
+    };
+
+    // Attach event delegation listeners ONCE
+    if (!rentPeriodsContainer.hasAttribute('data-rent-bound')) {
+      rentPeriodsContainer.setAttribute('data-rent-bound', 'true');
+      rentPeriodsContainer.addEventListener('input', handleContainerEvent);
+      rentPeriodsContainer.addEventListener('change', handleContainerEvent);
+      rentPeriodsContainer.addEventListener('click', handleContainerEvent);
+    }
+
+    const renderRentPeriods = () => {
+      if (!rentPeriodsContainer) return;
+      
+      // Initialize with one period if empty
+      if (rentPeriods.length === 0) {
+        rentPeriods = [{
+          id: `period-${Date.now()}`,
+          amount: 0,
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: undefined,
+          payDay: 1,
+          currency: config.settings.currency || "USD"
+        }];
+      }
+
+      const currencies = getAvailableCurrencies();
+      const currentCurrency = config.settings.currency || "USD";
+
+      // Build HTML
+      const html = rentPeriods.map((period, index) => {
+        return `
+          <div class="rent-period-item" data-period-id="${period.id}" style="margin-bottom: 20px; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div style="font-size: 14px; font-weight: 600; color: #111827;">Period ${index + 1}</div>
+              ${rentPeriods.length > 1 ? `<button class="btn btn-quiet btn-sm" type="button" data-remove-period="${period.id}" data-period-id="${period.id}" style="padding: 6px 12px; font-size: 12px; cursor: pointer; border: 1px solid #d1d5db; background: white; border-radius: 4px; color: #dc2626;">Remove</button>` : ''}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151;">Monthly Amount</label>
+                <div style="display: flex; gap: 8px;">
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    class="rent-amount input" 
+                    data-period-id="${period.id}" 
+                    value="${period.amount > 0 ? period.amount : ''}" 
+                    placeholder="e.g., 1175" 
+                    style="flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white;" 
+                  />
+                  <select 
+                    class="rent-currency select" 
+                    data-period-id="${period.id}" 
+                    value="${period.currency || currentCurrency}"
+                    style="width: 100px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white; cursor: pointer;"
+                  >
+                    ${currencies.map(curr => `<option value="${curr}" ${(period.currency || currentCurrency) === curr ? 'selected' : ''}>${curr}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151;">Pay Day (1-28)</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="28" 
+                  class="rent-payday input" 
+                  data-period-id="${period.id}" 
+                  value="${period.payDay || 1}" 
+                  style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white;" 
+                />
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151;">Start Date</label>
+                <input 
+                  type="date" 
+                  class="rent-start input" 
+                  data-period-id="${period.id}" 
+                  value="${period.startDate || ''}" 
+                  required 
+                  style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white; cursor: pointer;" 
+                />
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151;">End Date (optional)</label>
+                <input 
+                  type="date" 
+                  class="rent-end input" 
+                  data-period-id="${period.id}" 
+                  value="${period.endDate || ''}" 
+                  style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white; cursor: pointer;" 
+                />
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Set innerHTML - event delegation will handle all events
+      rentPeriodsContainer.innerHTML = html;
+    };
+
+    // Bind add period button
+    if (addRentPeriodBtn) {
+      // Remove any existing listeners
+      const newAddBtn = addRentPeriodBtn.cloneNode(true) as HTMLButtonElement;
+      addRentPeriodBtn.parentNode?.replaceChild(newAddBtn, addRentPeriodBtn);
+      
+      newAddBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const lastPeriod = rentPeriods[rentPeriods.length - 1];
+        const nextStart = lastPeriod?.endDate 
+          ? new Date(new Date(lastPeriod.endDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+        
+        rentPeriods.push({
+          id: `period-${Date.now()}-${Math.random()}`,
+          amount: lastPeriod?.amount || 0,
+          startDate: nextStart,
+          endDate: undefined,
+          payDay: lastPeriod?.payDay || 1,
+          currency: lastPeriod?.currency || config.settings.currency || "USD"
+        });
+        renderRentPeriods();
+      });
+    }
+
+    // Bind save button
+    if (saveRentFromImport) {
+      // Remove any existing listeners
+      const newSaveBtn = saveRentFromImport.cloneNode(true) as HTMLButtonElement;
+      saveRentFromImport.parentNode?.replaceChild(newSaveBtn, saveRentFromImport);
+      
+      let isSaving = false;
+      newSaveBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Prevent multiple simultaneous saves
+        if (isSaving) {
+          return;
+        }
+        
+        if (rentPeriods.length === 0 || rentPeriods.some(p => !p.amount || !p.startDate)) {
+          alert('Please fill in all required fields for at least one period.');
+          return;
+        }
+        
+        isSaving = true;
+        newSaveBtn.setAttribute('disabled', 'true');
+        newSaveBtn.style.opacity = '0.6';
+        newSaveBtn.style.cursor = 'not-allowed';
+
+        // Save periods to settings
+        config.settings.rentPeriods = rentPeriods;
+        if (rentPeriods.length > 0) {
+          config.settings.rentBudget = rentPeriods[0].amount;
+          config.settings.rentPayDay = rentPeriods[0].payDay;
+        }
         saveConfig();
 
-        // If mode is monthly or once, create rent transaction(s)
-        if (mode === "monthly" || mode === "once") {
+        // Remove existing rent transactions (by hash to catch all duplicates)
+        const rentHashes = new Set<string>();
+        for (const period of rentPeriods) {
+          const startDate = new Date(period.startDate);
+          const endDate = period.endDate ? new Date(period.endDate) : new Date('2099-12-31');
           const now = new Date();
-          const rentPayDay = config.settings.rentPayDay || 1;
-          const dates: string[] = [];
-
-          if (mode === "once") {
-            // Single transaction for current month
+          
+          // Generate all hashes that will be created for this period
+          let currentMonth = new Date(startDate);
+          while (currentMonth <= endDate && currentMonth <= now) {
             const rentDate = new Date(
-              now.getFullYear(),
-              now.getMonth(),
-              Math.min(rentPayDay, 28)
+              currentMonth.getFullYear(),
+              currentMonth.getMonth(),
+              Math.min(period.payDay, 28)
             );
-            dates.push(toISO(rentDate));
-          } else {
-            // Monthly transactions for last 3 months and next 3 months
-            for (let i = -3; i <= 3; i++) {
-              const rentDate = new Date(
-                now.getFullYear(),
-                now.getMonth() + i,
-                Math.min(rentPayDay, 28)
-              );
-              dates.push(toISO(rentDate));
+            
+            if (rentDate >= startDate && rentDate <= endDate) {
+              const hash = hashRow([toISO(rentDate), period.amount, "Rent", "manual"]);
+              rentHashes.add(hash);
             }
+            
+            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
           }
-
-          // Remove existing rent transactions first
-          const existingRents = transactions.filter((t) => {
-            const cat = config.categories.find((c) => c.id === t.categoryId);
-            return cat?.name === "Rent" || cat?.name === "Housing";
-          });
-
-          // Remove from store by re-putting all transactions except rent ones
-          const nonRentTransactions = transactions.filter(
-            (t) => !existingRents.find((r) => r.id === t.id)
-          );
-          await store.bulkPut("transactions", nonRentTransactions);
-          transactions = nonRentTransactions;
-
-          // Create new rent transactions
-          const newRents: Transaction[] = [];
-          for (const dateISO of dates) {
-            const rent: Transaction = {
-              id: uid(),
-              dateISO,
-              amount: -Math.abs(amount),
-              type: "expense",
-              categoryId:
-                getCategoryIdByName("Rent", "expense") ||
-                getCategoryIdByName("Housing", "expense"),
-              description: "Rent",
-              account: config.settings.accounts[0]?.name || "Bank",
-              sourceFile: "manual",
-              createdAt: Date.now(),
-              hash: hashRow([dateISO, amount, "Rent", "manual"]),
-            };
-            await store.put("transactions", rent);
-            newRents.push(rent);
-          }
-          transactions = newRents.concat(transactions);
         }
+
+        // Reload all transactions from database to ensure we have the latest
+        await loadAll();
+        
+        // Identify and DELETE all existing rent transactions from database
+        const existingRents = transactions.filter((t) => {
+          const cat = config.categories.find((c) => c.id === t.categoryId);
+          return (cat?.name === "Rent" || cat?.name === "Housing") && t.sourceFile === "manual";
+        });
+
+        // Delete all existing rent transactions from database
+        for (const rentTx of existingRents) {
+          await store.remove("transactions", rentTx.id);
+        }
+
+        // Filter out rent transactions from in-memory array
+        const nonRentTransactions = transactions.filter(
+          (t) => !existingRents.find((r) => r.id === t.id)
+        );
+        transactions = nonRentTransactions;
+
+        // Create new rent transactions for each period
+        const newRents: Transaction[] = [];
+        const newRentHashes = new Set<string>();
+        
+        for (const period of rentPeriods) {
+          const startDate = new Date(period.startDate);
+          const endDate = period.endDate ? new Date(period.endDate) : new Date('2099-12-31');
+          const now = new Date();
+          
+          // Generate monthly transactions for this period
+          let currentMonth = new Date(startDate);
+          while (currentMonth <= endDate && currentMonth <= now) {
+            const rentDate = new Date(
+              currentMonth.getFullYear(),
+              currentMonth.getMonth(),
+              Math.min(period.payDay, 28)
+            );
+            
+            if (rentDate >= startDate && rentDate <= endDate) {
+              const hash = hashRow([toISO(rentDate), period.amount, "Rent", "manual"]);
+              
+              // Skip if we've already created a transaction with this hash (avoid duplicates within the same save)
+              if (!newRentHashes.has(hash)) {
+                newRentHashes.add(hash);
+                
+                const rent: Transaction = {
+                  id: uid(),
+                  dateISO: toISO(rentDate),
+                  amount: -Math.abs(period.amount),
+                  type: "expense",
+                  categoryId:
+                    getCategoryIdByName("Rent", "expense") ||
+                    getCategoryIdByName("Housing", "expense"),
+                  description: "Rent",
+                  account: config.settings.accounts[0]?.name || "Bank",
+                  sourceFile: "manual",
+                  createdAt: Date.now(),
+                  hash: hash,
+                  currency: config.settings.currency || "USD", // Store currency from settings
+                };
+                await store.put("transactions", rent);
+                newRents.push(rent);
+              }
+            }
+            
+            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+          }
+        }
+        transactions = newRents.concat(transactions);
 
         await loadAll();
         renderAll();
 
         if (importRentSavedNote) {
-          importRentSavedNote.textContent = `Saved: ${formatCurrency(amount)} ${
-            mode === "monthly"
-              ? "per month"
-              : mode === "once"
-              ? "one-time"
-              : "budget only"
-          }`;
+          importRentSavedNote.textContent = `✓ Saved: ${rentPeriods.length} rent period${rentPeriods.length !== 1 ? 's' : ''}`;
+          importRentSavedNote.style.color = '#059669';
+          importRentSavedNote.style.fontWeight = '500';
           setTimeout(() => {
-            if (importRentSavedNote) importRentSavedNote.textContent = "";
+            if (importRentSavedNote) {
+              importRentSavedNote.textContent = "";
+              importRentSavedNote.style.color = '';
+              importRentSavedNote.style.fontWeight = '';
+            }
           }, 3000);
         }
+        
+        isSaving = false;
+        newSaveBtn.removeAttribute('disabled');
+        newSaveBtn.style.opacity = '1';
+        newSaveBtn.style.cursor = 'pointer';
       });
+    }
+
+    // Initial render - MUST be called after all bindings are set up
+    if (rentPeriodsContainer) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        renderRentPeriods();
+      }, 100);
     }
 
     // Plan page rent
@@ -1267,38 +1573,54 @@ function createRuntime() {
             }
           }
 
-          // Remove existing rent transactions
+          // Reload all transactions from database to ensure we have the latest
+          await loadAll();
+          
+          // Remove existing rent transactions - only manual ones (not imported)
           const existingRents = transactions.filter((t) => {
             const cat = config.categories.find((c) => c.id === t.categoryId);
-            return cat?.name === "Rent" || cat?.name === "Housing";
+            return (cat?.name === "Rent" || cat?.name === "Housing") && t.sourceFile === "manual";
           });
 
-          // Remove from store by re-putting all transactions except rent ones
+          // Delete all existing rent transactions from database
+          for (const rentTx of existingRents) {
+            await store.remove("transactions", rentTx.id);
+          }
+
+          // Filter out rent transactions from in-memory array
           const nonRentTransactions = transactions.filter(
             (t) => !existingRents.find((r) => r.id === t.id)
           );
-          await store.bulkPut("transactions", nonRentTransactions);
           transactions = nonRentTransactions;
 
           // Create new rent transactions
           const newRents: Transaction[] = [];
+          const newRentHashes = new Set<string>();
           for (const dateISO of dates) {
-            const rent: Transaction = {
-              id: uid(),
-              dateISO,
-              amount: -Math.abs(amount),
-              type: "expense",
-              categoryId:
-                getCategoryIdByName("Rent", "expense") ||
-                getCategoryIdByName("Housing", "expense"),
-              description: "Rent",
-              account: config.settings.accounts[0]?.name || "Bank",
-              sourceFile: "manual",
-              createdAt: Date.now(),
-              hash: hashRow([dateISO, amount, "Rent", "manual"]),
-            };
-            await store.put("transactions", rent);
-            newRents.push(rent);
+            const hash = hashRow([dateISO, amount, "Rent", "manual"]);
+            
+            // Skip if we've already created a transaction with this hash (avoid duplicates)
+            if (!newRentHashes.has(hash)) {
+              newRentHashes.add(hash);
+              
+              const rent: Transaction = {
+                id: uid(),
+                dateISO,
+                amount: -Math.abs(amount),
+                type: "expense",
+                categoryId:
+                  getCategoryIdByName("Rent", "expense") ||
+                  getCategoryIdByName("Housing", "expense"),
+                description: "Rent",
+                account: config.settings.accounts[0]?.name || "Bank",
+                sourceFile: "manual",
+                createdAt: Date.now(),
+                hash: hash,
+                currency: config.settings.currency || "USD", // Store currency from settings
+              };
+              await store.put("transactions", rent);
+              newRents.push(rent);
+            }
           }
           transactions = newRents.concat(transactions);
         }
@@ -1318,6 +1640,119 @@ function createRuntime() {
             if (rentSavedNote) rentSavedNote.textContent = "";
           }, 3000);
         }
+      });
+    }
+
+    // Rent edit modal button (Plan page)
+    const editRentBtn = byId("btnEditRent");
+    if (editRentBtn) {
+      on(editRentBtn, "click", async () => {
+        const { showRentEditModal } = await import('./rent-edit-modal');
+        type RentPeriod = {
+          id: string;
+          amount: number;
+          startDate: string;
+          endDate?: string;
+          payDay: number;
+        };
+        
+        // Load existing rent periods from settings (or create default)
+        const existingPeriods: RentPeriod[] = config.settings.rentPeriods || [];
+        const currentRent = {
+          amount: config.settings.rentBudget || 0,
+          payDay: config.settings.rentPayDay || 1
+        };
+
+        showRentEditModal(currentRent, existingPeriods, async (periods: RentPeriod[]) => {
+          // Save periods to settings
+          config.settings.rentPeriods = periods;
+          if (periods.length > 0) {
+            config.settings.rentBudget = periods[0].amount;
+            config.settings.rentPayDay = periods[0].payDay;
+          }
+          saveConfig();
+
+          // Regenerate rent transactions based on periods
+          // First, reload all transactions from database to ensure we have the latest
+          await loadAll();
+          
+          // Identify and DELETE all existing rent transactions from database
+          const existingRents = transactions.filter((t) => {
+            const cat = config.categories.find((c) => c.id === t.categoryId);
+            return (cat?.name === "Rent" || cat?.name === "Housing") && t.sourceFile === "manual";
+          });
+
+          // Delete all existing rent transactions from database
+          for (const rentTx of existingRents) {
+            await store.remove("transactions", rentTx.id);
+          }
+
+          // Filter out rent transactions from in-memory array
+          const nonRentTransactions = transactions.filter(
+            (t) => !existingRents.find((r) => r.id === t.id)
+          );
+
+          // Create new rent transactions for each period
+          const newRentHashes = new Set<string>();
+          const newRents: Transaction[] = [];
+          for (const period of periods) {
+            const startDate = new Date(period.startDate);
+            const endDate = period.endDate ? new Date(period.endDate) : new Date('2099-12-31');
+            const now = new Date();
+            
+            // Generate monthly transactions for this period
+            let currentMonth = new Date(startDate);
+            while (currentMonth <= endDate && currentMonth <= now) {
+              const rentDate = new Date(
+                currentMonth.getFullYear(),
+                currentMonth.getMonth(),
+                Math.min(period.payDay, 28)
+              );
+              
+              if (rentDate >= startDate && rentDate <= endDate) {
+                const hash = hashRow([toISO(rentDate), period.amount, "Rent", "manual"]);
+                
+                // Skip if we've already created a transaction with this hash (avoid duplicates within the same save)
+                if (!newRentHashes.has(hash)) {
+                  newRentHashes.add(hash);
+                  
+                  const rent: Transaction = {
+                    id: uid(),
+                    dateISO: toISO(rentDate),
+                    amount: -Math.abs(period.amount),
+                    type: "expense",
+                    categoryId:
+                      getCategoryIdByName("Rent", "expense") ||
+                      getCategoryIdByName("Housing", "expense"),
+                    description: "Rent",
+                    account: config.settings.accounts[0]?.name || "Bank",
+                    sourceFile: "manual",
+                    createdAt: Date.now(),
+                    hash: hash,
+                    currency: config.settings.currency || "USD", // Store currency from settings
+                  };
+                  await store.put("transactions", rent);
+                  newRents.push(rent);
+                }
+              }
+              
+              currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+            }
+          }
+          
+          // Update in-memory transactions array
+          transactions = newRents.concat(nonRentTransactions);
+
+          await loadAll();
+          renderAll();
+
+          // Update summary
+          const summary = byId("rentPeriodsSummary");
+          if (summary) {
+            const activePeriods = periods.filter(p => !p.endDate || new Date(p.endDate) >= new Date());
+            summary.textContent = `${periods.length} rent period${periods.length !== 1 ? 's' : ''} configured. ${activePeriods.length} active.`;
+          }
+        });
       });
     }
   }
@@ -1370,7 +1805,7 @@ function createRuntime() {
             budgetAmount.value = String(amount || "");
             budgetAmount.focus();
           }
-          budgetForm.dataset.editingBudget = name;
+          if (budgetForm) budgetForm.dataset.editingBudget = name;
           if (submitBtn) submitBtn.textContent = "Update";
         }
         if (action === "remove") {
@@ -1656,6 +2091,145 @@ function createRuntime() {
     if (mappingPanel) mappingPanel.hidden = false;
   }
 
+  async function handleMultipleCsvFiles(files: File[]) {
+    if (files.length === 0) return;
+    
+    // If only one file, use the single file handler
+    if (files.length === 1) {
+      await handleCsvFile(files[0]);
+      return;
+    }
+    
+    // Process all files and combine their data
+    let combinedHeaders: string[] = [];
+    let combinedRows: string[][] = [];
+    const fileNames: string[] = [];
+    let totalRows = 0;
+    let processedCount = 0;
+
+    for (const file of files) {
+      try {
+        const text = await file.text();
+        const { headers, rows } = parseCsv(text);
+        
+        if (rows.length === 0) {
+          console.warn(`File ${file.name} has no data rows`);
+          continue;
+        }
+        
+        // Use headers from first file, or merge if different
+        if (combinedHeaders.length === 0) {
+          combinedHeaders = headers;
+        } else {
+          // Merge headers - add any new columns from this file
+          const newHeaders = headers.filter(h => !combinedHeaders.includes(h));
+          combinedHeaders = [...combinedHeaders, ...newHeaders];
+        }
+        
+        // Align rows to combined headers
+        const alignedRows = rows.map(row => {
+          const alignedRow: string[] = [];
+          combinedHeaders.forEach(header => {
+            const index = headers.indexOf(header);
+            alignedRow.push(index >= 0 && index < row.length ? row[index] : "");
+          });
+          return alignedRow;
+        });
+        
+        combinedRows = [...combinedRows, ...alignedRows];
+        fileNames.push(file.name);
+        totalRows += rows.length;
+        processedCount++;
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
+        // Continue with other files even if one fails
+      }
+    }
+
+    if (processedCount === 0) {
+      alert("No valid CSV files could be processed. Please check your files and try again.");
+      return;
+    }
+
+    if (combinedRows.length === 0) {
+      alert("No valid CSV data found in the selected files.");
+      return;
+    }
+
+    // Update global state - APPEND to existing data if user is adding more files
+    // Check if we already have data from a previous import
+    if (lastCsvRows.length > 0 && lastCsvHeaders.length > 0) {
+      // Merge with existing data
+      const existingHeaders = lastCsvHeaders;
+      const existingRows = lastCsvRows;
+      
+      // Merge headers
+      const allHeaders = [...existingHeaders];
+      combinedHeaders.forEach(h => {
+        if (!allHeaders.includes(h)) {
+          allHeaders.push(h);
+        }
+      });
+      
+      // Align existing rows to new header structure
+      const alignedExistingRows = existingRows.map(row => {
+        const alignedRow: string[] = [];
+        allHeaders.forEach(header => {
+          const index = existingHeaders.indexOf(header);
+          alignedRow.push(index >= 0 && index < row.length ? row[index] : "");
+        });
+        return alignedRow;
+      });
+      
+      // Align new rows to new header structure
+      const alignedNewRows = combinedRows.map(row => {
+        const alignedRow: string[] = [];
+        allHeaders.forEach(header => {
+          const index = combinedHeaders.indexOf(header);
+          alignedRow.push(index >= 0 && index < row.length ? row[index] : "");
+        });
+        return alignedRow;
+      });
+      
+      lastCsvHeaders = allHeaders;
+      lastCsvRows = [...alignedExistingRows, ...alignedNewRows];
+      totalRows = lastCsvRows.length;
+    } else {
+      // First import - use the combined data as-is
+      lastCsvHeaders = combinedHeaders;
+      lastCsvRows = combinedRows;
+    }
+
+    // Detect and show format settings
+    detectAndDisplayFormats(lastCsvHeaders, lastCsvRows);
+
+    renderMapping("mappingGrid", lastCsvHeaders, [
+      "date",
+      "amount",
+      "description",
+      "category",
+      "account",
+      "currency",
+      "type",
+    ]);
+    renderPreview("previewTable", lastCsvHeaders, lastCsvRows.slice(0, 50));
+    const note = byId("txFileNote");
+    if (note) {
+      const fileList = fileNames.length <= 3 
+        ? fileNames.join(", ") 
+        : `${fileNames.slice(0, 3).join(", ")}, +${fileNames.length - 3} more`;
+      note.textContent = `${fileList} - ${totalRows} total rows (${processedCount} file${processedCount !== 1 ? 's' : ''} processed)`;
+    }
+    
+    // Show preview, format, and mapping panels
+    const previewPanel = byId("previewPanel");
+    if (previewPanel) previewPanel.hidden = false;
+    const formatPanel = byId("formatPanel");
+    if (formatPanel) formatPanel.hidden = false;
+    const mappingPanel = byId("mappingPanel");
+    if (mappingPanel) mappingPanel.hidden = false;
+  }
+
   async function handleIncomeCsv(file: File) {
     const text = await file.text();
     const { headers, rows } = parseCsv(text);
@@ -1749,6 +2323,11 @@ function createRuntime() {
         const duplicate = existingHashes.has(hash);
         if (duplicate && !doNotDedup) continue;
         existingHashes.add(hash);
+        // Store source file name if available from CSV metadata
+        const sourceFileName = (lastCsvRows.length > 0 && rows.indexOf(row) >= 0) 
+          ? `import-${new Date().toISOString().split('T')[0]}` 
+          : "import";
+        
         imported.push({
           id: uid(),
           dateISO,
@@ -1757,10 +2336,11 @@ function createRuntime() {
           categoryId,
           description,
           account,
-          sourceFile: record.sourceFile || "import",
+          sourceFile: record.sourceFile || sourceFileName,
           createdAt: Date.now(),
           hash,
           isDuplicate: duplicate,
+          currency: record.currency || config.settings.currency || "USD",
         });
       }
     }
@@ -1769,14 +2349,24 @@ function createRuntime() {
       // Add new transactions to existing ones before storing
       const allTransactions = [...transactions, ...imported];
       await store.bulkPut("transactions", allTransactions);
+      // Update in-memory array immediately
+      transactions.push(...imported);
     }
     if (importedIncome.length) {
       const allIncome = [...income, ...importedIncome];
       await store.bulkPut("income", allIncome);
+      // Update in-memory array immediately
+      income.push(...importedIncome);
     }
     if (imported.length || importedIncome.length) {
       // Reload all transactions from store to ensure consistency
       await loadAll();
+      // Force a re-render of the dashboard if we're on it
+      renderAll();
+      // Also trigger a custom event for React components to listen to
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+      }
     }
     renderAll();
     const result = byId("importResult");
@@ -1784,7 +2374,7 @@ function createRuntime() {
       const totalImported = imported.length + importedIncome.length;
       result.textContent =
         totalImported > 0
-          ? `Imported ${totalImported} rows. Navigate to Dashboard to see them.`
+          ? `✓ Imported ${totalImported} rows (${imported.length} transactions, ${importedIncome.length} income). Dashboard updated.`
           : "No transactions imported. Check your date/amount mapping.";
     }
     if ((transactions.length || income.length) && shouldExpandRange()) {
@@ -2142,6 +2732,37 @@ function createRuntime() {
     renderTopMerchantsTable();
   }
 
+  function bindTableToggles() {
+    const toggleCategories = byId("btnToggleTopCategories");
+    const toggleMerchants = byId("btnToggleTopMerchants");
+    const categoriesTable = byId("topCategoriesTable");
+    const merchantsTable = byId("topMerchantsTable");
+
+    if (toggleCategories && categoriesTable) {
+      toggleCategories.addEventListener("click", () => {
+        const showAll = categoriesTable.hasAttribute("data-show-all");
+        if (showAll) {
+          categoriesTable.removeAttribute("data-show-all");
+        } else {
+          categoriesTable.setAttribute("data-show-all", "true");
+        }
+        renderTopCategoriesTable();
+      });
+    }
+
+    if (toggleMerchants && merchantsTable) {
+      toggleMerchants.addEventListener("click", () => {
+        const showAll = merchantsTable.hasAttribute("data-show-all");
+        if (showAll) {
+          merchantsTable.removeAttribute("data-show-all");
+        } else {
+          merchantsTable.setAttribute("data-show-all", "true");
+        }
+        renderTopMerchantsTable();
+      });
+    }
+  }
+
   function renderWhatChanged() {
     const list = byId("whatChangedList");
     const emptyEl = byId("whatChangedEmpty");
@@ -2262,26 +2883,25 @@ function createRuntime() {
         const sign = isIncrease ? '+' : '';
         
         return `
-          <div class="action-item">
-            <div>
-              <div class="action-title">
-                ${escapeHtml(change.category)} 
-                <span class="${colorClass}">
-                  ${arrow} ${sign}${formatCurrency(Math.abs(change.change))} 
-                  (${sign}${change.changePercent.toFixed(1)}%)
-                </span>
+          <div class="action-item" style="margin-bottom: 6px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb;">
+            <div style="flex: 1; min-width: 0;">
+              <div class="action-title" style="font-size: 13px; font-weight: 600; margin-bottom: 3px; color: #1f2933;">
+                ${escapeHtml(change.category)}
               </div>
-              <div class="action-sub">
-                ${formatCurrency(change.current)} this month vs ${formatCurrency(change.previous)} last month
+              <div style="font-size: 16px; font-weight: 700; margin-bottom: 2px; color: ${isIncrease && !isIncome ? '#dc2626' : isIncome && isIncrease ? '#059669' : '#059669'};">
+                ${arrow} ${sign}${formatCurrency(Math.abs(change.change))}
+              </div>
+              <div class="action-sub" style="font-size: 11px; color: #6b7280;">
+                ${formatCurrency(change.current)} vs ${formatCurrency(change.previous)} • ${sign}${change.changePercent.toFixed(1)}%
               </div>
             </div>
-            <button class="btn btn-quiet" type="button" data-drilldown-url="${escapeHtml(
+            <button class="btn btn-quiet btn-sm" type="button" data-drilldown-url="${escapeHtml(
               buildDrilldownUrl({
                 source: change.type === 'income' ? 'income' : 'category-spike',
                 category: change.category
               })
-            )}">
-              View details
+            )}" style="flex-shrink: 0; margin-left: 12px; padding: 4px 8px; font-size: 11px; text-decoration: none;">
+              View
             </button>
           </div>
         `;
@@ -2471,9 +3091,19 @@ function createRuntime() {
     if (!el) return;
     const emptyEl = byId("cashflowPreviewEmpty");
     const range = getRange();
+    
+    // Ensure range has valid values
+    if (!range.from || !range.to) {
+      el.innerHTML = "";
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
 
     // Compute flow graph from local data (same as main map)
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    const flowGraph = computeFlowGraphFromLocalData({
+      from: range.from,
+      to: range.to
+    });
 
     // Show empty state if no data
     if (!flowGraph.nodes || flowGraph.nodes.length === 0) {
@@ -2485,6 +3115,10 @@ function createRuntime() {
     if (emptyEl) emptyEl.hidden = true;
 
     // Render same Sankey diagram as main map (smaller size for preview)
+    // Constrain height for preview
+    el.style.padding = '8px';
+    el.style.maxHeight = '280px';
+    el.style.overflow = 'hidden';
     renderSankeyDiagram(el, flowGraph, true); // true = isPreview
   }
 
@@ -2536,9 +3170,23 @@ function createRuntime() {
     const categoryListEl = byId("cashflowCategoryList");
     if (!el) return;
     const range = getRange();
+    
+    // Ensure range has valid values
+    if (!range.from || !range.to) {
+      el.innerHTML = "";
+      if (emptyEl) emptyEl.hidden = false;
+      if (categoryListEl) categoryListEl.innerHTML = "";
+      renderTable("flowTopSinks", []);
+      renderTable("flowTopSavings", []);
+      renderTable("flowUnallocated", []);
+      return;
+    }
 
     // Compute flow graph from local data
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    const flowGraph = computeFlowGraphFromLocalData({
+      from: range.from,
+      to: range.to
+    });
 
     // Show empty state if no data
     if (!flowGraph.nodes || flowGraph.nodes.length === 0) {
@@ -2933,7 +3581,15 @@ function createRuntime() {
     if (!container) return;
 
     const range = getRange();
-    const flowGraph = computeFlowGraphFromLocalData(range);
+    if (!range.from || !range.to) {
+      container.innerHTML = '<div class="chart-empty">No date range selected.</div>';
+      return;
+    }
+    
+    const flowGraph = computeFlowGraphFromLocalData({
+      from: range.from,
+      to: range.to
+    });
     const { nodes, metadata } = flowGraph;
 
     if (metadata.totalIncome === 0) {
@@ -3454,7 +4110,7 @@ function createRuntime() {
                 row.dateISO = updatedData.dateISO;
                 row.source = updatedData.source;
                 row.amount = updatedData.amount;
-                row.currency = updatedData.currency;
+                row.currency = updatedData.currency || 'USD';
                 await store.put("income", row);
               } else {
                 const row = current as Transaction;
@@ -4018,28 +4674,50 @@ function createRuntime() {
   }
 
   function summarizeRange(range: { from: string | null; to: string | null }) {
+    const displayCurrency = config.settings.currency || "USD";
     const inRange = transactions.filter((t) => withinRange(t.dateISO, range));
     let expenses = inRange
       .filter((t) => t.type === "expense")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => {
+        const sourceCurrency = t.currency || "USD";
+        const convertedAmount = convertCurrency(Math.abs(t.amount), sourceCurrency, displayCurrency);
+        return s + convertedAmount;
+      }, 0);
     const rentBudget = buildRentBudgetByMonth(range, inRange);
     const rentBudgetMonths = Object.keys(rentBudget.byMonth).length;
     if (rentBudget.total) {
-      expenses += rentBudget.total;
+      // Rent budget is in USD (from settings), convert if needed
+      expenses += convertCurrency(rentBudget.total, "USD", displayCurrency);
     }
     const investments = inRange
       .filter((t) => t.type === "investment")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => {
+        const sourceCurrency = t.currency || "USD";
+        const convertedAmount = convertCurrency(Math.abs(t.amount), sourceCurrency, displayCurrency);
+        return s + convertedAmount;
+      }, 0);
     const transfers = inRange
       .filter((t) => t.type === "transfer")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => {
+        const sourceCurrency = t.currency || "USD";
+        const convertedAmount = convertCurrency(Math.abs(t.amount), sourceCurrency, displayCurrency);
+        return s + convertedAmount;
+      }, 0);
     const incomeTotal =
       income
         .filter((i) => withinRange(i.dateISO, range))
-        .reduce((s, i) => s + i.amount, 0) +
+        .reduce((s, i) => {
+          const sourceCurrency = i.currency || "USD";
+          const convertedAmount = convertCurrency(i.amount, sourceCurrency, displayCurrency);
+          return s + convertedAmount;
+        }, 0) +
       inRange
         .filter((t) => t.type === "income")
-        .reduce((s, t) => s + Math.abs(t.amount), 0);
+        .reduce((s, t) => {
+          const sourceCurrency = t.currency || "USD";
+          const convertedAmount = convertCurrency(Math.abs(t.amount), sourceCurrency, displayCurrency);
+          return s + convertedAmount;
+        }, 0);
     const netIncome = incomeTotal - expenses;
     const savingsRate = incomeTotal ? netIncome / incomeTotal : 0;
     const investedRate = incomeTotal ? investments / incomeTotal : 0;
@@ -4050,11 +4728,13 @@ function createRuntime() {
       incomeTotal - expenses - investments - transfers
     );
     const byCategory = groupByCategory(
-      inRange.filter((t) => t.type === "expense")
+      inRange.filter((t) => t.type === "expense"),
+      displayCurrency
     );
     if (rentBudget.total) {
+      const convertedRent = convertCurrency(rentBudget.total, "USD", displayCurrency);
       byCategory[rentBudget.name] =
-        (byCategory[rentBudget.name] || 0) + rentBudget.total;
+        (byCategory[rentBudget.name] || 0) + convertedRent;
     }
 
     // Calculate runway months (months of expenses that can be covered by net worth)
@@ -4449,68 +5129,110 @@ function createRuntime() {
     const table = byId("topCategoriesTable");
     if (!table) return;
     const range = getRange();
-    const rows = topCategoriesDetailed(8, range);
-    if (!rows.length) {
+    const allRows = topCategoriesDetailed(100, range);
+    if (!allRows.length) {
       table.innerHTML = `<tr><td class="muted small">No data yet</td></tr>`;
       return;
     }
+    
+    // Check if we should show all or just top 5
+    const toggleBtn = byId("btnToggleTopCategories");
+    const showAll = table.hasAttribute("data-show-all");
+    const displayRows = showAll ? allRows : allRows.slice(0, 5);
+    
     table.innerHTML = `
       <thead>
         <tr>
           <th>Category</th>
-          <th>Amount</th>
-          <th>% of expenses</th>
-          <th class="table-actions-head">Score</th>
+          <th style="text-align: right;">Amount</th>
+          <th style="text-align: right;">% of expenses</th>
+          <th class="table-actions-head" style="text-align: right;">Score</th>
         </tr>
       </thead>
       <tbody>
-        ${rows
+        ${displayRows
           .map(
             (row) => `
-          <tr>
+          <tr style="cursor: pointer;" data-category="${escapeHtml(row.name)}">
             <td>${escapeHtml(row.name)}</td>
-            <td>${escapeHtml(formatCurrency(row.value))}</td>
-            <td>${escapeHtml(formatPercent(row.percent))}</td>
-            <td class="table-actions">${row.score}</td>
+            <td style="text-align: right;">${escapeHtml(formatCurrency(row.value))}</td>
+            <td style="text-align: right;">${escapeHtml(formatPercent(row.percent))}</td>
+            <td class="table-actions" style="text-align: right;">${row.score}</td>
           </tr>`
           )
           .join("")}
       </tbody>
     `;
+    
+    // Add click handlers for drilldown
+    table.querySelectorAll("tbody tr").forEach((tr) => {
+      tr.addEventListener("click", () => {
+        const category = tr.getAttribute("data-category");
+        if (category) {
+          window.location.href = `/drilldown?source=category-spike&category=${encodeURIComponent(category)}`;
+        }
+      });
+    });
+    
+    // Update toggle button text
+    if (toggleBtn && allRows.length > 5) {
+      toggleBtn.textContent = showAll ? "Show top 5" : "Show all";
+    }
   }
 
   function renderTopMerchantsTable() {
     const table = byId("topMerchantsTable");
     if (!table) return;
     const range = getRange();
-    const rows = topMerchantsDetailed(8, range);
-    if (!rows.length) {
+    const allRows = topMerchantsDetailed(100, range);
+    if (!allRows.length) {
       table.innerHTML = `<tr><td class="muted small">No data yet</td></tr>`;
       return;
     }
+    
+    // Check if we should show all or just top 5
+    const toggleBtn = byId("btnToggleTopMerchants");
+    const showAll = table.hasAttribute("data-show-all");
+    const displayRows = showAll ? allRows : allRows.slice(0, 5);
+    
     table.innerHTML = `
       <thead>
         <tr>
           <th>Merchant</th>
-          <th>Amount</th>
-          <th>% of expenses</th>
-          <th class="table-actions-head">Score</th>
+          <th style="text-align: right;">Amount</th>
+          <th style="text-align: right;">% of expenses</th>
+          <th class="table-actions-head" style="text-align: right;">Score</th>
         </tr>
       </thead>
       <tbody>
-        ${rows
+        ${displayRows
           .map(
             (row) => `
-          <tr>
+          <tr style="cursor: pointer;" data-merchant="${escapeHtml(row.name)}">
             <td>${escapeHtml(row.name)}</td>
-            <td>${escapeHtml(formatCurrency(row.value))}</td>
-            <td>${escapeHtml(formatPercent(row.percent))}</td>
-            <td class="table-actions">${row.score}</td>
+            <td style="text-align: right;">${escapeHtml(formatCurrency(row.value))}</td>
+            <td style="text-align: right;">${escapeHtml(formatPercent(row.percent))}</td>
+            <td class="table-actions" style="text-align: right;">${row.score}</td>
           </tr>`
           )
           .join("")}
       </tbody>
     `;
+    
+    // Add click handlers for drilldown
+    table.querySelectorAll("tbody tr").forEach((tr) => {
+      tr.addEventListener("click", () => {
+        const merchant = tr.getAttribute("data-merchant");
+        if (merchant) {
+          window.location.href = `/drilldown?source=merchant-spike&merchant=${encodeURIComponent(merchant)}`;
+        }
+      });
+    });
+    
+    // Update toggle button text
+    if (toggleBtn && allRows.length > 5) {
+      toggleBtn.textContent = showAll ? "Show top 5" : "Show all";
+    }
   }
 
   function topCategoriesDetailed(
@@ -4673,13 +5395,16 @@ function createRuntime() {
     return config.settings.netWorthManual || 0;
   }
 
-  function groupByCategory(rows: Transaction[]) {
+  function groupByCategory(rows: Transaction[], displayCurrency?: string) {
+    const targetCurrency = displayCurrency || config.settings.currency || "USD";
     const map: Record<string, number> = {};
     for (const row of rows) {
       const cat =
         config.categories.find((c) => c.id === row.categoryId)?.name ||
         "Uncategorized";
-      map[cat] = (map[cat] || 0) + Math.abs(row.amount);
+      const sourceCurrency = row.currency || "USD";
+      const convertedAmount = convertCurrency(Math.abs(row.amount), sourceCurrency, targetCurrency);
+      map[cat] = (map[cat] || 0) + convertedAmount;
     }
     return map;
   }
@@ -5048,7 +5773,7 @@ function createRuntime() {
           date: formatFullDate(`${month}-01`),
           description: "Rent budget (no transaction)",
           category: rentBudget.name,
-          type: "budget",
+          type: "expense" as const,
           amount: formatCurrency(value),
           amountValue: value,
         });
@@ -5100,25 +5825,46 @@ function createRuntime() {
     for (const field of fields) {
       const row = document.createElement("div");
       row.className = "map-row";
+      const guessedValue = guessMapping(field, headers);
       row.innerHTML = `
         <div class="map-title">${field}</div>
         <div class="map-controls">
-          <select class="select" data-map="${field}">
+          <select class="select mapping-select" data-map="${field}" style="pointer-events: auto !important; cursor: pointer !important; z-index: 10; position: relative; -webkit-appearance: menulist; -moz-appearance: menulist; appearance: menulist;">
             <option value="">(none)</option>
             ${headers
               .map(
                 (h) =>
-                  `<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`
+                  `<option value="${escapeHtml(h)}" ${h === guessedValue ? 'selected' : ''}>${escapeHtml(h)}</option>`
               )
               .join("")}
           </select>
-          <input class="input" type="text" placeholder="Fixed value" data-fixed="${field}">
+          <input class="input mapping-fixed" type="text" placeholder="Fixed value" data-fixed="${field}" style="pointer-events: auto !important; cursor: text !important;">
         </div>
       `;
       grid.appendChild(row);
+      
+      // Ensure select is fully functional
       const select = row.querySelector("select") as HTMLSelectElement | null;
       if (select) {
-        select.value = guessMapping(field, headers);
+        select.removeAttribute('disabled');
+        select.removeAttribute('readonly');
+        select.disabled = false;
+        (select as any).readOnly = false;
+        select.style.pointerEvents = 'auto';
+        select.style.cursor = 'pointer';
+        select.style.zIndex = '10';
+        select.style.position = 'relative';
+      }
+      
+      // Ensure input is fully functional
+      const input = row.querySelector("input") as HTMLInputElement | null;
+      if (input) {
+        input.removeAttribute('disabled');
+        input.removeAttribute('readonly');
+        input.disabled = false;
+        (input as any).readOnly = false;
+        input.style.pointerEvents = 'auto';
+        input.style.cursor = 'text';
       }
     }
   }
@@ -6792,6 +7538,7 @@ function createRuntime() {
         bucketsWithDetails.push({
           name: "Expenses",
           total: totalExpenses,
+          type: "expense",
           categories: [],
           details: [
             {
@@ -6808,6 +7555,7 @@ function createRuntime() {
         bucketsWithDetails.push({
           name: "Savings",
           total: totalSavings,
+          type: "savings",
           categories: [],
           details: [
             {
@@ -6825,6 +7573,7 @@ function createRuntime() {
         bucketsWithDetails.push({
           name: "Allocated",
           total: totalIncome,
+          type: "expense",
           categories: [],
           details: [
             {
@@ -7638,8 +8387,8 @@ function createRuntime() {
         const category = config.categories.find((c) => c.id === tx.categoryId);
         resultTransactions.push({
           date: tx.dateISO,
-          description: tx.description || tx.merchant || "",
-          merchant: tx.merchant || "",
+          description: tx.description || "",
+          merchant: tx.description || "",
           category: category?.name || "Uncategorized",
           amount: Math.abs(tx.amount),
         });
@@ -7662,8 +8411,8 @@ function createRuntime() {
       rangeTransactions.forEach((tx) => {
         resultTransactions.push({
           date: tx.dateISO,
-          description: tx.description || tx.merchant || "",
-          merchant: tx.merchant || "",
+          description: tx.description || tx.description || "",
+          merchant: tx.description || "",
           category: categoryName,
           amount: Math.abs(tx.amount),
         });
@@ -7714,7 +8463,13 @@ function createRuntime() {
 
     // Compute drilldown data from local data
     const range = getRange();
-    const drilldownData = computeDrilldownFromLocalData(nodeId, range);
+    if (!range.from || !range.to) {
+      return;
+    }
+    const drilldownData = computeDrilldownFromLocalData(nodeId, {
+      from: range.from,
+      to: range.to
+    });
 
     if (explainTitle)
       explainTitle.textContent = drilldownData.nodeLabel || nodeId;
@@ -7729,11 +8484,11 @@ function createRuntime() {
       const rows = drilldownData.transactions.map((tx: any) => [
         formatFullDate(tx.date),
         tx.description || "",
-        tx.merchant || "",
+        tx.description || "",
         tx.category || "",
         formatCurrency(tx.amount),
       ]);
-      renderTable("cashflowExplainTable", rows, headers);
+      renderTable("cashflowExplainTable", rows);
     }
 
     // Highlight selected node
@@ -8312,12 +9067,41 @@ function createRuntime() {
     return true;
   }
 
-  function formatCurrency(value: number) {
+  // Exchange rates (base: USD). Approximate rates, can be updated or loaded from API
+  const EXCHANGE_RATES: Record<string, number> = {
+    USD: 1.0,
+    CAD: 1.35,
+    EUR: 0.92,
+    GBP: 0.79,
+    JPY: 149.0,
+    CHF: 0.88,
+    AUD: 1.52,
+    CNY: 7.24,
+    INR: 83.0,
+    MXN: 17.0,
+    BRL: 4.95,
+  };
+
+  function convertCurrency(amount: number, fromCurrency: string, toCurrency: string): number {
+    if (!fromCurrency || !toCurrency || fromCurrency === toCurrency) return amount;
+    if (!EXCHANGE_RATES[fromCurrency] || !EXCHANGE_RATES[toCurrency]) return amount;
+    
+    // Convert to USD first, then to target currency
+    const amountInUSD = amount / EXCHANGE_RATES[fromCurrency];
+    return amountInUSD * EXCHANGE_RATES[toCurrency];
+  }
+
+  function formatCurrency(value: number, sourceCurrency?: string) {
+    const displayCurrency = config.settings.currency || "USD";
+    const convertedValue = sourceCurrency 
+      ? convertCurrency(value, sourceCurrency, displayCurrency)
+      : value;
+    
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: config.settings.currency || "USD",
+      currency: displayCurrency,
       maximumFractionDigits: 0,
-    }).format(value || 0);
+    }).format(convertedValue || 0);
   }
 
   function formatPercent(value: number) {
@@ -8523,6 +9307,7 @@ function createRuntime() {
         rentBudget: null,
         rentMode: "monthly",
         rentPayDay: 1,
+        rentPeriods: [],
         location: {},
       },
     };
