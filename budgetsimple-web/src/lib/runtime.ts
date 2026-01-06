@@ -65,6 +65,7 @@ type Transaction = {
   categoryId: string;
   description: string;
   account: string;
+  currency?: string;
   sourceFile: string;
   createdAt: number;
   hash: string;
@@ -180,6 +181,7 @@ function createRuntime() {
     numberFormat: "auto", // "auto" | "us" | "eu" | "swiss"
     currencySymbol: "", // "" for auto-detect, or "CA$", "$", "€", etc.
   };
+  let didMigrations = false;
   const onboardSteps = [
     "upload",
     "map",
@@ -199,7 +201,9 @@ function createRuntime() {
     applyNavCollapsed();
     bindAll();
     loadAll().then(() => {
-      renderAll();
+      runMigrations().then(() => {
+        renderAll();
+      });
     });
     observeDom();
   }
@@ -209,6 +213,44 @@ function createRuntime() {
     income = await store.getAll("income");
     envelopes = await store.getAll("envelopes");
     envelopeContribs = await store.getAll("envelopeContribs");
+  }
+
+  async function runMigrations() {
+    if (didMigrations) return;
+    didMigrations = true;
+    const displayCurrency = config.settings.currency || "USD";
+
+    // Backfill missing currency on accounts/transactions/income for consistency.
+    let configChanged = false;
+    if (Array.isArray(config.settings.accounts)) {
+      for (const acc of config.settings.accounts) {
+        if (!acc.currency) {
+          acc.currency = displayCurrency;
+          configChanged = true;
+        }
+      }
+    }
+    if (configChanged) saveConfig();
+
+    let txChanged = false;
+    transactions = (transactions || []).map((t) => {
+      if (t && !t.currency) {
+        txChanged = true;
+        return { ...t, currency: displayCurrency };
+      }
+      return t;
+    });
+    if (txChanged) await store.bulkPut("transactions", transactions);
+
+    let incomeChanged = false;
+    income = (income || []).map((i) => {
+      if (i && !i.currency) {
+        incomeChanged = true;
+        return { ...i, currency: displayCurrency };
+      }
+      return i;
+    });
+    if (incomeChanged) await store.bulkPut("income", income);
   }
 
   function applyNavCollapsed() {
