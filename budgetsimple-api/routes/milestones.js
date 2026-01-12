@@ -6,6 +6,7 @@
  */
 
 const db = require('../lib/db-milestones')
+const { calculateProjection } = require('../lib/projection')
 
 module.exports = async function milestonesRoute (fastify) {
   // GET /api/milestones - List all milestones for user
@@ -343,77 +344,93 @@ module.exports = async function milestonesRoute (fastify) {
           months: {
             type: 'number',
             default: 360
+          },
+          annualReturn: {
+            type: 'number'
+          },
+          monthlyContribution: {
+            type: 'number'
+          },
+          horizonMonths: {
+            type: 'number'
           }
         }
       }
     }
   }, async function projectionHandler (request, reply) {
-    const { userId = 'demo-user', months = 360 } = request.query
+    const {
+      userId = 'demo-user',
+      months = 360,
+      annualReturn,
+      monthlyContribution,
+      horizonMonths
+    } = request.query
 
     try {
-      if (!fastify.supabase) {
-        return {
-          projection: [],
-          milestones: [],
-          assumptions: {
-            currentNetWorth: 0,
-            annualReturn: 7.0,
-            monthlyContribution: 0,
-            monthlyReturn: 0.565
-          }
+      let currentNetWorth = 0
+      let assumptions = null
+
+      if (fastify.supabase) {
+        // Get current net worth
+        const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
+          .from('net_worth_snapshots')
+          .select('net_worth, snapshot_date')
+          .eq('user_id', userId)
+          .order('snapshot_date', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (snapshotError && snapshotError.code !== 'PGRST116') {
+          fastify.log.warn(snapshotError, 'Error fetching net worth snapshot')
         }
+
+        currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
+
+        // Get user assumptions
+        const { data: assumptionsData, error: assumptionsError } = await fastify.supabase
+          .from('user_assumptions')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        if (assumptionsError && assumptionsError.code !== 'PGRST116') {
+          fastify.log.warn(assumptionsError, 'Error fetching user assumptions')
+        }
+
+        assumptions = assumptionsData
       }
 
-      // Get current net worth
-      const { data: latestSnapshot, error: snapshotError } = await fastify.supabase
-        .from('net_worth_snapshots')
-        .select('net_worth, snapshot_date')
-        .eq('user_id', userId)
-        .order('snapshot_date', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const annualReturnPercent = annualReturn !== undefined
+        ? parseFloat(annualReturn)
+        : parseFloat(assumptions?.expected_annual_return ?? 7.0)
+      const monthlyContributionValue = monthlyContribution !== undefined
+        ? parseFloat(monthlyContribution)
+        : parseFloat(assumptions?.monthly_contribution_override ?? 0)
+      const projectionHorizonMonths = horizonMonths !== undefined
+        ? parseInt(horizonMonths)
+        : parseInt(assumptions?.projection_horizon_months ?? 360)
 
-      if (snapshotError && snapshotError.code !== 'PGRST116') {
-        fastify.log.warn(snapshotError, 'Error fetching net worth snapshot')
-      }
-
-      const currentNetWorth = parseFloat(latestSnapshot?.net_worth || 0)
-
-      // Get user assumptions
-      const { data: assumptions, error: assumptionsError } = await fastify.supabase
-        .from('user_assumptions')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle()
-
-      if (assumptionsError && assumptionsError.code !== 'PGRST116') {
-        fastify.log.warn(assumptionsError, 'Error fetching user assumptions')
-      }
-
-      const annualReturn = parseFloat(assumptions?.expected_annual_return || 7.0) / 100
-      const monthlyReturn = Math.pow(1 + annualReturn, 1 / 12) - 1
-      const monthlyContribution = parseFloat(assumptions?.monthly_contribution_override || 0)
-
-      // Calculate projection curve
-      const projection = []
-      let projectedNW = currentNetWorth
-      const startDate = new Date()
-
-      for (let i = 0; i < months; i++) {
-        const date = new Date(startDate)
-        date.setMonth(date.getMonth() + i)
-        projectedNW = projectedNW * (1 + monthlyReturn) + monthlyContribution
-        projection.push({
-          date: date.toISOString().split('T')[0],
-          netWorth: projectedNW
-        })
-      }
+      const monthsRequested = Math.max(0, Math.floor(months))
+      const monthsToProject = Math.min(monthsRequested, projectionHorizonMonths)
+      const { projection, monthlyReturnPercent } = calculateProjection({
+        currentNetWorth,
+        months: monthsToProject,
+        annualReturnPercent,
+        monthlyContribution: monthlyContributionValue
+      })
 
       // Get all milestones with progress
       const milestones = await db.getMilestones(fastify, userId)
       const milestonesWithProgress = await Promise.all(
         milestones.map(async (m) => {
-          const progress = await db.calculateMilestoneProgress(fastify, userId, m.id)
+          const progress = await db.calculateMilestoneProgress(fastify, userId, m.id, {
+            currentNetWorth,
+            assumptions: {
+              expected_annual_return: annualReturnPercent,
+              monthly_contribution_override: monthlyContributionValue,
+              projection_horizon_months: projectionHorizonMonths
+            }
+          })
           return { ...m, progress }
         })
       )
@@ -423,9 +440,9 @@ module.exports = async function milestonesRoute (fastify) {
         milestones: milestonesWithProgress,
         assumptions: {
           currentNetWorth,
-          annualReturn: annualReturn * 100,
-          monthlyContribution,
-          monthlyReturn: monthlyReturn * 100
+          annualReturn: annualReturnPercent,
+          monthlyContribution: monthlyContributionValue,
+          monthlyReturn: monthlyReturnPercent
         }
       }
     } catch (error) {
